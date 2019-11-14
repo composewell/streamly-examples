@@ -17,15 +17,18 @@ import qualified Streamly as S
 import qualified Streamly.Prelude as S
 import qualified Streamly.Data.Unfold as UF
 import qualified Streamly.Data.Fold as FL
+import qualified Streamly.Memory.Array as A
 import qualified Streamly.Network.Socket as SK
 import qualified Streamly.Network.Inet.TCP as TCP
 
+import qualified Streamly.Internal.Prelude as S
 import qualified Streamly.Internal.Data.Unicode.Stream as U
 import qualified Streamly.Internal.Data.Fold as FL
 import qualified Streamly.Internal.Data.Unfold as UF
 import qualified Streamly.Internal.FileSystem.Dir as Dir
 import qualified Streamly.Internal.FileSystem.File as File
 import qualified Streamly.Internal.FileSystem.Handle as FH
+import qualified Streamly.Internal.Network.Socket as SK
 
 sumInt :: Identity Int
 sumInt =
@@ -144,26 +147,27 @@ meanings = map fetch wordList
 
 getWords :: IO ()
 getWords =
-      S.fromListM meanings      -- SerialT  IO (String, String)
+      S.fromListM meanings                  -- SerialT  IO (String, String)
     & aheadly
-    & S.map show                -- SerialT IO String
-    & FH.putStrings           -- IO ()
+    & S.map show                            -- SerialT IO String
+    & S.intercalateSuffix "\n" UF.identity  -- SerialT IO String
+    & S.map A.fromList                      -- SerialT IO (Array Word8)
+    & FH.putChunks                          -- IO ()
 
 lookupWords :: Socket -> IO ()
 lookupWords sk =
-      S.unfold SK.read sk  -- SerialT IO Word8
-    & U.decodeLatin1       -- SerialT IO Char
-    & U.words FL.toList    -- SerialT IO String
-    & S.serially           -- AheadT  IO String
-    & S.mapM fetch         -- AheadT  IO (String, String)
-    & S.aheadly            -- SerialT IO (String, String)
-    & S.map show           -- SerialT IO String
-    & S.concatUnfold UF.fromList -- SerialT IO Char
-    & U.encodeLatin1       -- SerialT IO Word8
-    & S.fold (SK.write sk) -- IO ()
+      S.unfold SK.read sk                   -- SerialT IO Word8
+    & U.decodeLatin1                        -- SerialT IO Char
+    & U.words FL.toList                     -- SerialT IO String
+    & S.serially                            -- AheadT  IO String
+    & S.mapM fetch                          -- AheadT  IO (String, String)
+    & S.aheadly                             -- SerialT IO (String, String)
+    & S.map show                            -- SerialT IO String
+    & S.intercalateSuffix "\n" UF.identity  -- SerialT IO String
+    & S.fold (SK.writeStrings sk)           -- IO ()
 
 serve :: Socket -> IO ()
-serve sk = finally (close sk) (lookupWords sk)
+serve sk = finally (lookupWords sk) (close sk)
 
 wordserver :: IO ()
 wordserver =
@@ -172,6 +176,30 @@ wordserver =
     & S.mapM serve                   -- AsyncT IO ()
     & S.asyncly                      -- SerialT IO ()
     & S.drain                        -- IO ()
+
+readWords :: Socket -> SerialT IO String
+readWords sk =
+    S.unfold SK.read sk -- SerialT IO Word8
+  & U.decodeLatin1      -- SerialT IO Char
+  & U.words FL.toList   -- SerialT IO String
+
+recv :: Socket -> SerialT IO String
+recv sk = S.finally (liftIO $ close sk) (readWords sk)
+
+mergeStreams :: IO ()
+mergeStreams =
+      S.unfold TCP.acceptOnPort 8091   -- SerialT IO Socket
+    & S.concatMapWith S.parallel recv  -- SerialT IO String
+    & U.unwords UF.fromList            -- SerialT IO Char
+    & U.encodeLatin1                   -- SerialT IO Word8
+    & File.fromBytes "outFile"         -- IO ()
+
+concurrentFolds :: IO ()
+concurrentFolds =
+      FH.getBytes                            -- SerialT IO Word8
+    & S.tapAsync (File.fromBytes "outFile1") -- SerialT IO Word8
+    & S.tapAsync (File.fromBytes "outFile2") -- SerialT IO Word8
+    & File.fromBytes "outFile"               -- IO ()
 
 main :: IO ()
 main = do
@@ -190,4 +218,6 @@ main = do
     -- UF.fold cross FL.sum (1,1) >>= print
     -- S.drain loops
     -- getWords
-    wordserver
+    -- wordserver
+    -- mergeStreams
+    concurrentFolds
