@@ -34,3 +34,6 @@ executable example
     , streamly          >= 0.6.0 && < 0.7
     , directory         >= 1.2   && < 1.4
     , transformers      >= 0.4   && < 0.6
+    , containers
+    , http-conduit
+    , network
