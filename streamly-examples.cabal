@@ -31,7 +31,7 @@ executable example
 
   build-depends:
       base              == 4.*
-    , streamly          >= 0.6.0 && < 0.7
+    , streamly          >= 0.7.0 && < 0.8
     , directory         >= 1.2   && < 1.4
     , transformers      >= 0.4   && < 0.6
     , containers
