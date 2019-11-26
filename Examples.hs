@@ -164,7 +164,7 @@ lookupWords sk =
     & S.aheadly                             -- SerialT IO (String, String)
     & S.map show                            -- SerialT IO String
     & S.intercalateSuffix "\n" UF.identity  -- SerialT IO String
-    & S.fold (SK.writeStrings sk)           -- IO ()
+    & S.fold (SK.writeStrings U.encodeLatin1 sk) -- IO ()
 
 serve :: Socket -> IO ()
 serve sk = finally (lookupWords sk) (close sk)
