@@ -1,3 +1,10 @@
+-- The server accepts a stream of command words separated by space characters
+-- and responds with outputs of the commands.
+--
+-- To try this example, use "telnet 127.0.0.1 8091" on a terminal and type one
+-- or more space separated commands e.g. "time random time" followed by a
+-- newline.
+
 {-# LANGUAGE TupleSections #-}
 
 module Main (main) where
@@ -67,11 +74,9 @@ handler sk =
 
 server :: IO ()
 server =
-      S.unfold TCP.acceptOnPort 8091  -- SerialT IO Socket
-    & S.serially                      -- AsyncT IO ()
-    & S.mapM (SK.handleWithM handler) -- AsyncT IO ()
-    & S.asyncly                       -- SerialT IO ()
-    & S.drain                         -- IO ()
+      (S.serially $ S.unfold TCP.acceptOnPort 8091)  -- SerialT IO Socket
+    & (S.asyncly  . S.mapM (SK.handleWithM handler)) -- AsyncT IO ()
+    & S.drain                                        -- IO ()
 
 main :: IO ()
 main = server
