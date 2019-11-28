@@ -13,6 +13,7 @@ import Data.Function ((&))
 import Network.Socket (Socket)
 import Streamly.Data.Fold (Fold)
 import System.Random (randomIO)
+import Streamly.Internal.Control.Monad (discard)
 
 import qualified Data.Map.Strict as Map
 import qualified Streamly as S
@@ -66,7 +67,8 @@ handler sk =
     & U.decodeLatin1                  -- SerialT IO Char
     & U.words FL.toList               -- SerialT IO String
     & S.map (, sk)                    -- SerialT IO (String, Socket)
-    & S.fold (FL.demux_ commands)     -- SerialT IO ()
+    & S.fold (FL.demux_ commands)     -- IO () + Exceptions
+    & discard                         -- IO ()
 
 ------------------------------------------------------------------------------
 -- Accept connecttions and handle connected sockets
