@@ -43,7 +43,7 @@ executable CmdServer
   default-extensions: OverloadedStrings
   hs-source-dirs:   .
   main-is: CmdServer.hs
-  ghc-options: -O2 -Wall -with-rtsopts "-T" -fspec-constr-recursive=16 -fmax-worker-args=16
+  ghc-options: -O2 -Wall -threaded -with-rtsopts "-N" -fspec-constr-recursive=16 -fmax-worker-args=16
   -- -fplugin Streamly.Internal.Fusion
 
   build-depends:

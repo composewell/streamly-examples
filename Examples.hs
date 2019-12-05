@@ -7,7 +7,7 @@ import Data.Word
 import Data.Char
 import Data.Map.Strict hiding (map, lookup)
 import Network.HTTP.Simple
-import Network.Socket
+import Network.Socket hiding (recv)
 
 import Streamly (SerialT, asyncly, aheadly)
 import Streamly.Internal.Data.Fold (Fold)

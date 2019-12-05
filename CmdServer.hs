@@ -38,24 +38,27 @@ sendValue sk x =
     & S.fold (A.writeN 60)
     >>= SK.writeChunk sk
 
-mkFold :: (() -> Socket -> IO ()) -> Fold IO Socket ()
-mkFold step = FL.mkFoldId step (return ())
-
 ------------------------------------------------------------------------------
 -- Command Handlers
 ------------------------------------------------------------------------------
 
-time :: () -> Socket -> IO ()
-time () sk = Clock.getTime Clock.Monotonic >>= sendValue sk
+time :: Socket -> IO ()
+time sk = Clock.getTime Clock.Monotonic >>= sendValue sk
 
-random :: () -> Socket -> IO ()
-random () sk = (randomIO :: IO Int) >>= sendValue sk
+random :: Socket -> IO ()
+random sk = (randomIO :: IO Int) >>= sendValue sk
+
+def :: (String, Socket) -> IO ()
+def (str, sk) = return ("Unknown command: " ++ str) >>= sendValue sk
 
 commands :: Map.Map String (Fold IO Socket ())
 commands = Map.fromList
-    [ ("time"  , mkFold time)
-    , ("random", mkFold random)
+    [ ("time"  , FL.drainBy time)
+    , ("random", FL.drainBy random)
     ]
+
+demux :: Fold IO (String, Socket) ()
+demux = FL.demuxDefault_ commands (FL.drainBy def)
 
 ------------------------------------------------------------------------------
 -- Parse and handle commands on a socket
@@ -67,7 +70,7 @@ handler sk =
     & U.decodeLatin1                  -- SerialT IO Char
     & U.words FL.toList               -- SerialT IO String
     & S.map (, sk)                    -- SerialT IO (String, Socket)
-    & S.fold (FL.demux_ commands)     -- IO () + Exceptions
+    & S.fold demux                    -- IO () + Exceptions
     & discard                         -- IO ()
 
 ------------------------------------------------------------------------------
