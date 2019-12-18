@@ -52,3 +52,20 @@ executable CmdServer
     , containers
     , random
     , network
+    , exceptions
+
+executable CmdClient
+  default-language: Haskell2010
+  default-extensions: OverloadedStrings
+  hs-source-dirs:   .
+  main-is: CmdClient.hs
+  ghc-options: -O2 -Wall -threaded -with-rtsopts "-N" -fspec-constr-recursive=16 -fmax-worker-args=16
+  -- -fplugin Streamly.Internal.Fusion
+
+  build-depends:
+      base              == 4.*
+    , streamly          >= 0.7.0 && < 0.8
+    , containers
+    , random
+    , network
+    , exceptions
