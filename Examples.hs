@@ -29,6 +29,7 @@ import qualified Streamly.Internal.FileSystem.Dir as Dir
 import qualified Streamly.Internal.FileSystem.File as File
 import qualified Streamly.Internal.FileSystem.Handle as FH
 import qualified Streamly.Internal.Network.Socket as SK
+import qualified Streamly.Internal.Data.Stream.Parallel as Par
 
 sumInt :: Identity Int
 sumInt =
@@ -197,8 +198,8 @@ mergeStreams =
 concurrentFolds :: IO ()
 concurrentFolds =
       FH.getBytes                            -- SerialT IO Word8
-    & S.tapAsync (File.fromBytes "outFile1") -- SerialT IO Word8
-    & S.tapAsync (File.fromBytes "outFile2") -- SerialT IO Word8
+    & Par.tapAsync (File.fromBytes "outFile1") -- SerialT IO Word8
+    & Par.tapAsync (File.fromBytes "outFile2") -- SerialT IO Word8
     & File.fromBytes "outFile"               -- IO ()
 
 main :: IO ()
