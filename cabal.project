@@ -3,4 +3,4 @@ packages: streamly-examples.cabal
 source-repository-package
   type: git
   location: https://github.com/composewell/streamly
-  tag: 0d737d1890670cacfe302030ccbac572e893e3a7
+  tag: 1d66e4409476c2fc442b1cbd9e88fc80afe87e15
