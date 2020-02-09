@@ -31,31 +31,37 @@ import qualified Streamly.Internal.FileSystem.Handle as FH
 import qualified Streamly.Internal.Network.Socket as SK
 import qualified Streamly.Internal.Data.Stream.Parallel as Par
 
+-- | Sum a list of Int
 sumInt :: Identity Int
 sumInt =
       S.unfold UF.fromList [1..10] -- SerialT Identity Int
     & S.fold   FL.sum              -- Identity Int
 
+-- | Sum a list of Int
 sumInt1 :: Identity Int
 sumInt1 =
       S.fromList [1..10]       -- SerialT Identity Int
     & S.sum                    -- Identity Int
 
+-- | Read from standard input write to standard output
 echo :: IO ()
 echo =
       FH.getChunks            -- SerialT IO (Array Word8)
     & FH.putChunks            -- IO ()
 
+-- | Read from a file and write to standard output
 cat :: IO ()
 cat =
       File.toChunks "inFile"    -- SerialT IO (Array Word8)
     & FH.putChunks              -- IO ()
 
+-- | Read from a file and write to another file
 cp :: IO ()
 cp =
       File.toChunks "inFile"    -- SerialT IO (Array Word8)
     & File.fromChunks "outFile" -- IO ()
 
+-- | Count the number of bytes in a file
 wcc :: IO Int
 wcc =
       File.toBytes "inFile" -- SerialT IO Word8
@@ -67,6 +73,7 @@ countl n ch = if (ch == 10) then n + 1 else n
 nlines :: Monad m => Fold m Word8 Int
 nlines = FL.mkPure countl 0 id
 
+-- | Count the number of lines in a file
 wcl :: IO Int
 wcl =
       File.toBytes "inFile" -- SerialT IO Word8
@@ -81,17 +88,20 @@ countw (n, wasSpace) ch =
 nwords :: Monad m => Fold m Word8 Int
 nwords = FL.mkPure countw (0, True) fst
 
+-- | Count the number of words in a file
 wcw :: IO Int
 wcw =
       File.toBytes "inFile"   -- SerialT IO Word8
     & S.fold nwords           -- IO Int
 
+-- | Count the number of bytes, lines and words in a file
 wc :: IO (Int, Int, Int)
 wc =
       File.toBytes "inFile"   -- SerialT IO Word8
     & S.fold ((,,) <$> nlines <*> nwords <*> FL.length)
                               -- IO (Int, Int, Int)
 
+-- | Read from a file and write to two files
 tee :: IO ((),())
 tee =
       File.toBytes "inFile"        -- SerialT IO Word8
@@ -101,6 +111,7 @@ bucket :: Int -> (Int, Int)
 bucket n = let i = n `mod` 10
            in if i > 9 then (9,n) else (i,n)
 
+-- | Read from a file and generate a histogram of word length
 wordHisto :: IO (Map Int Int)
 wordHisto =
       File.toBytes "inFile"            -- SerialT IO Word8
@@ -110,23 +121,36 @@ wordHisto =
     & S.trace print
     & S.fold (FL.classify FL.length)   -- IO (Map (Int, Int))
 
+-- Read all files from a directory and write to a single output file.
+-- Equivalent to cat dir/* > outFile.
 appendAll :: IO ()
 appendAll =
       Dir.toFiles "appendAll"        -- SerialT IO String
     & S.concatUnfold File.read       -- SerialT IO Word8
     & File.fromBytes "outFile"       -- IO()
 
-mult :: (Int, Int) -> Int
-mult (x, y) = x * y
-
-from :: Monad m => Unfold m Int Int
-from = UF.enumerateFromToIntegral 1000
-
 cross :: Monad m => Unfold m (Int, Int) Int
 cross =
-      UF.outerProduct from from
+      UF.outerProduct src src
     & UF.map mult
 
+    where
+
+    mult :: (Int, Int) -> Int
+    mult (x, y) = x * y
+
+    src :: Monad m => Unfold m Int Int
+    src = UF.enumerateFromToIntegral 1000
+
+-- | Nested looping/outer product. Multiply an element of the first stream with
+-- all elements of the second stream and then add the results. Do this for all
+-- elements of the first stream.
+crossMultSum :: IO Int
+crossMultSum = UF.fold cross FL.sum (1,1)
+
+-- | Nested looping/outer product. For each element of the first stream create
+-- a tuple with each element of the second stream.
+--
 loops :: SerialT IO ()
 loops = do
     x <- S.fromList [1,2]
@@ -146,6 +170,9 @@ wordList = ["cat", "dog", "mouse"]
 meanings :: [IO (String, String)]
 meanings = map fetch wordList
 
+-- | Fetch words meanings using google search for words in 'wordList'. All
+-- searches are performed concurrently.
+--
 getWords :: IO ()
 getWords =
       S.fromListM meanings                  -- SerialT  IO (String, String)
@@ -170,6 +197,12 @@ lookupWords sk =
 serve :: Socket -> IO ()
 serve sk = finally (lookupWords sk) (close sk)
 
+-- | Run a server on port 8091. The server accepts lines separated by newline
+-- characters, each line may contain a number of words. The server returns the
+-- meanings of words after performing google searches for meanings, the server
+-- performs searches concurrently. You can use "telnet" or "nc" as a client to
+-- try it.
+--
 wordserver :: IO ()
 wordserver =
       S.unfold TCP.acceptOnPort 8091 -- SerialT IO Socket
@@ -187,6 +220,11 @@ readWords sk =
 recv :: Socket -> SerialT IO String
 recv sk = S.finally (liftIO $ close sk) (readWords sk)
 
+-- | Starts a server at port 8091 listening for lines with space separated
+-- words. Multiple clients can connect to the server and send lines. The server
+-- handles all the connections concurrently, merges the lines and writes the
+-- merged stream to a file.
+--
 mergeStreams :: IO ()
 mergeStreams =
       S.unfold TCP.acceptOnPort 8091   -- SerialT IO Socket
@@ -195,6 +233,8 @@ mergeStreams =
     & U.encodeLatin1                   -- SerialT IO Word8
     & File.fromBytes "outFile"         -- IO ()
 
+-- | Read from standard input and write to a file, on the way tap the stream
+-- and write it to two other files.
 concurrentFolds :: IO ()
 concurrentFolds =
       FH.getBytes                            -- SerialT IO Word8
@@ -216,7 +256,7 @@ main = do
     -- void tee
     -- wordHisto >>= print
     -- appendAll
-    -- UF.fold cross FL.sum (1,1) >>= print
+    -- crossMultSum >>= print
     -- S.drain loops
     -- getWords
     -- wordserver
