@@ -21,14 +21,57 @@ source-repository head
   type: git
   location: git://github.com/composewell/streamly-examples.git
 
-executable example
-  default-language: Haskell2010
-  default-extensions: OverloadedStrings
-  hs-source-dirs:   .
-  main-is: Examples.hs
-  ghc-options: -O2 -Wall -with-rtsopts "-T" -fspec-constr-recursive=16 -fmax-worker-args=16 
-  -- -fplugin Streamly.Internal.Fusion
+------------------------------------------------------------------------------
+-- Flags                                                                    --
+------------------------------------------------------------------------------
 
+flag fusion-plugin
+  description: Use fusion plugin for benchmarks and executables
+  manual: True
+  default: False
+
+flag examples-sdl
+  description: Build including SDL examples
+  manual: True
+  default: False
+
+------------------------------------------------------------------------------
+-- Common Stanzas                                                           --
+------------------------------------------------------------------------------
+
+common exe-options
+  default-language: Haskell2010
+  hs-source-dirs:   .
+
+  ghc-options: -O2
+               -fdicts-strict
+               -fspec-constr-recursive=16
+               -fmax-worker-args=16 
+               -threaded
+               -with-rtsopts=-N
+
+               -Wall
+               -Wcompat
+               -Wunrecognised-warning-flags
+               -Widentities
+               -Wincomplete-record-updates
+               -Wincomplete-uni-patterns
+               -Wredundant-constraints
+               -Wnoncanonical-monad-instances
+
+  if flag(fusion-plugin) && !impl(ghcjs) && !impl(ghc < 8.6)
+    ghc-options: -fplugin Fusion.Plugin
+    build-depends:
+        fusion-plugin     >= 0.2   && < 0.3
+
+------------------------------------------------------------------------------
+-- Examples                                                                 --
+------------------------------------------------------------------------------
+
+executable Examples
+  import: exe-options
+  default-extensions: OverloadedStrings
+  main-is: Examples.hs
   build-depends:
       base              == 4.*
     , streamly          >= 0.7.0 && < 0.8
@@ -39,13 +82,9 @@ executable example
     , network
 
 executable CmdServer
-  default-language: Haskell2010
+  import: exe-options
   default-extensions: OverloadedStrings
-  hs-source-dirs:   .
   main-is: CmdServer.hs
-  ghc-options: -O2 -Wall -threaded -with-rtsopts "-N" -fspec-constr-recursive=16 -fmax-worker-args=16
-  -- -fplugin Streamly.Internal.Fusion
-
   build-depends:
       base              == 4.*
     , streamly          >= 0.7.0 && < 0.8
@@ -55,13 +94,9 @@ executable CmdServer
     , exceptions
 
 executable CmdClient
-  default-language: Haskell2010
+  import: exe-options
   default-extensions: OverloadedStrings
-  hs-source-dirs:   .
   main-is: CmdClient.hs
-  ghc-options: -O2 -Wall -threaded -with-rtsopts "-N" -fspec-constr-recursive=16 -fmax-worker-args=16
-  -- -fplugin Streamly.Internal.Fusion
-
   build-depends:
       base              == 4.*
     , streamly          >= 0.7.0 && < 0.8
@@ -69,3 +104,174 @@ executable CmdClient
     , random
     , network
     , exceptions
+
+executable SearchQuery
+  import: exe-options
+  main-is: SearchQuery.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-depends:
+        streamly
+      , base          >= 4.9   && < 5
+      , http-conduit  >= 2.2.2 && < 2.4
+  else
+    buildable: False
+
+executable ListDir
+  import: exe-options
+  main-is: ListDir.hs
+  buildable: True
+  build-Depends:
+      streamly
+    , base    >= 4.9   && < 5
+
+executable MergeSort
+  import: exe-options
+  main-is: MergeSort.hs
+  buildable: True
+  build-Depends:
+      streamly
+    , base   >= 4.9   && < 5
+    , random >= 1.0.0 && < 2
+
+executable AcidRain
+  import: exe-options
+  main-is: AcidRain.hs
+  buildable: True
+  build-Depends:
+      streamly
+    , base         >= 4.9   && < 5
+    , mtl          >= 2.2   && < 3
+
+executable CirclingSquare
+  import: exe-options
+  main-is: CirclingSquare.hs
+  if flag(examples-sdl)
+    buildable: True
+    build-Depends:
+        streamly
+      , base >= 4.9   && < 5
+      , SDL  >= 0.6.5 && < 0.7
+  else
+    buildable: False
+
+executable ControlFlow
+  import: exe-options
+  main-is: ControlFlow.hs
+  buildable: True
+  build-Depends:
+        streamly
+      , base              >= 4.9   && < 5
+      , exceptions        >= 0.8   && < 0.11
+      , transformers      >= 0.4   && < 0.6
+      , transformers-base >= 0.4   && < 0.5
+
+executable HandleIO
+  import: exe-options
+  main-is: HandleIO.hs
+  buildable: True
+  build-Depends:
+      streamly
+    , base              >= 4.9   && < 5
+
+executable FileIOExamples
+  import: exe-options
+  main-is: FileIOExamples.hs
+  buildable: True
+  build-Depends:
+      streamly
+    , base              >= 4.9   && < 5
+
+executable EchoServer
+  import: exe-options
+  main-is: EchoServer.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-Depends:
+        streamly
+      , base              >= 4.9   && < 5
+      , network           >= 2.6   && < 4
+  else
+    buildable: False
+
+executable FileSinkServer
+  import: exe-options
+  main-is: FileSinkServer.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-Depends:
+        streamly
+      , base              >= 4.9   && < 5
+      , network           >= 2.6   && < 4
+  else
+    buildable: False
+
+executable FromFileClient
+  import: exe-options
+  main-is: FromFileClient.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-Depends:
+        streamly
+      , base              >= 4.9   && < 5
+  else
+    buildable: False
+
+executable WordClassifier
+  import: exe-options
+  main-is: WordClassifier.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-Depends:
+        streamly
+      , base                 >= 4.9   && < 5
+      , hashable             >= 1.2   && < 1.4
+      , unordered-containers >= 0.2   && < 0.3
+  else
+    buildable: False
+
+executable WordCount
+  import: exe-options
+  main-is: WordCount.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-Depends:
+        streamly
+      , base                 >= 4.9   && < 5
+      , vector               >= 0.12  && < 0.13
+  else
+    buildable: False
+
+executable CamelCase
+  import: exe-options
+  main-is: CamelCase.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-Depends:
+        streamly
+      , base                 >= 4.9   && < 5
+  else
+    buildable: False
+
+executable Rate
+  import: exe-options
+  main-is: Rate.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-Depends:
+        streamly
+      , base                 >= 4.9   && < 5
+  else
+    buildable: False
+
+executable Split
+  import: exe-options
+  main-is: Split.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-Depends:
+        streamly
+      , base         >= 4.9   && < 5
+      , mtl          >= 2.2   && < 3
+  else
+    buildable: False

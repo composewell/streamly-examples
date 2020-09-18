@@ -16,15 +16,14 @@ import System.Random (randomIO)
 import Streamly.Internal.Control.Monad (discard)
 
 import qualified Data.Map.Strict as Map
-import qualified Streamly as S
 import qualified Streamly.Data.Fold as FL
-import qualified Streamly.Memory.Array as A
+import qualified Streamly.Data.Array.Storable.Foreign as A
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Prelude as S
 
 import qualified Streamly.Internal.Data.Fold as FL
 import qualified Streamly.Internal.Data.Time.Clock as Clock
-import qualified Streamly.Internal.Data.Unicode.Stream as U
+import qualified Streamly.Internal.Unicode.Stream as U
 import qualified Streamly.Internal.Network.Socket as SK
 
 ------------------------------------------------------------------------------

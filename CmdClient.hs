@@ -5,12 +5,12 @@ import Data.Function ((&))
 import Data.Word (Word8)
 import Network.Socket (PortNumber)
 
-import Streamly
+import Streamly.Prelude (SerialT)
 import qualified Streamly.Prelude as S
 import qualified Streamly.Internal.Network.Inet.TCP as TCP
 import qualified Streamly.Internal.Data.Fold as FL
 import qualified Streamly.Internal.Data.Unfold as UF
-import qualified Streamly.Internal.Data.Unicode.Stream as U
+import qualified Streamly.Internal.Unicode.Stream as U
 
 remoteAddr :: (Word8,Word8,Word8,Word8)
 remoteAddr = (192, 168, 1, 4)
@@ -44,6 +44,6 @@ sender =
 main :: IO ()
 main = do
       S.replicate 4 sender                        -- SerialT IO (SerialT IO ())
-    & S.concatMapWith async id                    -- SerialT IO ()
+    & S.concatMapWith S.async id                    -- SerialT IO ()
     & S.postscanlM' (counter "rcvd: ") (0 :: Int) -- SerialT IO Int
     & S.drain                                     -- IO ()

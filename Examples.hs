@@ -1,3 +1,6 @@
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
+
 import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception (finally)
@@ -7,22 +10,20 @@ import Data.Word
 import Data.Char
 import Data.Map.Strict hiding (map, lookup)
 import Network.HTTP.Simple
-import Network.Socket hiding (recv)
+import Network.Socket
 
-import Streamly (SerialT, asyncly, aheadly)
+import Streamly.Prelude (SerialT)
 import Streamly.Internal.Data.Fold (Fold)
 import Streamly.Internal.Data.Unfold (Unfold)
 
-import qualified Streamly as S
 import qualified Streamly.Prelude as S
-import qualified Streamly.Data.Unfold as UF
 import qualified Streamly.Data.Fold as FL
-import qualified Streamly.Memory.Array as A
+import qualified Streamly.Data.Array.Storable.Foreign as A
 import qualified Streamly.Network.Socket as SK
 import qualified Streamly.Network.Inet.TCP as TCP
 
-import qualified Streamly.Internal.Prelude as S
-import qualified Streamly.Internal.Data.Unicode.Stream as U
+import qualified Streamly.Internal.Data.Stream.IsStream as S
+import qualified Streamly.Internal.Unicode.Stream as U
 import qualified Streamly.Internal.Data.Fold as FL
 import qualified Streamly.Internal.Data.Unfold as UF
 import qualified Streamly.Internal.FileSystem.Dir as Dir
@@ -153,8 +154,8 @@ crossMultSum = UF.fold cross FL.sum (1,1)
 --
 loops :: SerialT IO ()
 loops = do
-    x <- S.fromList [1,2]
-    y <- S.fromList [3,4]
+    x <- S.fromList [1,2 :: Int]
+    y <- S.fromList [3,4 :: Int]
     S.yieldM $ putStrLn $ show (x, y)
 
 get :: String -> IO String
@@ -176,7 +177,7 @@ meanings = map fetch wordList
 getWords :: IO ()
 getWords =
       S.fromListM meanings                  -- SerialT  IO (String, String)
-    & aheadly
+    & S.aheadly
     & S.map show                            -- SerialT IO String
     & S.intercalateSuffix "\n" UF.identity  -- SerialT IO String
     & S.map A.fromList                      -- SerialT IO (Array Word8)
