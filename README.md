@@ -5,7 +5,7 @@ You can run these examples using `stack` like this:
 
 ```
 $ stack build
-$ stack AcidRain.hs
+$ stack examples/AcidRain.hs
 ```
 
 Note: This method may not work for `CirclingSquare.hs` SDL animation example.

@@ -41,12 +41,12 @@ flag examples-sdl
 
 common exe-options
   default-language: Haskell2010
-  hs-source-dirs:   .
+  hs-source-dirs:   examples
 
   ghc-options: -O2
                -fdicts-strict
                -fspec-constr-recursive=16
-               -fmax-worker-args=16 
+               -fmax-worker-args=16
                -threaded
                -with-rtsopts=-N
 
@@ -74,7 +74,7 @@ executable Examples
   main-is: Examples.hs
   build-depends:
       base              == 4.*
-    , streamly          >= 0.7.0 && < 0.8
+    , streamly
     , directory         >= 1.2   && < 1.4
     , transformers      >= 0.4   && < 0.6
     , containers
@@ -87,7 +87,7 @@ executable CmdServer
   main-is: CmdServer.hs
   build-depends:
       base              == 4.*
-    , streamly          >= 0.7.0 && < 0.8
+    , streamly
     , containers
     , random
     , network
@@ -99,7 +99,7 @@ executable CmdClient
   main-is: CmdClient.hs
   build-depends:
       base              == 4.*
-    , streamly          >= 0.7.0 && < 0.8
+    , streamly
     , containers
     , random
     , network
