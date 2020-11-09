@@ -4,7 +4,7 @@ packages:
 extra-deps:
 - SDL-0.6.7.0@sha256:9d6ba75c0cab575ec38468c8277803983e985f9622437aeca6a53e6a7337a7d5,2045
 - git: https://github.com/composewell/streamly.git
-  commit: f72dcaf4932b2fc24a10156507a980858e2c108d
+  commit: e36bfcfff79e528e91363f1d3b80bd6b528a69b0
 #allow-newer: true
 flags: {}
 extra-package-dbs: []

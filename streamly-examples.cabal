@@ -64,6 +64,15 @@ common exe-options
     build-depends:
         fusion-plugin     >= 0.2   && < 0.3
 
+  if os(darwin)
+      cpp-options:    -DCABAL_OS_DARWIN
+
+  if os(linux)
+      cpp-options:    -DCABAL_OS_LINUX
+
+  if os(windows)
+      cpp-options:    -DCABAL_OS_WINDOWS
+
 ------------------------------------------------------------------------------
 -- Examples                                                                 --
 ------------------------------------------------------------------------------
@@ -279,6 +288,18 @@ executable Rate
 executable Split
   import: exe-options
   main-is: Split.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-Depends:
+        streamly
+      , base         >= 4.9   && < 5
+      , mtl          >= 2.2   && < 3
+  else
+    buildable: False
+
+executable FileSystemEvent
+  import: exe-options
+  main-is: FileSystemEvent.hs
   if !impl(ghcjs)
     buildable: True
     build-Depends:
