@@ -45,5 +45,5 @@ main :: IO ()
 main = do
       S.replicate 4 sender                        -- SerialT IO (SerialT IO ())
     & S.concatMapWith S.async id                    -- SerialT IO ()
-    & S.postscanlM' (counter "rcvd: ") (0 :: Int) -- SerialT IO Int
+    & S.postscanlM' (counter "rcvd: ") (return 0 :: IO Int) -- SerialT IO Int
     & S.drain                                     -- IO ()
