@@ -1,0 +1,338 @@
+version: 2.1
+
+#-----------------------------------------------------------------------------
+# packcheck-0.4.2
+# Packcheck global environment variables
+#-----------------------------------------------------------------------------
+
+env: &env
+    environment:
+      # ------------------------------------------------------------------------
+      # Common options
+      # ------------------------------------------------------------------------
+      # GHC_OPTIONS: "-Werror"
+      CABAL_REINIT_CONFIG: "y"
+      LC_ALL: "C.UTF-8"
+
+      # ------------------------------------------------------------------------
+      # What to build
+      # ------------------------------------------------------------------------
+      DISABLE_TEST: "y"
+      DISABLE_BENCH: "y"
+      DISABLE_DOCS: "y"
+      DISABLE_SDIST_BUILD: "yes"
+      DISABLE_DIST_CHECKS: "yes"
+      ENABLE_INSTALL: "y"
+
+      # ------------------------------------------------------------------------
+      # stack options
+      # ------------------------------------------------------------------------
+      # Note requiring a specific version of stack using STACKVER may fail due to
+      # github API limit while checking and upgrading/downgrading to the specific
+      # version.
+      #STACKVER: "1.6.5"
+      STACK_UPGRADE: "y"
+      #RESOLVER: "lts-12"
+
+      # ------------------------------------------------------------------------
+      # cabal options
+      # ------------------------------------------------------------------------
+      CABAL_CHECK_RELAX: "y"
+      CABAL_NO_SANDBOX: "y"
+      CABAL_HACKAGE_MIRROR: "hackage.haskell.org:http://hackage.fpcomplete.com"
+
+      # ------------------------------------------------------------------------
+      # Where to find the required tools
+      # ------------------------------------------------------------------------
+      PATH: /opt/ghc/bin:/opt/ghcjs/bin:/sbin:/usr/sbin:/bin:/usr/bin
+      TOOLS_DIR: /opt
+
+      # ------------------------------------------------------------------------
+      # Location of packcheck.sh (the shell script invoked to perform CI tests ).
+      # ------------------------------------------------------------------------
+      # You can either commit the packcheck.sh script at this path in your repo or
+      # you can use it by specifying the PACKCHECK_REPO_URL option below in which
+      # case it will be automatically copied from the packcheck repo to this path
+      # during CI tests. In any case it is finally invoked from this path.
+      PACKCHECK: "./packcheck.sh"
+      # If you have not committed packcheck.sh in your repo at PACKCHECK
+      # then it is automatically pulled from this URL.
+      PACKCHECK_GITHUB_URL: "https://raw.githubusercontent.com/harendra-kumar/packcheck"
+      PACKCHECK_GITHUB_COMMIT: "563702bd02c41343dcd3dfcfef0845ca428a9240"
+
+executors:
+  amd64-executor:
+    docker:
+      - image: ubuntu:xenial
+  x86-executor:
+    docker:
+      - image: i386/ubuntu:eoan
+
+#-----------------------------------------------------------------------------
+# Common utility stuff, not to be modified usually
+#-----------------------------------------------------------------------------
+
+preinstall: &preinstall
+  run: |
+        apt-get update
+        # required for https/cache save and restore
+        apt-get install -y ca-certificates
+
+        # required to (re)generate the configure script
+        apt-get install -y autoconf
+
+        # For ghc and cabal-install packages from hvr's ppa
+        # gnupg is required for apt-key to work
+        apt-get install -y gnupg
+        apt-get install -y apt-transport-https
+        apt-key adv --keyserver keyserver.ubuntu.com  --recv-keys BA3CBA3FFE22B574
+        apt-get install -y software-properties-common
+        apt-get install -y git
+        apt-get install -y zlib1g-dev
+        add-apt-repository -y ppa:hvr/ghc
+        # echo "deb http://downloads.haskell.org/debian stretch main" >> /etc/apt/sources.list
+        echo "deb-src http://ppa.launchpad.net/hvr/ghc/ubuntu xenial main" >> /etc/apt/sources.list
+        apt-get update
+
+        # required for packcheck
+        apt-get install -y curl
+
+        # required for outbound https for stack and for stack setup
+        apt-get install -y netbase xz-utils make
+
+        # If a custom stack-yaml is specified, replace the default with that
+        if test -e "$STACK_YAML"; then rm -f stack.yaml && ln -sv $STACK_YAML stack.yaml; else true; fi
+        unset STACK_YAML
+
+        # Get packcheck if needed
+        CURL=$(which curl)
+        PACKCHECK_URL=${PACKCHECK_GITHUB_URL}/${PACKCHECK_GITHUB_COMMIT}/packcheck.sh
+        if test ! -e "$PACKCHECK"; then $CURL -sL -o "$PACKCHECK" $PACKCHECK_URL; fi;
+        chmod +x $PACKCHECK
+
+restore: &restore
+  # Needs to happen after installing ca-certificates
+  restore_cache:
+    key: v1-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}
+
+save: &save
+  save_cache:
+      key: v1-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}
+      paths:
+        - ~/.cabal
+        - ~/.ghc
+        - ~/.local
+        - ~/.stack
+
+#-----------------------------------------------------------------------------
+# Build matrix
+#-----------------------------------------------------------------------------
+
+jobs:
+  stack-ghc-8_8:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+            name: GHC 8.8 + stack lts-16.12
+            environment:
+              BUILD: "stack"
+              RESOLVER: "lts-16.12"
+              SDIST_OPTIONS: "--ignore-check"
+            command: |
+              apt-get build-dep -y ghc-8.8.4
+              apt-get install -y cabal-install-3.2
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+  cabal-ghc-8_6_5:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+           name: GHC 8.6.5
+           environment:
+             BUILD: "cabal-v2"
+           command: |
+              apt-get install -y ghc-8.6.5
+              apt-get install -y cabal-install-3.2
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+  cabal-ghc-8_4_4:
+      <<: *env
+      executor: x86-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+           name: GHC 8.4.4 + x86
+           environment:
+             BUILD: "cabal-v2"
+             GHCVER: "8.4.4"
+           command: |
+              apt-get install -y ghc-8.4.4
+              apt-get install -y cabal-install-3.2
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+  cabal-ghc-8_2_2:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+            environment:
+              BUILD: "cabal-v2"
+            command: |
+              apt-get install -y ghc-8.2.2
+              apt-get install -y cabal-install-3.2
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+  cabal-ghc-8_0_2:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+            environment:
+              BUILD: "cabal-v2"
+            command: |
+              apt-get install -y ghc-8.0.2
+              apt-get install -y cabal-install-3.2
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+  cabal-ghcjs-8_4:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+            name: GHCJS 8.4
+            environment:
+              BUILD: cabal-v2
+              ENABLE_GHCJS: "yes"
+              DISABLE_TEST: "yes"
+              ENABLE_INSTALL: ""
+              DISABLE_DOCS: "yes"
+              DISABLE_SDIST_BUILD: "yes"
+            command: |
+              add-apt-repository -y ppa:hvr/ghcjs
+              add-apt-repository -y 'deb https://deb.nodesource.com/node_11.x xenial main'
+              curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
+              apt-get update
+              apt-get install -y cabal-install-3.2
+              apt-get install -y nodejs
+              apt-get install -y ghcjs-8.4
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+  cabal-ghc-8_10_2:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+            name: GHC 8.10.2
+            environment:
+              BUILD: "cabal-v2"
+            command: |
+              apt-get install -y ghc-8.10.2
+              apt-get install -y cabal-install-3.2
+              bash -c "$PACKCHECK $BUILD"
+            no_output_timeout: 25m
+        - *save
+  cabal-ghc-8_10_2_sdl:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+           name: GHC 8.10.2 + examples-sdl
+           environment:
+             BUILD: "cabal-v2"
+             CABAL_BUILD_OPTIONS: "--flag examples-sdl"
+           command: |
+              apt-get install -y libsdl1.2-dev
+              apt-get install -y ghc-8.10.2
+              apt-get install -y cabal-install-3.2
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+  cabal-ghc-8_10_2_fusion_plugin:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+           name: GHC 8.10.2 + fusion-plugin
+           environment:
+             BUILD: "cabal-v2"
+             CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
+           command: |
+              apt-get install -y ghc-8.10.2
+              apt-get install -y cabal-install-3.2
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+  cabal-ghc-8_10_2_all_plugins:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+           name: GHC 8.10.2 + examples-sdl + fusion-plugin
+           environment:
+             BUILD: "cabal-v2"
+             CABAL_BUILD_OPTIONS: "--flag examples-sdl --flag fusion-plugin"
+           command: |
+              apt-get install -y libsdl1.2-dev
+              apt-get install -y ghc-8.10.2
+              apt-get install -y cabal-install-3.2
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - cabal-ghc-8_10_2:
+           name: GHC 8.10.2
+      - cabal-ghc-8_10_2_sdl:
+           name: GHC 8.10.2 + examples-sdl
+      - cabal-ghc-8_10_2_fusion_plugin:
+           name: GHC 8.10.2 + fusion-plugin
+      - cabal-ghc-8_10_2_all_plugins:
+           name: GHC 8.10.2 + examples-sdl + fusion-plugin
+      - cabal-ghc-8_6_5:
+          name: GHC 8.6.5
+      - cabal-ghc-8_4_4:
+          name: GHC 8.4.4 + x86
+      - cabal-ghc-8_2_2:
+          name: GHC 8.2.2
+      - cabal-ghc-8_0_2:
+          name: GHC 8.0.2
+      #- cabal-ghc-7.10.3
+      - cabal-ghcjs-8_4:
+          name: GHCJS 8.4
+      - stack-ghc-8_8:
+          name: GHC 8.8 + stack lts-16.12
+      #- stack-ghc-8.4
+      #- stack-ghc-8.2
+      #- coveralls-ghc-8.2.2
+      #- coveralls-ghc-8.8.3
