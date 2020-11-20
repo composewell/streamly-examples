@@ -72,38 +72,50 @@ executable Examples
   import: exe-options
   default-extensions: OverloadedStrings
   main-is: Examples.hs
-  build-depends:
-      base              == 4.*
-    , streamly
-    , directory         >= 1.2   && < 1.4
-    , transformers      >= 0.4   && < 0.6
-    , containers
-    , http-conduit
-    , network
+  if !impl(ghcjs)
+    buildable: True
+    build-depends:
+        base              == 4.*
+      , streamly
+      , directory         >= 1.2   && < 1.4
+      , transformers      >= 0.4   && < 0.6
+      , containers
+      , http-conduit
+      , network
+  else
+    buildable: False
 
 executable CmdServer
   import: exe-options
   default-extensions: OverloadedStrings
   main-is: CmdServer.hs
-  build-depends:
-      base              == 4.*
-    , streamly
-    , containers
-    , random
-    , network
-    , exceptions
+  if !impl(ghcjs)
+    buildable: True
+    build-depends:
+        base              == 4.*
+      , streamly
+      , containers
+      , random
+      , network
+      , exceptions
+  else
+    buildable: False
 
 executable CmdClient
   import: exe-options
   default-extensions: OverloadedStrings
   main-is: CmdClient.hs
-  build-depends:
-      base              == 4.*
-    , streamly
-    , containers
-    , random
-    , network
-    , exceptions
+  if !impl(ghcjs)
+    buildable: True
+    build-depends:
+        base              == 4.*
+      , streamly
+      , containers
+      , random
+      , network
+      , exceptions
+  else
+    buildable: False
 
 executable SearchQuery
   import: exe-options
