@@ -1,0 +1,14 @@
+resolver: lts-16.12
+packages:
+- '.'
+extra-deps:
+- SDL-0.6.7.0@sha256:9d6ba75c0cab575ec38468c8277803983e985f9622437aeca6a53e6a7337a7d5,2045
+- git: https://github.com/composewell/streamly.git
+  commit: f72dcaf4932b2fc24a10156507a980858e2c108d
+#allow-newer: true
+flags: {}
+extra-package-dbs: []
+rebuild-ghc-options: true
+# For mac ports installed SDL library on Mac OS X
+extra-include-dirs:
+- /opt/local/include
