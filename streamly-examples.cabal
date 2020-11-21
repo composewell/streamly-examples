@@ -79,9 +79,9 @@ executable Examples
       , streamly
       , directory         >= 1.2   && < 1.4
       , transformers      >= 0.4   && < 0.6
-      , containers
-      , http-conduit
-      , network
+      , containers        >= 0.5   && < 0.7
+      , http-conduit      >= 2.2.2 && < 2.4
+      , network           >= 2.6   && < 4
   else
     buildable: False
 
@@ -94,10 +94,10 @@ executable CmdServer
     build-depends:
         base              == 4.*
       , streamly
-      , containers
-      , random
-      , network
-      , exceptions
+      , containers        >= 0.5   && < 0.7
+      , random            >= 1.0.0 && < 2
+      , network           >= 2.6   && < 4
+      , exceptions        >= 0.8   && < 0.11
   else
     buildable: False
 
@@ -110,10 +110,10 @@ executable CmdClient
     build-depends:
         base              == 4.*
       , streamly
-      , containers
-      , random
-      , network
-      , exceptions
+      , containers        >= 0.5   && < 0.7
+      , random            >= 1.0.0 && < 2
+      , network           >= 2.6   && < 4
+      , exceptions        >= 0.8   && < 0.11
   else
     buildable: False
 
