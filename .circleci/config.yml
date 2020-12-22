@@ -321,8 +321,6 @@ workflows:
            name: GHC 8.10.2 + examples-sdl + fusion-plugin
       - cabal-ghc-8_6_5:
           name: GHC 8.6.5
-      - cabal-ghc-8_4_4:
-          name: GHC 8.4.4 + x86
       - cabal-ghc-8_2_2:
           name: GHC 8.2.2
       - cabal-ghc-8_0_2:
