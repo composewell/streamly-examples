@@ -39,7 +39,25 @@ flag examples-sdl
 -- Common Stanzas                                                           --
 ------------------------------------------------------------------------------
 
+common exe-dependencies
+  build-depends:
+      streamly
+    , base                  >= 4.9   && < 5
+    , directory         	  >= 1.2   && < 1.4
+    , transformers      	  >= 0.4   && < 0.6
+    , containers        	  >= 0.5   && < 0.7
+    , http-conduit      	  >= 2.2.2 && < 2.4
+    , random            	  >= 1.0.0 && < 2
+    , exceptions        	  >= 0.8   && < 0.11
+    , transformers-base 	  >= 0.4   && < 0.5
+    , network           	  >= 2.6   && < 4
+    , hashable              >= 1.2   && < 1.4
+    , unordered-containers  >= 0.2   && < 0.3
+    , vector                >= 0.12  && < 0.13
+    , mtl                   >= 2.2   && < 3
+
 common exe-options
+  import: exe-dependencies
   default-language: Haskell2010
   hs-source-dirs:   examples
 
@@ -83,14 +101,6 @@ executable Examples
   main-is: Examples.hs
   if !impl(ghcjs)
     buildable: True
-    build-depends:
-        base              == 4.*
-      , streamly
-      , directory         >= 1.2   && < 1.4
-      , transformers      >= 0.4   && < 0.6
-      , containers        >= 0.5   && < 0.7
-      , http-conduit      >= 2.2.2 && < 2.4
-      , network           >= 2.6   && < 4
   else
     buildable: False
 
@@ -100,13 +110,6 @@ executable CmdServer
   main-is: CmdServer.hs
   if !impl(ghcjs)
     buildable: True
-    build-depends:
-        base              == 4.*
-      , streamly
-      , containers        >= 0.5   && < 0.7
-      , random            >= 1.0.0 && < 2
-      , network           >= 2.6   && < 4
-      , exceptions        >= 0.8   && < 0.11
   else
     buildable: False
 
@@ -116,13 +119,6 @@ executable CmdClient
   main-is: CmdClient.hs
   if !impl(ghcjs)
     buildable: True
-    build-depends:
-        base              == 4.*
-      , streamly
-      , containers        >= 0.5   && < 0.7
-      , random            >= 1.0.0 && < 2
-      , network           >= 2.6   && < 4
-      , exceptions        >= 0.8   && < 0.11
   else
     buildable: False
 
@@ -131,10 +127,6 @@ executable SearchQuery
   main-is: SearchQuery.hs
   if !impl(ghcjs)
     buildable: True
-    build-depends:
-        streamly
-      , base          >= 4.9   && < 5
-      , http-conduit  >= 2.2.2 && < 2.4
   else
     buildable: False
 
@@ -142,27 +134,16 @@ executable ListDir
   import: exe-options
   main-is: ListDir.hs
   buildable: True
-  build-Depends:
-      streamly
-    , base    >= 4.9   && < 5
 
 executable MergeSort
   import: exe-options
   main-is: MergeSort.hs
   buildable: True
-  build-Depends:
-      streamly
-    , base   >= 4.9   && < 5
-    , random >= 1.0.0 && < 2
 
 executable AcidRain
   import: exe-options
   main-is: AcidRain.hs
   buildable: True
-  build-Depends:
-      streamly
-    , base         >= 4.9   && < 5
-    , mtl          >= 2.2   && < 3
 
 executable CirclingSquare
   import: exe-options
@@ -170,9 +151,7 @@ executable CirclingSquare
   if flag(examples-sdl)
     buildable: True
     build-Depends:
-        streamly
-      , base >= 4.9   && < 5
-      , SDL  >= 0.6.5 && < 0.7
+        SDL  >= 0.6.5 && < 0.7
   else
     buildable: False
 
@@ -180,38 +159,22 @@ executable ControlFlow
   import: exe-options
   main-is: ControlFlow.hs
   buildable: True
-  build-Depends:
-        streamly
-      , base              >= 4.9   && < 5
-      , exceptions        >= 0.8   && < 0.11
-      , transformers      >= 0.4   && < 0.6
-      , transformers-base >= 0.4   && < 0.5
 
 executable HandleIO
   import: exe-options
   main-is: HandleIO.hs
   buildable: True
-  build-Depends:
-      streamly
-    , base              >= 4.9   && < 5
 
 executable FileIOExamples
   import: exe-options
   main-is: FileIOExamples.hs
   buildable: True
-  build-Depends:
-      streamly
-    , base              >= 4.9   && < 5
 
 executable EchoServer
   import: exe-options
   main-is: EchoServer.hs
   if !impl(ghcjs)
     buildable: True
-    build-Depends:
-        streamly
-      , base              >= 4.9   && < 5
-      , network           >= 2.6   && < 4
   else
     buildable: False
 
@@ -220,10 +183,6 @@ executable FileSinkServer
   main-is: FileSinkServer.hs
   if !impl(ghcjs)
     buildable: True
-    build-Depends:
-        streamly
-      , base              >= 4.9   && < 5
-      , network           >= 2.6   && < 4
   else
     buildable: False
 
@@ -232,9 +191,6 @@ executable FromFileClient
   main-is: FromFileClient.hs
   if !impl(ghcjs)
     buildable: True
-    build-Depends:
-        streamly
-      , base              >= 4.9   && < 5
   else
     buildable: False
 
@@ -243,11 +199,6 @@ executable WordClassifier
   main-is: WordClassifier.hs
   if !impl(ghcjs)
     buildable: True
-    build-Depends:
-        streamly
-      , base                 >= 4.9   && < 5
-      , hashable             >= 1.2   && < 1.4
-      , unordered-containers >= 0.2   && < 0.3
   else
     buildable: False
 
@@ -256,10 +207,6 @@ executable WordCount
   main-is: WordCount.hs
   if !impl(ghcjs)
     buildable: True
-    build-Depends:
-        streamly
-      , base                 >= 4.9   && < 5
-      , vector               >= 0.12  && < 0.13
   else
     buildable: False
 
@@ -268,9 +215,6 @@ executable CamelCase
   main-is: CamelCase.hs
   if !impl(ghcjs)
     buildable: True
-    build-Depends:
-        streamly
-      , base                 >= 4.9   && < 5
   else
     buildable: False
 
@@ -279,9 +223,6 @@ executable Rate
   main-is: Rate.hs
   if !impl(ghcjs)
     buildable: True
-    build-Depends:
-        streamly
-      , base                 >= 4.9   && < 5
   else
     buildable: False
 
@@ -290,21 +231,10 @@ executable Split
   main-is: Split.hs
   if !impl(ghcjs)
     buildable: True
-    build-Depends:
-        streamly
-      , base         >= 4.9   && < 5
-      , mtl          >= 2.2   && < 3
   else
     buildable: False
 
 executable FileSystemEvent
   import: exe-options
   main-is: FileSystemEvent.hs
-  if !impl(ghcjs)
-    buildable: True
-    build-Depends:
-        streamly
-      , base         >= 4.9   && < 5
-      , mtl          >= 2.2   && < 3
-  else
-    buildable: False
+  buildable: True
