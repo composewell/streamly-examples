@@ -1,0 +1,10 @@
+streamly-examples
+Copyright 2019 Composewell Technologies
+
+This product includes software developed at
+Composewell Technologies (http://www.composewell.com).
+
+The example AcidRain is adapted from Gabriel Gonzalez's pipes-concurrency
+package, which is available under BSD-3-Clause License. The source code of which
+can be found at
+https://hackage.haskell.org/package/pipes-concurrency-2.0.8/docs/Pipes-Concurrent-Tutorial.html

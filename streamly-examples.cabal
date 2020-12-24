@@ -2,10 +2,10 @@ cabal-version: 2.2
 name:          streamly-examples
 category:      Streaming, Streamly
 version:       0.1.0
-license:       BSD-3-Clause
+license:       Apache-2.0
 license-file:  LICENSE
-author:        Harendra Kumar
-maintainer:    Harendra Kumar
+author:        Composewell Technologies
+maintainer:    streamly@composewell.com
 stability:     provisional
 homepage:      http://github.com/composewell/streamly-examples
 bug-reports:   http://github.com/composewell/streamly-examples/issues
@@ -16,6 +16,11 @@ description:   Examples for streamly
 tested-with: GHC==8.8.1
 build-type:    Simple
 extra-source-files:
+  .circleci/config.yml
+  .github/workflows/haskell.yml
+  appveyor.yml
+  README.md
+  NOTICE
 
 source-repository head
   type: git
