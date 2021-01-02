@@ -12,11 +12,11 @@ import qualified Streamly.Unicode.Stream as Unicode
 import qualified Streamly.Internal.Data.Array.Storable.Foreign as Array
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Streamly.Internal.Data.Stream.IsStream as Stream
-#if defined(CABAL_OS_DARWIN)
+#if darwin_HOST_OS
 import qualified Streamly.Internal.FileSystem.Event.Darwin as Event
-#elif defined(CABAL_OS_LINUX)
+#elif linux_HOST_OS
 import qualified Streamly.Internal.FileSystem.Event.Linux as Event
-#elif defined(CABAL_OS_WINDOWS)
+#elif mingw32_HOST_OS
 import qualified Streamly.Internal.FileSystem.Event.Windows as Event
 #else
 #error "FS Events not supported on this platform"

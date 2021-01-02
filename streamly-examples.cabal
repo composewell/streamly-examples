@@ -43,14 +43,14 @@ common exe-dependencies
   build-depends:
       streamly
     , base                  >= 4.9   && < 5
-    , directory         	  >= 1.2   && < 1.4
-    , transformers      	  >= 0.4   && < 0.6
-    , containers        	  >= 0.5   && < 0.7
-    , http-conduit      	  >= 2.2.2 && < 2.4
-    , random            	  >= 1.0.0 && < 2
-    , exceptions        	  >= 0.8   && < 0.11
-    , transformers-base 	  >= 0.4   && < 0.5
-    , network           	  >= 2.6   && < 4
+    , directory             >= 1.2   && < 1.4
+    , transformers          >= 0.4   && < 0.6
+    , containers            >= 0.5   && < 0.7
+    , http-conduit          >= 2.2.2 && < 2.4
+    , random                >= 1.0.0 && < 2
+    , exceptions            >= 0.8   && < 0.11
+    , transformers-base     >= 0.4   && < 0.5
+    , network               >= 2.6   && < 4
     , hashable              >= 1.2   && < 1.4
     , unordered-containers  >= 0.2   && < 0.3
     , vector                >= 0.12  && < 0.13
@@ -82,22 +82,12 @@ common exe-options
     build-depends:
         fusion-plugin     >= 0.2   && < 0.3
 
-  if os(darwin)
-      cpp-options:    -DCABAL_OS_DARWIN
-
-  if os(linux)
-      cpp-options:    -DCABAL_OS_LINUX
-
-  if os(windows)
-      cpp-options:    -DCABAL_OS_WINDOWS
-
 ------------------------------------------------------------------------------
 -- Examples                                                                 --
 ------------------------------------------------------------------------------
 
 executable Examples
   import: exe-options
-  default-extensions: OverloadedStrings
   main-is: Examples.hs
   if !impl(ghcjs)
     buildable: True
@@ -106,7 +96,6 @@ executable Examples
 
 executable CmdServer
   import: exe-options
-  default-extensions: OverloadedStrings
   main-is: CmdServer.hs
   if !impl(ghcjs)
     buildable: True
@@ -115,7 +104,6 @@ executable CmdServer
 
 executable CmdClient
   import: exe-options
-  default-extensions: OverloadedStrings
   main-is: CmdClient.hs
   if !impl(ghcjs)
     buildable: True
@@ -133,17 +121,14 @@ executable SearchQuery
 executable ListDir
   import: exe-options
   main-is: ListDir.hs
-  buildable: True
 
 executable MergeSort
   import: exe-options
   main-is: MergeSort.hs
-  buildable: True
 
 executable AcidRain
   import: exe-options
   main-is: AcidRain.hs
-  buildable: True
 
 executable CirclingSquare
   import: exe-options
@@ -158,17 +143,14 @@ executable CirclingSquare
 executable ControlFlow
   import: exe-options
   main-is: ControlFlow.hs
-  buildable: True
 
 executable HandleIO
   import: exe-options
   main-is: HandleIO.hs
-  buildable: True
 
 executable FileIOExamples
   import: exe-options
   main-is: FileIOExamples.hs
-  buildable: True
 
 executable EchoServer
   import: exe-options
@@ -237,4 +219,7 @@ executable Split
 executable FileSystemEvent
   import: exe-options
   main-is: FileSystemEvent.hs
-  buildable: True
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
