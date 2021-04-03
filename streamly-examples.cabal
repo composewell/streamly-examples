@@ -189,9 +189,9 @@ executable WordClassifier
   else
     buildable: False
 
-executable WordCount
+executable WordCountUTF8
   import: exe-options
-  main-is: WordCount.hs
+  main-is: WordCountUTF8.hs
   if !impl(ghcjs)
     buildable: True
   else
