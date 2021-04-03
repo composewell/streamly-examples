@@ -70,8 +70,6 @@ common exe-options
                -fdicts-strict
                -fspec-constr-recursive=16
                -fmax-worker-args=16
-               -threaded
-               -with-rtsopts=-N
 
                -Wall
                -Wcompat
@@ -87,12 +85,17 @@ common exe-options
     build-depends:
         fusion-plugin     >= 0.2   && < 0.3
 
+common exe-options-threaded
+  import: exe-options
+  ghc-options: -threaded
+               -with-rtsopts=-N
+
 ------------------------------------------------------------------------------
 -- Examples                                                                 --
 ------------------------------------------------------------------------------
 
 executable Examples
-  import: exe-options
+  import: exe-options-threaded
   main-is: Examples.hs
   if !impl(ghcjs)
     buildable: True
@@ -100,7 +103,7 @@ executable Examples
     buildable: False
 
 executable CmdServer
-  import: exe-options
+  import: exe-options-threaded
   main-is: CmdServer.hs
   if !impl(ghcjs)
     buildable: True
@@ -108,7 +111,7 @@ executable CmdServer
     buildable: False
 
 executable CmdClient
-  import: exe-options
+  import: exe-options-threaded
   main-is: CmdClient.hs
   if !impl(ghcjs)
     buildable: True
@@ -116,7 +119,7 @@ executable CmdClient
     buildable: False
 
 executable SearchQuery
-  import: exe-options
+  import: exe-options-threaded
   main-is: SearchQuery.hs
   if !impl(ghcjs)
     buildable: True
@@ -124,19 +127,19 @@ executable SearchQuery
     buildable: False
 
 executable ListDir
-  import: exe-options
+  import: exe-options-threaded
   main-is: ListDir.hs
 
 executable MergeSort
-  import: exe-options
+  import: exe-options-threaded
   main-is: MergeSort.hs
 
 executable AcidRain
-  import: exe-options
+  import: exe-options-threaded
   main-is: AcidRain.hs
 
 executable CirclingSquare
-  import: exe-options
+  import: exe-options-threaded
   main-is: CirclingSquare.hs
   if flag(examples-sdl)
     buildable: True
@@ -158,7 +161,7 @@ executable FileIOExamples
   main-is: FileIOExamples.hs
 
 executable EchoServer
-  import: exe-options
+  import: exe-options-threaded
   main-is: EchoServer.hs
   if !impl(ghcjs)
     buildable: True
@@ -166,7 +169,7 @@ executable EchoServer
     buildable: False
 
 executable FileSinkServer
-  import: exe-options
+  import: exe-options-threaded
   main-is: FileSinkServer.hs
   if !impl(ghcjs)
     buildable: True
@@ -174,7 +177,7 @@ executable FileSinkServer
     buildable: False
 
 executable FromFileClient
-  import: exe-options
+  import: exe-options-threaded
   main-is: FromFileClient.hs
   if !impl(ghcjs)
     buildable: True
@@ -189,8 +192,34 @@ executable WordClassifier
   else
     buildable: False
 
-executable WordCountUTF8
+executable WordCount
   import: exe-options
+  main-is: WordCount.hs
+  ghc-options: -main-is WordCount
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable WordCountParallel
+  import: exe-options-threaded
+  main-is: WordCountParallel.hs
+  other-modules: WordCount
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable WordCountModular
+  import: exe-options
+  main-is: WordCountModular.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable WordCountUTF8
+  import: exe-options-threaded
   main-is: WordCountUTF8.hs
   if !impl(ghcjs)
     buildable: True
@@ -206,7 +235,7 @@ executable CamelCase
     buildable: False
 
 executable Rate
-  import: exe-options
+  import: exe-options-threaded
   main-is: Rate.hs
   if !impl(ghcjs)
     buildable: True
@@ -222,7 +251,7 @@ executable Split
     buildable: False
 
 executable FileSystemEvent
-  import: exe-options
+  import: exe-options-threaded
   main-is: FileSystemEvent.hs
   if !impl(ghcjs)
     buildable: True
