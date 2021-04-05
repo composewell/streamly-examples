@@ -6,10 +6,10 @@ import Control.Monad.IO.Class (MonadIO)
 import Data.Function ((&))
 import Data.Word (Word8)
 import System.Environment (getArgs)
-import Streamly.Internal.Data.Array.Storable.Foreign (Array)
+import Streamly.Internal.Data.Array.Foreign (Array)
 
 import qualified Streamly.Unicode.Stream as Unicode
-import qualified Streamly.Internal.Data.Array.Storable.Foreign as Array
+import qualified Streamly.Internal.Data.Array.Foreign as Array
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Streamly.Internal.Data.Stream.IsStream as Stream
 #if darwin_HOST_OS

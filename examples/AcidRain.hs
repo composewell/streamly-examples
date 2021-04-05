@@ -10,10 +10,12 @@
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup ((<>))
 #endif
-import Streamly.Prelude as S
 import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.State (MonadState, get, modify, runStateT)
+import Streamly.Prelude (MonadAsync, SerialT)
+
+import qualified Streamly.Prelude as S
 
 data Event = Quit | Harm Int | Heal Int deriving (Show)
 

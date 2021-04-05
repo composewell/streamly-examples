@@ -1,8 +1,10 @@
 import qualified Streamly.Prelude as S
 import qualified Streamly.Data.Fold as FL
-import qualified Streamly.Data.Array.Storable.Foreign as A
+import Streamly.Internal.Data.Fold.Tee (Tee(..))
+import qualified Streamly.Data.Array.Foreign as A
 
 import qualified Streamly.Internal.Data.Fold as FL
+import qualified Streamly.Internal.Data.Fold.Tee as Tee
 import qualified Streamly.Internal.Data.Stream.IsStream as IP
 import qualified Streamly.Internal.FileSystem.File as File
 
@@ -41,8 +43,13 @@ avgll :: FilePath -> IO ()
 avgll src = print =<< (S.fold avg
     $ S.splitOnSuffix (== ord' '\n') FL.length
     $ File.toBytes src)
-    where avg = (/) <$> toDouble FL.sum <*> toDouble FL.length
-          toDouble = fmap (fromIntegral :: Int -> Double)
+
+    where
+
+    avg = Tee.toFold $ (/)
+            <$> Tee (toDouble FL.sum)
+            <*> Tee (toDouble FL.length)
+    toDouble = fmap (fromIntegral :: Int -> Double)
 
 llhisto :: FilePath -> IO ()
 llhisto src = print =<< (S.fold (FL.classify FL.length)

@@ -21,14 +21,14 @@ import qualified Streamly.Data.Fold as FL
 import qualified Streamly.Internal.Data.Fold as IFL
 import qualified Streamly.Internal.Data.Unfold as IUF
 import qualified Streamly.Internal.FileSystem.File as File
-import qualified Streamly.Data.Array.Storable.Foreign as A
+import qualified Streamly.Data.Array.Foreign as A
 import qualified Streamly.Prelude as S
 import           System.Environment (getArgs)
 
 instance (Enum a, Storable a) => Hashable (A.Array a) where
-    hash arr = fromIntegral $ runIdentity $ IUF.fold A.read IFL.rollingHash arr
+    hash arr = fromIntegral $ runIdentity $ IUF.fold IFL.rollingHash A.read arr
     hashWithSalt salt arr = fromIntegral $ runIdentity $
-        IUF.fold A.read (IFL.rollingHashWithSalt $ fromIntegral salt) arr
+        IUF.fold (IFL.rollingHashWithSalt $ fromIntegral salt) A.read arr
 
 {-# INLINE toLower #-}
 toLower :: Char -> Char

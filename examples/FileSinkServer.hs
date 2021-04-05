@@ -11,7 +11,7 @@ import System.Environment (getArgs)
 
 import Streamly.Unicode.Stream
 import qualified Streamly.FileSystem.Handle as FH
-import qualified Streamly.Data.Array.Storable.Foreign as A
+import qualified Streamly.Data.Array.Foreign as A
 import qualified Streamly.Network.Socket as NS
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Prelude as S
@@ -24,7 +24,7 @@ main = do
     withFile file AppendMode
         (\src -> S.fold (FH.write src)
         $ encodeLatin1
-        $ S.concatUnfold A.read
+        $ S.unfoldMany A.read
         $ S.concatMapWith S.parallel use
         $ S.unfold TCP.acceptOnPort 8090)
 

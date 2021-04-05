@@ -1,17 +1,19 @@
 import Data.Char (ord)
+import Streamly.Internal.Data.Fold.Tee (Tee(..))
 import System.Environment (getArgs)
 import System.IO (IOMode(..), hSeek, SeekMode(..))
 
 import qualified Streamly.Data.Fold as FL
 import qualified Streamly.FileSystem.Handle as FH
 import qualified System.IO as FH
-import qualified Streamly.Data.Array.Storable.Foreign as A
+import qualified Streamly.Data.Array.Foreign as A
 import qualified Streamly.Prelude as S
 -- import qualified Streamly.FileSystem.FD as FH
 
 import qualified Streamly.Internal.Data.Fold as FL
+import qualified Streamly.Internal.Data.Fold.Tee as Tee
 import qualified Streamly.Internal.Unicode.Stream as US
-import qualified Streamly.Internal.Memory.ArrayStream as AS
+import qualified Streamly.Internal.Data.Array.Stream.Foreign as AS
 import qualified Streamly.Internal.Data.Stream.IsStream as S
 
 -- Read the contents of a file to stdout.
@@ -79,8 +81,13 @@ avgll :: FH.Handle -> IO ()
 avgll src = print =<< (S.fold avg
     $ S.splitWithSuffix (== ord' '\n') FL.length
     $ S.unfold FH.read src)
-    where avg = (/) <$> toDouble FL.sum <*> toDouble FL.length
-          toDouble = fmap (fromIntegral :: Int -> Double)
+
+    where
+
+    avg = Tee.toFold $ (/)
+            <$> Tee (toDouble FL.sum)
+            <*> Tee (toDouble FL.length)
+    toDouble = fmap (fromIntegral :: Int -> Double)
 
 -- histogram of line lengths in a file
 llhisto :: FH.Handle -> IO ()

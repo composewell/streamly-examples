@@ -17,7 +17,7 @@ import Streamly.Internal.Control.Monad (discard)
 
 import qualified Data.Map.Strict as Map
 import qualified Streamly.Data.Fold as FL
-import qualified Streamly.Data.Array.Storable.Foreign as A
+import qualified Streamly.Data.Array.Foreign as A
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Prelude as S
 
@@ -57,7 +57,7 @@ commands = Map.fromList
     ]
 
 demux :: Fold IO (String, Socket) ()
-demux = FL.demuxDefault_ commands (FL.drainBy def)
+demux = fmap snd $ FL.demuxDefault commands (FL.drainBy def)
 
 ------------------------------------------------------------------------------
 -- Parse and handle commands on a socket

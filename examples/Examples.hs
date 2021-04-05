@@ -14,17 +14,19 @@ import Network.Socket
 
 import Streamly.Prelude (SerialT)
 import Streamly.Internal.Data.Fold (Fold)
+import Streamly.Internal.Data.Fold.Tee (Tee(..))
 import Streamly.Internal.Data.Unfold (Unfold)
 
 import qualified Streamly.Prelude as S
 import qualified Streamly.Data.Fold as FL
-import qualified Streamly.Data.Array.Storable.Foreign as A
+import qualified Streamly.Data.Array.Foreign as A
 import qualified Streamly.Network.Socket as SK
 import qualified Streamly.Network.Inet.TCP as TCP
 
 import qualified Streamly.Internal.Data.Stream.IsStream as S
 import qualified Streamly.Internal.Unicode.Stream as U
 import qualified Streamly.Internal.Data.Fold as FL
+import qualified Streamly.Internal.Data.Fold.Tee as Tee
 import qualified Streamly.Internal.Data.Unfold as UF
 import qualified Streamly.Internal.FileSystem.Dir as Dir
 import qualified Streamly.Internal.FileSystem.File as File
@@ -72,7 +74,7 @@ countl :: Int -> Word8 -> Int
 countl n ch = if (ch == 10) then n + 1 else n
 
 nlines :: Monad m => Fold m Word8 Int
-nlines = FL.mkPure countl 0 id
+nlines = FL.mkFoldl countl 0
 
 -- | Count the number of lines in a file
 wcl :: IO Int
@@ -87,7 +89,7 @@ countw (n, wasSpace) ch =
         else (if wasSpace then n + 1 else n, False)
 
 nwords :: Monad m => Fold m Word8 Int
-nwords = FL.mkPure countw (0, True) fst
+nwords = fmap fst $ FL.mkFoldl countw (0, True)
 
 -- | Count the number of words in a file
 wcw :: IO Int
@@ -99,7 +101,7 @@ wcw =
 wc :: IO (Int, Int, Int)
 wc =
       File.toBytes "inFile"   -- SerialT IO Word8
-    & S.fold ((,,) <$> nlines <*> nwords <*> FL.length)
+    & S.fold (Tee.toFold $ (,,) <$> Tee nlines <*> Tee nwords <*> Tee FL.length)
                               -- IO (Int, Int, Int)
 
 -- | Read from a file and write to two files
@@ -127,12 +129,12 @@ wordHisto =
 appendAll :: IO ()
 appendAll =
       Dir.toFiles "appendAll"        -- SerialT IO String
-    & S.concatUnfold File.read       -- SerialT IO Word8
+    & S.unfoldMany File.read         -- SerialT IO Word8
     & File.fromBytes "outFile"       -- IO()
 
-cross :: Monad m => Unfold m (Int, Int) Int
+cross :: Monad m => Unfold m Int Int
 cross =
-      UF.outerProduct src src
+      UF.cross src src
     & UF.map mult
 
     where
@@ -147,7 +149,7 @@ cross =
 -- all elements of the second stream and then add the results. Do this for all
 -- elements of the first stream.
 crossMultSum :: IO Int
-crossMultSum = UF.fold cross FL.sum (1,1)
+crossMultSum = UF.fold FL.sum cross 1
 
 -- | Nested looping/outer product. For each element of the first stream create
 -- a tuple with each element of the second stream.

@@ -41,7 +41,7 @@ import Streamly.Internal.Unicode.Stream
 import qualified Streamly.Internal.Data.Stream.IsStream as S
 import qualified Streamly.Unicode.Stream as S
 import qualified Streamly.FileSystem.Handle as FH
-import qualified Streamly.Data.Array.Storable.Foreign as A
+import qualified Streamly.Data.Array.Foreign as A
 import qualified Data.Vector.Storable.Mutable as V
 
 -------------------------------------------------------------------------------
