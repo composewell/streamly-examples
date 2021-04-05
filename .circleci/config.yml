@@ -80,6 +80,7 @@ preinstall: &preinstall
 
         # required to (re)generate the configure script
         apt-get install -y autoconf
+        apt-get install -y libtinfo-dev
 
         # For ghc and cabal-install packages from hvr's ppa
         # gnupg is required for apt-key to work
