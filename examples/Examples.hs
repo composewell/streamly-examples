@@ -64,46 +64,6 @@ cp =
       File.toChunks "inFile"    -- SerialT IO (Array Word8)
     & File.fromChunks "outFile" -- IO ()
 
--- | Count the number of bytes in a file
-wcc :: IO Int
-wcc =
-      File.toBytes "inFile" -- SerialT IO Word8
-    & S.fold FL.length      -- IO Int
-
-countl :: Int -> Word8 -> Int
-countl n ch = if (ch == 10) then n + 1 else n
-
-nlines :: Monad m => Fold m Word8 Int
-nlines = FL.mkFoldl countl 0
-
--- | Count the number of lines in a file
-wcl :: IO Int
-wcl =
-      File.toBytes "inFile" -- SerialT IO Word8
-    & S.fold nlines         -- IO Int
-
-countw :: (Int, Bool) -> Word8 -> (Int, Bool)
-countw (n, wasSpace) ch =
-        if (isSpace $ chr $ fromIntegral ch)
-        then (n, True)
-        else (if wasSpace then n + 1 else n, False)
-
-nwords :: Monad m => Fold m Word8 Int
-nwords = fmap fst $ FL.mkFoldl countw (0, True)
-
--- | Count the number of words in a file
-wcw :: IO Int
-wcw =
-      File.toBytes "inFile"   -- SerialT IO Word8
-    & S.fold nwords           -- IO Int
-
--- | Count the number of bytes, lines and words in a file
-wc :: IO (Int, Int, Int)
-wc =
-      File.toBytes "inFile"   -- SerialT IO Word8
-    & S.fold (Tee.toFold $ (,,) <$> Tee nlines <*> Tee nwords <*> Tee FL.length)
-                              -- IO (Int, Int, Int)
-
 -- | Read from a file and write to two files
 tee :: IO ((),())
 tee =
@@ -252,10 +212,6 @@ main = do
     -- echo
     -- cat
     -- cp
-    -- wcc >>= print
-    -- wcl >>= print
-    -- wcw >>= print
-    -- wc >>= print
     -- void tee
     -- wordHisto >>= print
     -- appendAll
