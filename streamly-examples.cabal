@@ -101,6 +101,14 @@ executable Examples
   else
     buildable: False
 
+executable WordServer
+  import: exe-options-threaded
+  main-is: WordServer.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
 executable CmdServer
   import: exe-options-threaded
   main-is: CmdServer.hs

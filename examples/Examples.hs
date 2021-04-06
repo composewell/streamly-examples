@@ -120,12 +120,9 @@ loops = do
     y <- S.fromList [3,4 :: Int]
     S.yieldM $ putStrLn $ show (x, y)
 
-get :: String -> IO String
-get s = threadDelay 1000000 >> return s
-
+-- Simulate network/db query by adding a delay
 fetch :: String -> IO (String, String)
-fetch w =
-    (,) <$> pure w <*> get ( "https://www.google.com/search?q=" ++ w)
+fetch w = threadDelay 1000000 >> return (w,w)
 
 wordList :: [String]
 wordList = ["cat", "dog", "mouse"]
@@ -133,8 +130,8 @@ wordList = ["cat", "dog", "mouse"]
 meanings :: [IO (String, String)]
 meanings = map fetch wordList
 
--- | Fetch words meanings using google search for words in 'wordList'. All
--- searches are performed concurrently.
+-- | Fetch words meanings for words in 'wordList'. All searches are performed
+-- concurrently.
 --
 getWords :: IO ()
 getWords =
@@ -144,35 +141,6 @@ getWords =
     & S.intercalateSuffix "\n" UF.identity  -- SerialT IO String
     & S.map A.fromList                      -- SerialT IO (Array Word8)
     & FH.putChunks                          -- IO ()
-
-lookupWords :: Socket -> IO ()
-lookupWords sk =
-      S.unfold SK.read sk                   -- SerialT IO Word8
-    & U.decodeLatin1                        -- SerialT IO Char
-    & U.words FL.toList                     -- SerialT IO String
-    & S.serially                            -- AheadT  IO String
-    & S.mapM fetch                          -- AheadT  IO (String, String)
-    & S.aheadly                             -- SerialT IO (String, String)
-    & S.map show                            -- SerialT IO String
-    & S.intercalateSuffix "\n" UF.identity  -- SerialT IO String
-    & S.fold (SK.writeStrings U.encodeLatin1 sk) -- IO ()
-
-serve :: Socket -> IO ()
-serve sk = finally (lookupWords sk) (close sk)
-
--- | Run a server on port 8091. The server accepts lines separated by newline
--- characters, each line may contain a number of words. The server returns the
--- meanings of words after performing google searches for meanings, the server
--- performs searches concurrently. You can use "telnet" or "nc" as a client to
--- try it.
---
-wordserver :: IO ()
-wordserver =
-      S.unfold TCP.acceptOnPort 8091 -- SerialT IO Socket
-    & S.serially                     -- AsyncT IO ()
-    & S.mapM serve                   -- AsyncT IO ()
-    & S.asyncly                      -- SerialT IO ()
-    & S.drain                        -- IO ()
 
 readWords :: Socket -> SerialT IO String
 readWords sk =
@@ -218,6 +186,5 @@ main = do
     -- crossMultSum >>= print
     -- S.drain loops
     -- getWords
-    -- wordserver
     -- mergeStreams
     concurrentFolds
