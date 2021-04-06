@@ -14,15 +14,15 @@
 -- Build with the following options:
 -------------------------------------------------------------------------------
 -- streamly optimization plugin is required for best performance
--- ghc -O2 -fplugin Plugin -fspec-constr-recursive=10 -fmax-worker-args=16
--- For concurrent version add: -threaded -with-rtsopts "-N"
+--
+-- cabal build --flag fusion-plugin WordCountUTF8
 
 -------------------------------------------------------------------------------
 -- Comparing with "wc -mwl" command:
 -------------------------------------------------------------------------------
 --
 -- 1) To enable UTF8 with wc: export LANG=en_US.UTF-8; export LC_ALL=$LANG
--- 2) To test whether it is acutally using utf8, copy and paste this string
+-- 2) To test whether it is actually using utf8, copy and paste this string
 -- "U+1680 U+2000 U+2001 U+2002" and run "wc -mwl" on this. Without proper UTF8
 -- handling word count would be 1, with proper UTF8 handling word count would
 -- be 4. Note that the spaces in this string are not regular space chars they
@@ -38,7 +38,7 @@ import Streamly.Internal.Unicode.Stream
        (DecodeState, DecodeError(..), CodePoint, decodeUtf8Either,
        resumeDecodeUtf8Either)
 
-import qualified Streamly.Internal.Data.Stream.IsStream as S
+import qualified Streamly.Prelude as S
 import qualified Streamly.Unicode.Stream as S
 import qualified Streamly.FileSystem.Handle as FH
 import qualified Streamly.Data.Array.Foreign as A

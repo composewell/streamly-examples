@@ -7,11 +7,12 @@ import Data.Function ((&))
 import Data.Word (Word8)
 import GHC.Conc (numCapabilities)
 import System.Environment (getArgs)
-import Streamly.Internal.Data.Array.Foreign (Array)
+import Streamly.Data.Array.Foreign (Array)
 import WordCount (count, Counts(..), isSpace)
 
-import qualified Streamly.Internal.FileSystem.File as File
-import qualified Streamly.Internal.Data.Array.Foreign as Array
+import qualified Streamly.Data.Array.Foreign as Array
+import qualified Streamly.Internal.Data.Array.Foreign as Array (readIndex)
+import qualified Streamly.Internal.FileSystem.File as File (readChunks)
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Stream
 

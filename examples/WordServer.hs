@@ -1,7 +1,7 @@
 import Control.Concurrent (threadDelay)
 import Control.Exception (finally)
 import Data.Function ((&))
-import Network.Socket
+import Network.Socket (Socket, close)
 
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Data.Fold as Fold
@@ -11,7 +11,7 @@ import qualified Streamly.Unicode.Stream as Unicode
 
 import qualified Streamly.Internal.Data.Stream.IsStream as Stream (intercalateSuffix)
 import qualified Streamly.Internal.Unicode.Stream as Unicode (words)
-import qualified Streamly.Internal.Data.Unfold as Unfold
+import qualified Streamly.Internal.Data.Unfold as Unfold (identity)
 import qualified Streamly.Internal.Network.Socket as Socket (writeStrings)
 
 -- Simulate network/db query by adding a delay

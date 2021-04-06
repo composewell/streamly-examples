@@ -10,8 +10,8 @@ import Streamly.Internal.Data.Fold.Tee (Tee(..))
 import System.Environment (getArgs)
 
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Internal.FileSystem.File as File
-import qualified Streamly.Internal.Data.Fold.Tee as Tee
+import qualified Streamly.Internal.FileSystem.File as File (toBytes)
+import qualified Streamly.Internal.Data.Fold.Tee as Tee (toFold)
 import qualified Streamly.Prelude as Stream
 
 {-# INLINE isSpace #-}

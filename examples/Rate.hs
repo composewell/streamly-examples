@@ -1,10 +1,11 @@
-import qualified Streamly.Prelude as S
-import qualified Streamly.Internal.Data.Stream.IsStream as Internal
+import Data.Function ((&))
+import qualified Streamly.Prelude as Stream
+import qualified Streamly.Internal.Data.Stream.IsStream as Stream (timestamped)
 
 main :: IO ()
 main =
-      S.mapM_ print
-    $ S.asyncly
-    $ S.avgRate 1
-    $ Internal.timestamped
-    $ S.repeatM (pure "tick")
+      Stream.repeatM (pure "tick")  -- AsyncT IO String
+    & Stream.timestamped            -- AsyncT IO (AbsTime, String)
+    & Stream.avgRate 1              -- AsyncT IO (AbsTime, String)
+    & Stream.asyncly                -- SerialT IO (AbsTime, String)
+    & Stream.mapM_ print            -- IO ()
