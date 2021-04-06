@@ -141,28 +141,6 @@ getWords =
     & Stream.map Array.fromList                     -- SerialT IO (Array Word8)
     & Handle.putChunks                              -- IO ()
 
-readWords :: Socket -> SerialT IO String
-readWords sk =
-    Stream.unfold Socket.read sk -- SerialT IO Word8
-  & Unicode.decodeLatin1     -- SerialT IO Char
-  & Unicode.words Fold.toList  -- SerialT IO String
-
-recv :: Socket -> SerialT IO String
-recv sk = Stream.finally (liftIO $ close sk) (readWords sk)
-
--- | Starts a server at port 8091 listening for lines with space separated
--- words. Multiple clients can connect to the server and send lines. The server
--- handles all the connections concurrently, merges the lines and writes the
--- merged stream to a file.
---
-mergeStreams :: IO ()
-mergeStreams =
-      Stream.unfold TCP.acceptOnPort 8091        -- SerialT IO Socket
-    & Stream.concatMapWith Stream.parallel recv  -- SerialT IO String
-    & Unicode.unwords Unfold.fromList            -- SerialT IO Char
-    & Unicode.encodeLatin1                       -- SerialT IO Word8
-    & File.fromBytes "outFile"                   -- IO ()
-
 -- | Read from standard input and write to a file, on the way tap the stream
 -- and write it to two other files.
 concurrentFolds :: IO ()
@@ -185,5 +163,4 @@ main = do
     -- crossMultSum >>= print
     -- Stream.drain loops
     -- getWords
-    -- mergeStreams
     concurrentFolds

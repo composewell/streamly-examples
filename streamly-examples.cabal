@@ -109,6 +109,14 @@ executable WordServer
   else
     buildable: False
 
+executable MergeServer.hs
+  import: exe-options-threaded
+  main-is: MergeServer.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
 executable CmdServer
   import: exe-options-threaded
   main-is: CmdServer.hs
