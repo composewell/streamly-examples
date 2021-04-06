@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
+import Control.Concurrent (threadDelay)
 import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception (finally)
@@ -9,7 +10,6 @@ import Data.Function ((&))
 import Data.Word
 import Data.Char
 import Data.Map.Strict hiding (map, lookup)
-import Network.HTTP.Simple
 import Network.Socket
 
 import Streamly.Prelude (SerialT)
@@ -121,7 +121,7 @@ loops = do
     S.yieldM $ putStrLn $ show (x, y)
 
 get :: String -> IO String
-get s = liftIO (httpNoBody (parseRequest_ s)) >> return s
+get s = threadDelay 1000000 >> return s
 
 fetch :: String -> IO (String, String)
 fetch w =
