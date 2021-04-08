@@ -1,6 +1,8 @@
+import qualified Streamly.Prelude as S
 import qualified Streamly.Internal.Data.Stream.IsStream as S
-import qualified Streamly.Internal.FileSystem.Handle as IFH
+       (chunksOf2, evalStateT)
 import qualified Streamly.FileSystem.Handle as FH
+import qualified Streamly.Internal.FileSystem.Handle as FH (write2)
 import qualified System.IO as FH
 
 import Control.Monad.IO.Class (liftIO)
@@ -27,7 +29,7 @@ splitFile :: FH.Handle -> IO ()
 splitFile inHandle =
       S.unfold FH.read inHandle
     & S.liftInner
-    & S.chunksOf2 (180 * 1024 * 1024) newHandle IFH.write2
+    & S.chunksOf2 (180 * 1024 * 1024) newHandle FH.write2
     & S.evalStateT (return Nothing)  -- generate new handle for each iteration
     & S.drain
 

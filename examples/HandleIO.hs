@@ -7,14 +7,15 @@ import qualified Streamly.Data.Fold as FL
 import qualified Streamly.FileSystem.Handle as FH
 import qualified System.IO as FH
 import qualified Streamly.Data.Array.Foreign as A
+import qualified Streamly.Unicode.Stream as US
 import qualified Streamly.Prelude as S
 -- import qualified Streamly.FileSystem.FD as FH
 
-import qualified Streamly.Internal.Data.Fold as FL
+import qualified Streamly.Internal.Data.Fold as FL (classify)
 import qualified Streamly.Internal.Data.Fold.Tee as Tee
-import qualified Streamly.Internal.Unicode.Stream as US
-import qualified Streamly.Internal.Data.Array.Stream.Foreign as AS
-import qualified Streamly.Internal.Data.Stream.IsStream as S
+import qualified Streamly.Internal.Unicode.Stream as US (lines)
+import qualified Streamly.Internal.Data.Array.Stream.Foreign as AS (splitOn)
+import qualified Streamly.Internal.Data.Stream.IsStream as S (splitOnSeq)
 
 -- Read the contents of a file to stdout.
 --

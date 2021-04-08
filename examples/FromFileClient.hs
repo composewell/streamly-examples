@@ -6,8 +6,8 @@
 import System.Environment (getArgs)
 
 import qualified Streamly.Prelude as S
-import qualified Streamly.Internal.FileSystem.Handle as IFH
-import qualified Streamly.Internal.Network.Inet.TCP as TCP
+import qualified Streamly.FileSystem.Handle as FH
+import qualified Streamly.Internal.Network.Inet.TCP as TCP (writeChunks)
 
 import System.IO (withFile, IOMode(..))
 
@@ -16,5 +16,5 @@ main =
     let sendFile file =
             withFile file ReadMode $ \src ->
                   S.fold (TCP.writeChunks (127, 0, 0, 1) 8090)
-                $ IFH.toChunks src
+                $ S.unfold FH.readChunks src
      in getArgs >>= S.drain . S.parallely . S.mapM sendFile . S.fromList

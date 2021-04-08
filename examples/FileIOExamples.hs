@@ -3,10 +3,11 @@ import qualified Streamly.Data.Fold as FL
 import Streamly.Internal.Data.Fold.Tee (Tee(..))
 import qualified Streamly.Data.Array.Foreign as A
 
-import qualified Streamly.Internal.Data.Fold as FL
+import qualified Streamly.Internal.Data.Fold as FL (classify)
 import qualified Streamly.Internal.Data.Fold.Tee as Tee
-import qualified Streamly.Internal.Data.Stream.IsStream as IP
+import qualified Streamly.Internal.Data.Stream.IsStream as S (splitOnSeq)
 import qualified Streamly.Internal.FileSystem.File as File
+       (appendChunks, fromChunks, toBytes, toChunksWithBufferOf)
 
 import Data.Char (ord)
 import System.Environment (getArgs)
@@ -36,7 +37,7 @@ wcl src = print =<< (S.length
 
 grepc :: String -> FilePath -> IO ()
 grepc pat src = print . (subtract 1) =<< (S.length
-    $ IP.splitOnSeq (A.fromList (map ord' pat)) FL.drain
+    $ S.splitOnSeq (A.fromList (map ord' pat)) FL.drain
     $ File.toBytes src)
 
 avgll :: FilePath -> IO ()

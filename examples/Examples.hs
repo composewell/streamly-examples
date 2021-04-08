@@ -2,12 +2,12 @@
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
 import Control.Concurrent (threadDelay)
-import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception (finally)
 import Data.Functor.Identity (Identity)
 import Data.Function ((&))
 import Data.Map.Strict hiding (map, lookup)
+import System.IO (stdin, stdout)
 import Network.Socket (Socket, close)
 
 import Streamly.Prelude (SerialT)
@@ -19,18 +19,20 @@ import qualified Streamly.Data.Array.Foreign as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Unfold as Unfold
 import qualified Streamly.Prelude as Stream
+import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Unicode.Stream as Unicode
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Network.Inet.TCP as TCP
 
 import qualified Streamly.Internal.Data.Stream.IsStream as Stream (intercalateSuffix)
 import qualified Streamly.Internal.Unicode.Stream as Unicode (words, unwords)
+import qualified Streamly.Internal.Data.Unfold as Unfold
+    ( fromList, fold, enumerateFromToIntegral, identity, map,
+      cross, enumerateFromToIntegral, identity )
 import qualified Streamly.Internal.Data.Fold as Fold (classify)
 import qualified Streamly.Internal.Data.Fold.Tee as Tee (toFold)
-import qualified Streamly.Internal.Data.Unfold as Unfold (cross, enumerateFromToIntegral, identity)
 import qualified Streamly.Internal.FileSystem.Dir as Dir (toFiles)
 import qualified Streamly.Internal.FileSystem.File as File (fromBytes, toBytes, fromChunks, toChunks, write, read)
-import qualified Streamly.Internal.FileSystem.Handle as Handle (getChunks, putChunks, getBytes)
 import qualified Streamly.Internal.Data.Stream.Parallel as Par (tapAsync)
 
 -- | Sum a list of Int
@@ -48,14 +50,14 @@ sumInt1 =
 -- | Read from standard input write to standard output
 echo :: IO ()
 echo =
-      Handle.getChunks            -- SerialT IO (Array Word8)
-    & Handle.putChunks            -- IO ()
+      Stream.unfold Handle.readChunks stdin          -- SerialT IO (Array Word8)
+    & Stream.fold (Handle.writeChunks stdout)        -- IO ()
 
 -- | Read from a file and write to standard output
 cat :: IO ()
 cat =
-      File.toChunks "inFile"    -- SerialT IO (Array Word8)
-    & Handle.putChunks          -- IO ()
+      File.toChunks "inFile"                  -- SerialT IO (Array Word8)
+    & Stream.fold (Handle.writeChunks stdout) -- IO ()
 
 -- | Read from a file and write to another file
 cp :: IO ()
@@ -134,18 +136,18 @@ meanings = map fetch wordList
 --
 getWords :: IO ()
 getWords =
-      Stream.fromListM meanings                 -- SerialT  IO (String, String)
+      Stream.fromListM meanings                     -- SerialT  IO (String, String)
     & Stream.aheadly
     & Stream.map show                               -- SerialT IO String
     & Stream.intercalateSuffix "\n" Unfold.identity -- SerialT IO String
     & Stream.map Array.fromList                     -- SerialT IO (Array Word8)
-    & Handle.putChunks                              -- IO ()
+    & Stream.fold (Handle.writeChunks stdout)       -- IO ()
 
 -- | Read from standard input and write to a file, on the way tap the stream
 -- and write it to two other files.
 concurrentFolds :: IO ()
 concurrentFolds =
-      Handle.getBytes                          -- SerialT IO Word8
+      Stream.unfold Handle.read stdin          -- SerialT IO Word8
     & Par.tapAsync (File.fromBytes "outFile1") -- SerialT IO Word8
     & Par.tapAsync (File.fromBytes "outFile2") -- SerialT IO Word8
     & File.fromBytes "outFile"                 -- IO ()

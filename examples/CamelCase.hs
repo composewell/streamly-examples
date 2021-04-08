@@ -6,16 +6,16 @@ import System.Environment (getArgs)
 import System.IO (Handle, IOMode(..), openFile, stdout)
 
 import qualified Streamly.Prelude as S
-import qualified Streamly.Internal.FileSystem.Handle as FH
+import qualified Streamly.FileSystem.Handle as FH
 
 camelCase :: Handle -> Handle -> IO ()
 camelCase src dst =
-      FH.fromBytes dst
+      S.fold (FH.write dst)
     $ S.map fromJust
     $ S.filter isJust
     $ S.map snd
     $ S.scanl' step (True, Nothing)
-    $ FH.toBytes src
+    $ S.unfold FH.read src
 
     where
 

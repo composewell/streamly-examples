@@ -180,6 +180,11 @@ executable EchoServer
   main-is: EchoServer.hs
   if !impl(ghcjs)
     buildable: True
+    build-Depends:
+         streamly
+       , base              >= 4.9   && < 5
+       , exceptions        >= 0.8   && < 0.11
+       , network           >= 2.6   && < 4
   else
     buildable: False
 

@@ -16,19 +16,20 @@ import qualified Data.List as List
 import qualified Data.Ord as Ord
 import           Foreign.Storable (Storable(..))
 import qualified Streamly.Unicode.Stream as S
-import qualified Streamly.Internal.Unicode.Stream as S
+import qualified Streamly.Internal.Unicode.Stream as S (words)
 import qualified Streamly.Data.Fold as FL
-import qualified Streamly.Internal.Data.Fold as IFL
-import qualified Streamly.Internal.Data.Unfold as IUF
-import qualified Streamly.Internal.FileSystem.File as File
+import qualified Streamly.Internal.Data.Fold as FL
+       (rollingHash, rollingHashWithSalt)
+import qualified Streamly.Internal.Data.Unfold as UF (fold)
+import qualified Streamly.Internal.FileSystem.File as File (toBytes)
 import qualified Streamly.Data.Array.Foreign as A
 import qualified Streamly.Prelude as S
 import           System.Environment (getArgs)
 
 instance (Enum a, Storable a) => Hashable (A.Array a) where
-    hash arr = fromIntegral $ runIdentity $ IUF.fold IFL.rollingHash A.read arr
+    hash arr = fromIntegral $ runIdentity $ UF.fold FL.rollingHash A.read arr
     hashWithSalt salt arr = fromIntegral $ runIdentity $
-        IUF.fold (IFL.rollingHashWithSalt $ fromIntegral salt) A.read arr
+        UF.fold (FL.rollingHashWithSalt $ fromIntegral salt) A.read arr
 
 {-# INLINE toLower #-}
 toLower :: Char -> Char
