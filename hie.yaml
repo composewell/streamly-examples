@@ -1,0 +1,50 @@
+cradle:
+  multi:
+    - path: "./"
+      config:
+        cradle:
+          cabal:
+            - path: "./examples/AcidRain.hs"
+              component: "exe:AcidRain"
+            - path: "./examples/CirclingSquare.hs"
+              component: "exe:CirclingSquare"
+            - path: "./examples/CamelCase.hs"
+              component: "exe:CamelCase"
+            - path: "./examples/CmdClient.hs"
+              component: "exe:CmdClient"
+            - path: "./examples/CmdServer.hs"
+              component: "exe:CmdServer"
+            - path: "./examples/ControlFlow.hs"
+              component: "exe:ControlFlow"
+            - path: "./examples/EchoServer.hs"
+              component: "exe:EchoServer"
+            - path: "./examples/Examples.hs"
+              component: "exe:Examples"
+            - path: "./examples/FileIOExamples.hs"
+              component: "exe:FileIOExamples"
+            - path: "./examples/FileSinkServer.hs"
+              component: "exe:FileSinkServer"
+            - path: "./examples/FileSystemEvent.hs"
+              component: "exe:FileSystemEvent"
+            - path: "./examples/FromFileClient.hs"
+              component: "exe:FromFileClient"
+            - path: "./examples/HandleIO.hs"
+              component: "exe:HandleIO"
+            - path: "./examples/ListDir.hs"
+              component: "exe:ListDir"
+            - path: "./examples/MergeSort.hs"
+              component: "exe:MergeSort"
+            - path: "./examples/Rate.hs"
+              component: "exe:Rate"
+            - path: "./examples/SearchQuery.hs"
+              component: "exe:SearchQuery"
+            - path: "./examples/Split.hs"
+              component: "exe:Split"
+            - path: "./examples/WordClassifier.hs"
+              component: "exe:WordClassifier"
+            - path: "./examples/WordCount.hs"
+              component: "exe:WordCount"
+
+dependencies:
+  - streamly-examples.cabal
+  - hie.yaml
