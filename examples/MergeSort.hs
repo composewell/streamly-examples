@@ -11,13 +11,13 @@ import System.Random (getStdGen, randoms)
 import Data.List (sort)
 
 import Streamly.Prelude (Serial)
-import qualified Streamly.Prelude as S
+import qualified Streamly.Prelude as Stream
 
 getSorted :: Serial Word16
 getSorted = do
-    g <- S.yieldM getStdGen
+    g <- Stream.yieldM getStdGen
     let ls = take 100000 (randoms g) :: [Word16]
     foldMap return (sort ls)
 
 main :: IO ()
-main = S.last (S.mergeAsyncBy compare getSorted getSorted) >>= print
+main = Stream.last (Stream.mergeAsyncBy compare getSorted getSorted) >>= print

@@ -9,19 +9,19 @@ import qualified Network.Socket as Net
 import Streamly.Network.Socket
 
 import qualified Streamly.Network.Inet.TCP as TCP
-import qualified Streamly.Prelude as S
+import qualified Streamly.Prelude as Stream
 
 main :: IO ()
 main =
-      S.serially (S.unfold TCP.acceptOnPort 8091)
-    & S.parallely . S.mapM (handleWithM echo)
-    & S.drain
+      Stream.serially (Stream.unfold TCP.acceptOnPort 8091)
+    & Stream.parallely . Stream.mapM (handleWithM echo)
+    & Stream.drain
 
     where
 
     echo sk =
-          S.unfold readChunksWithBufferOf (32768, sk) -- SerialT IO Socket
-        & S.fold (writeChunks sk)                     -- IO ()
+          Stream.unfold readChunksWithBufferOf (32768, sk) -- SerialT IO Socket
+        & Stream.fold (writeChunks sk)                     -- IO ()
 
 handleWithM :: (MonadMask m, MonadIO m) => (Socket -> m ()) -> Socket -> m ()
 handleWithM f sk = finally (f sk) (liftIO (Net.close sk))

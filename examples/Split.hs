@@ -1,5 +1,5 @@
-import qualified Streamly.Prelude as S
-import qualified Streamly.Internal.Data.Stream.IsStream as S
+import qualified Streamly.Prelude as Stream
+import qualified Streamly.Internal.Data.Stream.IsStream as Stream
        (chunksOf2, evalStateT)
 import qualified Streamly.FileSystem.Handle as FH
 import qualified Streamly.Internal.FileSystem.Handle as FH (write2)
@@ -27,11 +27,11 @@ newHandle = do
 -- of directory names.
 splitFile :: FH.Handle -> IO ()
 splitFile inHandle =
-      S.unfold FH.read inHandle
-    & S.liftInner
-    & S.chunksOf2 (180 * 1024 * 1024) newHandle FH.write2
-    & S.evalStateT (return Nothing)  -- generate new handle for each iteration
-    & S.drain
+      Stream.unfold FH.read inHandle
+    & Stream.liftInner
+    & Stream.chunksOf2 (180 * 1024 * 1024) newHandle FH.write2
+    & Stream.evalStateT (return Nothing)  -- generate new handle for each iteration
+    & Stream.drain
 
 main :: IO ()
 main = do

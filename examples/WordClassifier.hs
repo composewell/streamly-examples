@@ -15,21 +15,21 @@ import           Data.IORef
 import qualified Data.List as List
 import qualified Data.Ord as Ord
 import           Foreign.Storable (Storable(..))
-import qualified Streamly.Unicode.Stream as S
-import qualified Streamly.Internal.Unicode.Stream as S (words)
-import qualified Streamly.Data.Fold as FL
-import qualified Streamly.Internal.Data.Fold as FL
+import qualified Streamly.Unicode.Stream as Stream
+import qualified Streamly.Internal.Unicode.Stream as Stream (words)
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Internal.Data.Fold as Fold
        (rollingHash, rollingHashWithSalt)
-import qualified Streamly.Internal.Data.Unfold as UF (fold)
+import qualified Streamly.Internal.Data.Unfold as Unfold (fold)
 import qualified Streamly.Internal.FileSystem.File as File (toBytes)
-import qualified Streamly.Data.Array.Foreign as A
-import qualified Streamly.Prelude as S
+import qualified Streamly.Data.Array.Foreign as Array
+import qualified Streamly.Prelude as Stream
 import           System.Environment (getArgs)
 
-instance (Enum a, Storable a) => Hashable (A.Array a) where
-    hash arr = fromIntegral $ runIdentity $ UF.fold FL.rollingHash A.read arr
+instance (Enum a, Storable a) => Hashable (Array.Array a) where
+    hash arr = fromIntegral $ runIdentity $ Unfold.fold Fold.rollingHash Array.read arr
     hashWithSalt salt arr = fromIntegral $ runIdentity $
-        UF.fold (FL.rollingHashWithSalt $ fromIntegral salt) A.read arr
+        Unfold.fold (Fold.rollingHashWithSalt $ fromIntegral salt) Array.read arr
 
 {-# INLINE toLower #-}
 toLower :: Char -> Char
@@ -57,11 +57,11 @@ main = do
             alter Nothing    = fmap Just $ newIORef (1 :: Int)
             alter (Just ref) = modifyIORef' ref (+ 1) >> return (Just ref)
         in File.toBytes inFile    -- SerialT IO Word8
-         & S.decodeLatin1         -- SerialT IO Char
-         & S.map toLower          -- SerialT IO Char
-         & S.words FL.toList      -- SerialT IO String
-         & S.filter (all isAlpha) -- SerialT IO String
-         & S.foldlM' (flip (Map.alterF alter)) (return Map.empty) -- IO (Map String (IORef Int))
+         & Stream.decodeLatin1         -- SerialT IO Char
+         & Stream.map toLower          -- SerialT IO Char
+         & Stream.words Fold.toList      -- SerialT IO String
+         & Stream.filter (all isAlpha) -- SerialT IO String
+         & Stream.foldlM' (flip (Map.alterF alter)) (return Map.empty) -- IO (Map String (IORef Int))
 
     -- Print the top hashmap entries
     counts <-

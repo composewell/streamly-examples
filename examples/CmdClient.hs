@@ -6,11 +6,11 @@ import Data.Word (Word8)
 import Network.Socket (PortNumber)
 
 import Streamly.Prelude (SerialT)
-import qualified Streamly.Prelude as S
+import qualified Streamly.Prelude as Stream
 import qualified Streamly.Internal.Network.Inet.TCP as TCP
-import qualified Streamly.Internal.Data.Fold as FL
-import qualified Streamly.Internal.Data.Unfold as UF
-import qualified Streamly.Internal.Unicode.Stream as U
+import qualified Streamly.Internal.Data.Fold as Fold
+import qualified Streamly.Internal.Data.Unfold as Unfold
+import qualified Streamly.Internal.Unicode.Stream as Unicode
 
 remoteAddr :: (Word8,Word8,Word8,Word8)
 remoteAddr = (192, 168, 1, 4)
@@ -33,18 +33,18 @@ counter tag n () = do
 
 sender :: SerialT IO ()
 sender =
-      S.repeat "time\nrandom\n"                    -- SerialT IO String
-    & U.unwords UF.fromList                        -- SerialT IO Char
-    & U.encodeLatin1                               -- SerialT IO Word8
+      Stream.repeat "time\nrandom\n"               -- SerialT IO String
+    & Unicode.unwords Unfold.fromList              -- SerialT IO Char
+    & Unicode.encodeLatin1                         -- SerialT IO Word8
     & TCP.transformBytesWith remoteAddr remotePort -- SerialT IO Word8
-    & U.decodeLatin1                               -- SerialT IO Char
-    & U.lines FL.drain                             -- SerialT IO String
-    & S.chunksOf chunkSize FL.drain                -- SerialT IO ()
+    & Unicode.decodeLatin1                         -- SerialT IO Char
+    & Unicode.lines Fold.drain                     -- SerialT IO String
+    & Stream.chunksOf chunkSize Fold.drain         -- SerialT IO ()
 
 main :: IO ()
 main = do
-      S.replicate 4 sender                         -- SerialT IO (SerialT IO ())
-    & S.concatMapWith S.async id                   -- SerialT IO ()
-    & S.postscanlM' (counter "rcvd: ") 
+      Stream.replicate 4 sender                    -- SerialT IO (SerialT IO ())
+    & Stream.concatMapWith Stream.async id         -- SerialT IO ()
+    & Stream.postscanlM' (counter "rcvd: ")
         (return 0 :: IO Int)                       -- SerialT IO Int
-    & S.drain                                      -- IO ()
+    & Stream.drain                                 -- IO ()

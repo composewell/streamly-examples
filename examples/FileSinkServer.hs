@@ -11,10 +11,10 @@ import System.Environment (getArgs)
 
 import Streamly.Unicode.Stream
 import qualified Streamly.FileSystem.Handle as FH
-import qualified Streamly.Data.Array.Foreign as A
+import qualified Streamly.Data.Array.Foreign as Array
 import qualified Streamly.Network.Socket as NS
 import qualified Streamly.Network.Inet.TCP as TCP
-import qualified Streamly.Prelude as S
+import qualified Streamly.Prelude as Stream
 
 import System.IO (withFile, IOMode(..))
 
@@ -22,16 +22,16 @@ main :: IO ()
 main = do
     file <- fmap head getArgs
     withFile file AppendMode
-        (\src -> S.fold (FH.write src)
+        (\src -> Stream.fold (FH.write src)
         $ encodeLatin1
-        $ S.unfoldMany A.read
-        $ S.concatMapWith S.parallel use
-        $ S.unfold TCP.acceptOnPort 8090)
+        $ Stream.unfoldMany Array.read
+        $ Stream.concatMapWith Stream.parallel use
+        $ Stream.unfold TCP.acceptOnPort 8090)
 
     where
 
-    use sk = S.finally (liftIO $ close sk) (recv sk)
+    use sk = Stream.finally (liftIO $ close sk) (recv sk)
     recv =
-          S.splitWithSuffix (== '\n') A.write
+          Stream.splitWithSuffix (== '\n') Array.write
         . decodeLatin1
-        . S.unfold NS.read
+        . Stream.unfold NS.read

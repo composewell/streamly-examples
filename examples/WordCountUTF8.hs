@@ -38,10 +38,10 @@ import Streamly.Internal.Unicode.Stream
        (DecodeState, DecodeError(..), CodePoint, decodeUtf8Either,
        resumeDecodeUtf8Either)
 
-import qualified Streamly.Prelude as S
-import qualified Streamly.Unicode.Stream as S
+import qualified Streamly.Prelude as Stream
+import qualified Streamly.Unicode.Stream as Stream
 import qualified Streamly.FileSystem.Handle as FH
-import qualified Streamly.Data.Array.Foreign as A
+import qualified Streamly.Data.Array.Foreign as Array
 import qualified Data.Vector.Storable.Mutable as V
 
 -------------------------------------------------------------------------------
@@ -308,9 +308,9 @@ printCounts v = do
 _wc_mwl_parserial :: Handle -> IO (V.IOVector Int)
 _wc_mwl_parserial src = do
     counts <- newCounts
-    S.mapM_ (countChar counts)
+    Stream.mapM_ (countChar counts)
         $ decodeUtf8Either
-        $ S.unfold FH.read src
+        $ Stream.unfold FH.read src
     return counts
 
 -------------------------------------------------------------------------------
@@ -332,9 +332,9 @@ countCharSerial (Counts l w c wasSpace) ch =
 -- Note: This counts invalid byte sequences are non-space chars
 _wc_mwl_serial :: Handle -> IO ()
 _wc_mwl_serial src = print =<< (
-      S.foldl' countCharSerial (Counts 0 0 0 True)
-    $ S.decodeUtf8
-    $ S.unfold FH.read src)
+      Stream.foldl' countCharSerial (Counts 0 0 0 True)
+    $ Stream.decodeUtf8
+    $ Stream.unfold FH.read src)
 
 -------------------------------------------------------------------------------
 -- Parallel counting
@@ -348,26 +348,26 @@ _wc_mwl_serial src = print =<< (
 reconstructChar :: Int
                 -> V.IOVector Int
                 -> V.IOVector Int
-                -> IO (S.SerialT IO (Either DecodeError Char))
+                -> IO (Stream.SerialT IO (Either DecodeError Char))
 reconstructChar hdrCnt v1 v2 = do
     when (hdrCnt > 3 || hdrCnt < 0) $ error "reconstructChar: hdrCnt > 3"
     stream1 <-
         if (hdrCnt > 2)
         then do
             x <- readField v2 HeaderWord3
-            return $ (fromIntegral x :: Word8) `S.cons` S.nil
-        else return S.nil
+            return $ (fromIntegral x :: Word8) `Stream.cons` Stream.nil
+        else return Stream.nil
     stream2 <-
         if (hdrCnt > 1)
         then do
             x <- readField v2 HeaderWord2
-            return $ fromIntegral x `S.cons` stream1
+            return $ fromIntegral x `Stream.cons` stream1
         else return stream1
     stream3 <-
         if (hdrCnt > 0)
         then do
             x <- readField v2 HeaderWord1
-            return $ fromIntegral x `S.cons` stream2
+            return $ fromIntegral x `Stream.cons` stream2
         else return stream2
 
     state <- readField v1 TrailerState
@@ -503,11 +503,11 @@ addCounts v1 v2 = do
                     -- join the trailing part of the first block with the
                     -- header of the next
                     decoded <- reconstructChar hdrCnt2 v1 v2
-                    res <- S.uncons decoded
+                    res <- Stream.uncons decoded
                     case res of
                         Nothing -> error "addCounts: Bug. empty reconstructed char"
                         Just (h, t) -> do
-                            tlength <- S.length t
+                            tlength <- Stream.length t
                             case h of
                                 Right ch -> do
                                     -- If we have an error case after this
@@ -548,7 +548,7 @@ addCounts v1 v2 = do
                                     -- in partially decoded char to be written
                                     -- as trailer. Check if the last error is
                                     -- an incomplete decode.
-                                    r <- S.last t
+                                    r <- Stream.last t
                                     let (st', cp') =
                                             case r of
                                                 Nothing -> (st, cp)
@@ -589,22 +589,22 @@ addCounts v1 v2 = do
 -- Individual array processing is an isolated loop, fusing it with the bigger
 -- loop may be counter productive.
 {-# NOINLINE countArray #-}
-countArray :: A.Array Word8 -> IO (V.IOVector Int)
+countArray :: Array.Array Word8 -> IO (V.IOVector Int)
 countArray src = do
     counts <- newCounts
-    S.mapM_ (countChar counts)
+    Stream.mapM_ (countChar counts)
         $ decodeUtf8Either
-        $ S.unfold A.read src
+        $ Stream.unfold Array.read src
     return counts
 
 {-# INLINE wc_mwl_parallel #-}
 wc_mwl_parallel :: Handle -> Int -> IO (V.IOVector Int)
 wc_mwl_parallel src n = do
-    S.foldlM' addCounts newCounts
-        $ S.aheadly
-        $ S.maxThreads numCapabilities
-        $ S.mapM (countArray)
-        $ S.unfold FH.readChunksWithBufferOf (n, src)
+    Stream.foldlM' addCounts newCounts
+        $ Stream.aheadly
+        $ Stream.maxThreads numCapabilities
+        $ Stream.mapM (countArray)
+        $ Stream.unfold FH.readChunksWithBufferOf (n, src)
 
 -------------------------------------------------------------------------------
 -- Main

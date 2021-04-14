@@ -5,7 +5,7 @@
 
 import System.Environment (getArgs)
 
-import qualified Streamly.Prelude as S
+import qualified Streamly.Prelude as Stream
 import qualified Streamly.FileSystem.Handle as FH
 import qualified Streamly.Internal.Network.Inet.TCP as TCP (writeChunks)
 
@@ -15,6 +15,6 @@ main :: IO ()
 main =
     let sendFile file =
             withFile file ReadMode $ \src ->
-                  S.fold (TCP.writeChunks (127, 0, 0, 1) 8090)
-                $ S.unfold FH.readChunks src
-     in getArgs >>= S.drain . S.parallely . S.mapM sendFile . S.fromList
+                  Stream.fold (TCP.writeChunks (127, 0, 0, 1) 8090)
+                $ Stream.unfold FH.readChunks src
+     in getArgs >>= Stream.drain . Stream.parallely . Stream.mapM sendFile . Stream.fromList

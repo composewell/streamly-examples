@@ -31,7 +31,7 @@ import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Cont
 import Streamly.Prelude
-import qualified Streamly.Prelude as S
+import qualified Streamly.Prelude as Stream
 
 -------------------------------------------------------------------------------
 -- Using MaybeT below streamly
@@ -50,7 +50,7 @@ getSequenceMaybeBelow
 getSequenceMaybeBelow = do
     liftIO $ putStrLn "MaybeT below streamly: Enter one char per line: "
 
-    i <- S.fromFoldable [1..2 :: Int]
+    i <- Stream.fromFoldable [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -61,7 +61,7 @@ getSequenceMaybeBelow = do
 
 mainMaybeBelow :: IO ()
 mainMaybeBelow = do
-    r <- runMaybeT (S.drain getSequenceMaybeBelow)
+    r <- runMaybeT (Stream.drain getSequenceMaybeBelow)
     case r of
         Just _ -> putStrLn "Bingo"
         Nothing -> putStrLn "Wrong"
@@ -80,7 +80,7 @@ getSequenceMaybeAbove :: (IsStream t, MonadIO (t m)) => MaybeT (t m) ()
 getSequenceMaybeAbove = do
     liftIO $ putStrLn "MaybeT above streamly: Enter one char per line: "
 
-    i <- lift $ S.fromFoldable [1..2 :: Int]
+    i <- lift $ Stream.fromFoldable [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -112,7 +112,7 @@ getSequenceEitherBelow
 getSequenceEitherBelow = do
     liftIO $ putStrLn "ExceptT below streamly: Enter one char per line: "
 
-    i <- S.fromFoldable [1..2 :: Int]
+    i <- Stream.fromFoldable [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -124,7 +124,7 @@ getSequenceEitherBelow = do
 mainEitherBelow :: IO ()
 mainEitherBelow = do
     -- XXX Cannot lift catchE
-    r <- runExceptT (S.drain getSequenceEitherBelow)
+    r <- runExceptT (Stream.drain getSequenceEitherBelow)
     case r of
         Right _ -> liftIO $ putStrLn "Bingo"
         Left s  -> liftIO $ putStrLn s
@@ -150,12 +150,12 @@ getSequenceEitherAsyncBelow = do
             >> lift (throwE "First task")
             >> return 1)
             <> (lift (throwE "Second task") >> return 2)
-            <> S.yield (3 :: Integer)
+            <> Stream.yield (3 :: Integer)
     liftIO $ putStrLn $ "iteration = " <> show i
 
 mainEitherAsyncBelow :: IO ()
 mainEitherAsyncBelow = do
-    r <- runExceptT (S.drain $ asyncly getSequenceEitherAsyncBelow)
+    r <- runExceptT (Stream.drain $ asyncly getSequenceEitherAsyncBelow)
     case r of
         Right _ -> liftIO $ putStrLn "Bingo"
         Left s  -> liftIO $ putStrLn s
@@ -177,7 +177,7 @@ getSequenceEitherAbove :: (IsStream t, MonadIO (t m))
 getSequenceEitherAbove = do
     liftIO $ putStrLn "ExceptT above streamly: Enter one char per line: "
 
-    i <- lift $ S.fromFoldable [1..2 :: Int]
+    i <- lift $ Stream.fromFoldable [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -207,7 +207,7 @@ getSequenceMonadThrow :: (IsStream t, MonadIO (t m), MonadThrow (t m))
 getSequenceMonadThrow = do
     liftIO $ putStrLn "MonadThrow in streamly: Enter one char per line: "
 
-    i <- S.fromFoldable [1..2 :: Int]
+    i <- Stream.fromFoldable [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -218,7 +218,7 @@ getSequenceMonadThrow = do
 
 mainMonadThrow :: IO ()
 mainMonadThrow =
-    catch (S.drain getSequenceMonadThrow >> liftIO (putStrLn "Bingo"))
+    catch (Stream.drain getSequenceMonadThrow >> liftIO (putStrLn "Bingo"))
           (\(e :: SomeException) -> liftIO $ print e)
 
 -------------------------------------------------------------------------------
@@ -236,7 +236,7 @@ getSequenceContBelow
 getSequenceContBelow = do
     liftIO $ putStrLn "ContT below streamly: Enter one char per line: "
 
-    i <- S.fromFoldable [1..2 :: Int]
+    i <- Stream.fromFoldable [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r <- lift $ callCC $ \exit -> do
@@ -270,7 +270,7 @@ getSequenceContAbove :: (IsStream t, MonadIO (t m))
 getSequenceContAbove = do
     liftIO $ putStrLn "ContT above streamly: Enter one char per line: "
 
-    i <- lift $ S.fromFoldable [1..2 :: Int]
+    i <- lift $ Stream.fromFoldable [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     callCC $ \exit -> do
@@ -299,10 +299,10 @@ mainContAbove = do
 main :: IO ()
 main = do
     mainMaybeBelow
-    S.drain $ runMaybeT mainMaybeAbove
-    runContT (S.drain mainContBelow) return
-    S.drain (runContT mainContAbove return)
+    Stream.drain $ runMaybeT mainMaybeAbove
+    runContT (Stream.drain mainContBelow) return
+    Stream.drain (runContT mainContAbove return)
     mainEitherBelow
-    S.drain (runExceptT mainEitherAbove)
+    Stream.drain (runExceptT mainEitherAbove)
     mainMonadThrow
     mainEitherAsyncBelow

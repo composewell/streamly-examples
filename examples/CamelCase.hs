@@ -5,17 +5,17 @@ import Data.Maybe (fromJust, isJust)
 import System.Environment (getArgs)
 import System.IO (Handle, IOMode(..), openFile, stdout)
 
-import qualified Streamly.Prelude as S
-import qualified Streamly.FileSystem.Handle as FH
+import qualified Streamly.Prelude as Stream
+import qualified Streamly.FileSystem.Handle as Handle
 
 camelCase :: Handle -> Handle -> IO ()
 camelCase src dst =
-      S.fold (FH.write dst)
-    $ S.map fromJust
-    $ S.filter isJust
-    $ S.map snd
-    $ S.scanl' step (True, Nothing)
-    $ S.unfold FH.read src
+      Stream.fold (Handle.write dst)
+    $ Stream.map fromJust
+    $ Stream.filter isJust
+    $ Stream.map snd
+    $ Stream.scanl' step (True, Nothing)
+    $ Stream.unfold Handle.read src
 
     where
 

@@ -16,15 +16,15 @@ import System.Random (randomIO)
 import Streamly.Internal.Control.Monad (discard)
 
 import qualified Data.Map.Strict as Map
-import qualified Streamly.Data.Fold as FL
-import qualified Streamly.Data.Array.Foreign as A
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Array.Foreign as Array
 import qualified Streamly.Network.Inet.TCP as TCP
-import qualified Streamly.Prelude as S
+import qualified Streamly.Prelude as Stream
 
-import qualified Streamly.Internal.Data.Fold as FL
+import qualified Streamly.Internal.Data.Fold as Fold
 import qualified Streamly.Internal.Data.Time.Clock as Clock
-import qualified Streamly.Internal.Unicode.Stream as U
-import qualified Streamly.Internal.Network.Socket as SK
+import qualified Streamly.Internal.Unicode.Stream as Unicode
+import qualified Streamly.Internal.Network.Socket as Socket
 
 ------------------------------------------------------------------------------
 -- Utility functions
@@ -32,10 +32,10 @@ import qualified Streamly.Internal.Network.Socket as SK
 
 sendValue :: Show a => Socket -> a -> IO ()
 sendValue sk x =
-      S.fromList (show x ++ "\n")
-    & U.encodeLatin1
-    & S.fold (A.writeN 60)
-    >>= SK.writeChunk sk
+      Stream.fromList (show x ++ "\n")
+    & Unicode.encodeLatin1
+    & Stream.fold (Array.writeN 60)
+    >>= Socket.writeChunk sk
 
 ------------------------------------------------------------------------------
 -- Command Handlers
@@ -52,12 +52,12 @@ def (str, sk) = return ("Unknown command: " ++ str) >>= sendValue sk
 
 commands :: Map.Map String (Fold IO Socket ())
 commands = Map.fromList
-    [ ("time"  , FL.drainBy time)
-    , ("random", FL.drainBy random)
+    [ ("time"  , Fold.drainBy time)
+    , ("random", Fold.drainBy random)
     ]
 
 demux :: Fold IO (String, Socket) ()
-demux = fmap snd $ FL.demuxDefault commands (FL.drainBy def)
+demux = fmap snd $ Fold.demuxDefault commands (Fold.drainBy def)
 
 ------------------------------------------------------------------------------
 -- Parse and handle commands on a socket
@@ -65,11 +65,11 @@ demux = fmap snd $ FL.demuxDefault commands (FL.drainBy def)
 
 handler :: Socket -> IO ()
 handler sk =
-      S.unfold SK.read sk             -- SerialT IO Word8
-    & U.decodeLatin1                  -- SerialT IO Char
-    & U.words FL.toList               -- SerialT IO String
-    & S.map (, sk)                    -- SerialT IO (String, Socket)
-    & S.fold demux                    -- IO () + Exceptions
+      Stream.unfold Socket.read sk    -- SerialT IO Word8
+    & Unicode.decodeLatin1            -- SerialT IO Char
+    & Unicode.words Fold.toList       -- SerialT IO String
+    & Stream.map (, sk)               -- SerialT IO (String, Socket)
+    & Stream.fold demux               -- IO () + Exceptions
     & discard                         -- IO ()
 
 ------------------------------------------------------------------------------
@@ -78,9 +78,9 @@ handler sk =
 
 server :: IO ()
 server =
-      (S.serially $ S.unfold TCP.acceptOnPort 8091)  -- SerialT IO Socket
-    & (S.asyncly  . S.mapM (SK.handleWithM handler)) -- AsyncT IO ()
-    & S.drain                                        -- IO ()
+      (Stream.serially $ Stream.unfold TCP.acceptOnPort 8091)  -- SerialT IO Socket
+    & (Stream.asyncly  . Stream.mapM (Socket.handleWithM handler)) -- AsyncT IO ()
+    & Stream.drain                                        -- IO ()
 
 main :: IO ()
 main = server
