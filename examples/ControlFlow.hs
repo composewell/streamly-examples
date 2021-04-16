@@ -23,14 +23,15 @@ import Data.Semigroup (Semigroup(..))
 #endif
 import Control.Concurrent (threadDelay)
 import Control.Exception (catch, SomeException)
-import Control.Monad
+import Control.Monad (when, mzero)
 import Control.Monad.Catch (MonadThrow, throwM, Exception)
-import Control.Monad.IO.Class
-import Control.Monad.Trans.Class
-import Control.Monad.Trans.Maybe
-import Control.Monad.Trans.Except
-import Control.Monad.Trans.Cont
-import Streamly.Prelude
+import Control.Monad.IO.Class (MonadIO (..))
+import Control.Monad.Trans.Class (MonadTrans(..))
+import Control.Monad.Trans.Maybe (MaybeT (..))
+import Control.Monad.Trans.Except (ExceptT, runExceptT, throwE, catchE)
+import Control.Monad.Trans.Cont (ContT(..), callCC)
+import Streamly.Prelude (IsStream)
+
 import qualified Streamly.Prelude as Stream
 
 -------------------------------------------------------------------------------
