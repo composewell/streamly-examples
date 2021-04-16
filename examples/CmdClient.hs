@@ -6,11 +6,12 @@ import Data.Word (Word8)
 import Network.Socket (PortNumber)
 
 import Streamly.Prelude (SerialT)
+import qualified Streamly.Data.Unfold as Unfold
 import qualified Streamly.Prelude as Stream
-import qualified Streamly.Internal.Network.Inet.TCP as TCP
-import qualified Streamly.Internal.Data.Fold as Fold
-import qualified Streamly.Internal.Data.Unfold as Unfold
-import qualified Streamly.Internal.Unicode.Stream as Unicode
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Internal.Network.Inet.TCP as TCP (transformBytesWith)
+import qualified Streamly.Internal.Unicode.Stream as Unicode (unwords, lines)
+import qualified Streamly.Unicode.Stream as Unicode
 
 remoteAddr :: (Word8,Word8,Word8,Word8)
 remoteAddr = (192, 168, 1, 4)
