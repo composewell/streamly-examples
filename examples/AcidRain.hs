@@ -13,6 +13,7 @@ import Data.Semigroup ((<>))
 import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.State (MonadState, get, modify, runStateT)
+import Data.Function ((&))
 import Streamly.Prelude (MonadAsync, SerialT)
 
 import qualified Streamly.Prelude as Stream
@@ -31,16 +32,16 @@ userAction = Stream.repeatM $ liftIO askUser
             _        -> putStrLn "Type potion or harm or quit" >> askUser
 
 acidRain :: MonadAsync m => SerialT m Event
-acidRain = Stream.fromAsync
-    $ Stream.constRate 1
-    $ Stream.repeatM
-    $ liftIO $ return $ Harm 1
+acidRain =
+      Stream.repeatM (liftIO $ return $ Harm 1) -- AsyncT m Event
+    & Stream.constRate 1                        -- AsyncT m Event
+    & Stream.fromAsync                          -- SerialT m Event
 
 data Result = Check | Done
 
 runEvents :: (MonadAsync m, MonadState Int m) => SerialT m Result
 runEvents = do
-    event <- userAction `Stream.parallel` acidRain
+    event <- userAction `Stream.parallel` acidRain -- SerialT m Event
     case event of
         Harm n -> modify (\h -> h - n) >> return Check
         Heal n -> modify (\h -> h + n) >> return Check
@@ -62,6 +63,7 @@ main :: IO ()
 main = do
     putStrLn "Your health is deteriorating due to acid rain,\\
              \ type \"potion\" or \"quit\""
-    let runGame = Stream.drainWhile (== Alive)
-                $ Stream.mapM getStatus runEvents
+    let runGame =
+            Stream.mapM getStatus runEvents -- SerialT (StateT Int IO) Status
+          & Stream.drainWhile (== Alive)    -- StateT Int IO ()
     void $ runStateT runGame 60
