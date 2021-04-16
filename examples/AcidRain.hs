@@ -31,7 +31,7 @@ userAction = Stream.repeatM $ liftIO askUser
             _        -> putStrLn "Type potion or harm or quit" >> askUser
 
 acidRain :: MonadAsync m => SerialT m Event
-acidRain = Stream.asyncly
+acidRain = Stream.fromAsync
     $ Stream.constRate 1
     $ Stream.repeatM
     $ liftIO $ return $ Harm 1

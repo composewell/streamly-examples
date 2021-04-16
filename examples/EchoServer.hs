@@ -13,8 +13,8 @@ import qualified Streamly.Prelude as Stream
 
 main :: IO ()
 main =
-      Stream.serially (Stream.unfold TCP.acceptOnPort 8091)
-    & Stream.parallely . Stream.mapM (handleWithM echo)
+      Stream.fromSerial (Stream.unfold TCP.acceptOnPort 8091)
+    & Stream.fromParallel . Stream.mapM (handleWithM echo)
     & Stream.drain
 
     where

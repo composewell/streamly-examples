@@ -17,4 +17,4 @@ main =
             withFile file ReadMode $ \src ->
                   Stream.fold (TCP.writeChunks (127, 0, 0, 1) 8090)
                 $ Stream.unfold FH.readChunks src
-     in getArgs >>= Stream.drain . Stream.parallely . Stream.mapM sendFile . Stream.fromList
+     in getArgs >>= Stream.drain . Stream.fromParallel . Stream.mapM sendFile . Stream.fromList

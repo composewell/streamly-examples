@@ -77,6 +77,6 @@ main :: IO ()
 main = do
     sdlInit
     cref <- newIORef (0,0)
-    Stream.drain $ Stream.asyncly $ Stream.constRate 40
+    Stream.drain $ Stream.fromAsync $ Stream.constRate 40
         $ Stream.repeatM (updateController cref)
               `Stream.parallel` Stream.repeatM (updateDisplay cref)

@@ -137,7 +137,7 @@ meanings = map fetch wordList
 getWords :: IO ()
 getWords =
       Stream.fromListM meanings                     -- SerialT  IO (String, String)
-    & Stream.aheadly
+    & Stream.fromAhead
     & Stream.map show                               -- SerialT IO String
     & Stream.intercalateSuffix "\n" Unfold.identity -- SerialT IO String
     & Stream.map Array.fromList                     -- SerialT IO (Array Word8)

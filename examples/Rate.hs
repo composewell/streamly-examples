@@ -7,5 +7,5 @@ main =
       Stream.repeatM (pure "tick")  -- AsyncT IO String
     & Stream.timestamped            -- AsyncT IO (AbsTime, String)
     & Stream.avgRate 1              -- AsyncT IO (AbsTime, String)
-    & Stream.asyncly                -- SerialT IO (AbsTime, String)
+    & Stream.fromAsync              -- SerialT IO (AbsTime, String)
     & Stream.mapM_ print            -- IO ()

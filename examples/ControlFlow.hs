@@ -155,7 +155,7 @@ getSequenceEitherAsyncBelow = do
 
 mainEitherAsyncBelow :: IO ()
 mainEitherAsyncBelow = do
-    r <- runExceptT (Stream.drain $ asyncly getSequenceEitherAsyncBelow)
+    r <- runExceptT (Stream.drain $ Stream.fromAsync getSequenceEitherAsyncBelow)
     case r of
         Right _ -> liftIO $ putStrLn "Bingo"
         Left s  -> liftIO $ putStrLn s

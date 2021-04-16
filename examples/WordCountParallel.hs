@@ -39,7 +39,7 @@ wc file = do
       Stream.unfold File.readChunks file
     & Stream.mapM (countArray)
     & Stream.maxThreads numCapabilities
-    & Stream.aheadly
+    & Stream.fromAhead
     & Stream.foldl' addCounts (False, (Counts 0 0 0 True))
 
 -------------------------------------------------------------------------------

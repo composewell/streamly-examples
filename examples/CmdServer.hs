@@ -78,9 +78,9 @@ handler sk =
 
 server :: IO ()
 server =
-      (Stream.serially $ Stream.unfold TCP.acceptOnPort 8091)  -- SerialT IO Socket
-    & (Stream.asyncly  . Stream.mapM (Socket.handleWithM handler)) -- AsyncT IO ()
-    & Stream.drain                                        -- IO ()
+      (Stream.fromSerial $ Stream.unfold TCP.acceptOnPort 8091)  -- SerialT IO Socket
+    & (Stream.fromAsync  . Stream.mapM (Socket.handleWithM handler)) -- AsyncT IO ()
+    & Stream.drain -- IO ()
 
 main :: IO ()
 main = server
