@@ -28,21 +28,21 @@
 -- be 4. Note that the spaces in this string are not regular space chars they
 -- are different unicode space chars.
 
-import Control.Monad (when)
+import Control.Monad (when, unless)
 import Data.Char (isSpace)
 import Data.Word (Word8)
 import GHC.Conc (numCapabilities)
 import System.Environment (getArgs)
 import System.IO (Handle, openFile, IOMode(..))
-import Streamly.Internal.Unicode.Stream
-       (DecodeState, DecodeError(..), CodePoint, decodeUtf8Either,
-       resumeDecodeUtf8Either)
 
+import qualified Data.Vector.Storable.Mutable as V
+import qualified Streamly.Data.Array.Foreign as Array
+import qualified Streamly.FileSystem.Handle as Handle
+import qualified Streamly.Internal.Unicode.Stream as Unicode
+       (DecodeState, DecodeError(..), CodePoint, decodeUtf8Either
+       , resumeDecodeUtf8Either)
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Stream
-import qualified Streamly.FileSystem.Handle as FH
-import qualified Streamly.Data.Array.Foreign as Array
-import qualified Data.Vector.Storable.Mutable as V
 
 -------------------------------------------------------------------------------
 -- Parallel char, line and word counting
@@ -177,7 +177,7 @@ readField :: V.IOVector Int -> Field -> IO Int
 readField v fld = V.read v (fromEnum fld)
 
 writeField :: V.IOVector Int -> Field -> Int -> IO ()
-writeField v fld val = V.write v (fromEnum fld) val
+writeField v fld = V.write v (fromEnum fld)
 
 modifyField :: V.IOVector Int -> Field -> (Int -> Int) -> IO ()
 modifyField v fld f = V.modify v f (fromEnum fld)
@@ -239,7 +239,7 @@ resetHeaderOnNewChar counts = do
 -- Manipulating the trailer
 -------------------------------------------------------------------------------
 
-setTrailer :: V.IOVector Int -> DecodeState -> CodePoint -> IO ()
+setTrailer :: V.IOVector Int -> Unicode.DecodeState -> Unicode.CodePoint -> IO ()
 setTrailer counts st cp = do
     writeField counts TrailerState (fromIntegral st)
     writeField counts TrailerCodePoint cp
@@ -257,7 +257,7 @@ resetTrailerOnNewChar counts = do
 -------------------------------------------------------------------------------
 
 {-# INLINE countChar #-}
-countChar :: V.IOVector Int -> Either DecodeError Char -> IO ()
+countChar :: V.IOVector Int -> Either Unicode.DecodeError Char -> IO ()
 countChar counts inp =
     case inp of
         Right ch -> do
@@ -272,7 +272,7 @@ countChar counts inp =
                 wasSpace <- readField counts WasSpace
                 when (wasSpace /= 0) $ modifyField counts WordCount (+ 1)
                 accountChar counts False
-        Left (DecodeError st cp) -> do
+        Left (Unicode.DecodeError st cp) -> do
             hdone <- readField counts HeaderDone
             if hdone == 0
             then do
@@ -281,7 +281,7 @@ countChar counts inp =
                     -- We got a non-starter in initial decoder state, there may
                     -- be something that comes before this to complete it.
                     r <- addToHeader counts cp
-                    when (not r) $ error "countChar: Bug addToHeader failed"
+                    unless r $ error "countChar: Bug addToHeader failed"
                 else do
                     -- We got an error in a non-initial decoder state, it may
                     -- be an input underflow error, keep it as incomplete in
@@ -309,8 +309,8 @@ _wc_mwl_parserial :: Handle -> IO (V.IOVector Int)
 _wc_mwl_parserial src = do
     counts <- newCounts
     Stream.mapM_ (countChar counts)
-        $ decodeUtf8Either
-        $ Stream.unfold FH.read src
+        $ Unicode.decodeUtf8Either
+        $ Stream.unfold Handle.read src
     return counts
 
 -------------------------------------------------------------------------------
@@ -322,19 +322,19 @@ data Counts = Counts !Int !Int !Int !Bool deriving Show
 {-# INLINE countCharSerial #-}
 countCharSerial :: Counts -> Char -> Counts
 countCharSerial (Counts l w c wasSpace) ch =
-    let l1 = if (ch == '\n') then l + 1 else l
+    let l1 = if ch == '\n' then l + 1 else l
         (w1, wasSpace1) =
-            if (isSpace ch)
+            if isSpace ch
             then (w, True)
             else (if wasSpace then w + 1 else w, False)
-    in (Counts l1 w1 (c + 1) wasSpace1)
+    in Counts l1 w1 (c + 1) wasSpace1
 
 -- Note: This counts invalid byte sequences are non-space chars
 _wc_mwl_serial :: Handle -> IO ()
 _wc_mwl_serial src = print =<< (
       Stream.foldl' countCharSerial (Counts 0 0 0 True)
     $ Stream.decodeUtf8
-    $ Stream.unfold FH.read src)
+    $ Stream.unfold Handle.read src)
 
 -------------------------------------------------------------------------------
 -- Parallel counting
@@ -348,23 +348,23 @@ _wc_mwl_serial src = print =<< (
 reconstructChar :: Int
                 -> V.IOVector Int
                 -> V.IOVector Int
-                -> IO (Stream.SerialT IO (Either DecodeError Char))
+                -> IO (Stream.SerialT IO (Either Unicode.DecodeError Char))
 reconstructChar hdrCnt v1 v2 = do
     when (hdrCnt > 3 || hdrCnt < 0) $ error "reconstructChar: hdrCnt > 3"
     stream1 <-
-        if (hdrCnt > 2)
+        if hdrCnt > 2
         then do
             x <- readField v2 HeaderWord3
             return $ (fromIntegral x :: Word8) `Stream.cons` Stream.nil
         else return Stream.nil
     stream2 <-
-        if (hdrCnt > 1)
+        if hdrCnt > 1
         then do
             x <- readField v2 HeaderWord2
             return $ fromIntegral x `Stream.cons` stream1
         else return stream1
     stream3 <-
-        if (hdrCnt > 0)
+        if hdrCnt > 0
         then do
             x <- readField v2 HeaderWord1
             return $ fromIntegral x `Stream.cons` stream2
@@ -372,7 +372,7 @@ reconstructChar hdrCnt v1 v2 = do
 
     state <- readField v1 TrailerState
     cp <- readField v1 TrailerCodePoint
-    return $ resumeDecodeUtf8Either (fromIntegral state) cp stream3
+    return $ Unicode.resumeDecodeUtf8Either (fromIntegral state) cp stream3
 
 getHdrChar :: V.IOVector Int -> IO (Maybe Int)
 getHdrChar v = do
@@ -381,7 +381,7 @@ getHdrChar v = do
         0 -> return Nothing
         1 -> do
             writeField v HeaderWordCount 0
-            fmap Just $ readField v HeaderWord1
+            Just <$> readField v HeaderWord1
         2 -> do
             x1 <- readField v HeaderWord1
             x2 <- readField v HeaderWord2
@@ -403,15 +403,13 @@ getHdrChar v = do
 combineHeaders :: V.IOVector Int -> V.IOVector Int -> IO ()
 combineHeaders v1 v2 = do
     hdone1 <- readField v1 HeaderDone
-    if hdone1 == 0
-    then do
+    when (hdone1 == 0) $ do
         res <- getHdrChar v2
         case res of
             Nothing -> return ()
             Just x -> do
                 r <- addToHeader v1 x
-                when (not r) $ error "combineHeaders: Bug, addToHeader failed"
-    else return ()
+                unless r $ error "combineHeaders: Bug, addToHeader failed"
 
 -- We combine the contents of the second vector into the first vector, mutating
 -- the first vector and returning it.
@@ -488,7 +486,7 @@ addCounts v1 v2 = do
                         writeField v1 CharCount (c1 + c2 + 1)
 
                         when (c1 == 0) $ writeField v1 FirstIsSpace 1
-                        if (c2 == 0)
+                        if c2 == 0
                         then writeField v1 WasSpace 1
                         else writeField v1 WasSpace wasSpace2
 
@@ -514,16 +512,14 @@ addCounts v1 v2 = do
                                     -- char then that would be treated
                                     -- as whitespace
                                     let lcount = l1 + l2
-                                        lcount1 = if (ch == '\n') then lcount + 1 else lcount
+                                        lcount1 = if ch == '\n' then lcount + 1 else lcount
                                         wcount = w1 + w2
                                         firstSpace = isSpace ch
                                         wasSpace = firstSpace || tlength /= 0
-                                        wcount1 =
-                                            if wasSpace
-                                            then wcount
-                                            else if w2 == 0 || firstIsSpace2 /= 0
-                                                 then wcount
-                                                 else wcount - 1
+                                        wcount1
+                                            | wasSpace = wcount
+                                            | w2 == 0 || firstIsSpace2 /= 0 = wcount
+                                            | otherwise = wcount - 1
                                     writeField v1 LineCount lcount1
                                     writeField v1 WordCount wcount1
                                     writeField v1 CharCount (c1 + c2 + 1 + tlength)
@@ -543,7 +539,7 @@ addCounts v1 v2 = do
                                     writeField v1 TrailerState trailerState2
                                     writeField v1 TrailerCodePoint trailerCodePoint2
                                     return v1
-                                Left (DecodeError st cp) -> do
+                                Left (Unicode.DecodeError st cp) -> do
                                     -- if header was incomplete it may result
                                     -- in partially decoded char to be written
                                     -- as trailer. Check if the last error is
@@ -554,7 +550,7 @@ addCounts v1 v2 = do
                                                 Nothing -> (st, cp)
                                                 Just lst -> case lst of
                                                     Right _ -> error "addCounts: Bug"
-                                                    Left (DecodeError st1 cp1) -> (st1, cp1)
+                                                    Left (Unicode.DecodeError st1 cp1) -> (st1, cp1)
                                     if hdone2 == 0 && st' /= 12
                                     then do
                                         -- all elements before the last one must be errors
@@ -593,7 +589,7 @@ countArray :: Array.Array Word8 -> IO (V.IOVector Int)
 countArray src = do
     counts <- newCounts
     Stream.mapM_ (countChar counts)
-        $ decodeUtf8Either
+        $ Unicode.decodeUtf8Either
         $ Stream.unfold Array.read src
     return counts
 
@@ -604,7 +600,7 @@ wc_mwl_parallel src n = do
         $ Stream.fromAhead
         $ Stream.maxThreads numCapabilities
         $ Stream.mapM (countArray)
-        $ Stream.unfold FH.readChunksWithBufferOf (n, src)
+        $ Stream.unfold Handle.readChunksWithBufferOf (n, src)
 
 -------------------------------------------------------------------------------
 -- Main
