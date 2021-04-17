@@ -46,6 +46,8 @@ cradle:
               component: "exe:WordClassifier"
             - path: "./examples/WordCount.hs"
               component: "exe:WordCount"
+            - path: "./examples/WordCountModular.hs"
+              component: "exe:WordCountModular"
 
 dependencies:
   - streamly-examples.cabal
