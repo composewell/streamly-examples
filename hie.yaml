@@ -52,6 +52,8 @@ cradle:
               component: "exe:WordCountParallel"
             - path: "./examples/WordCountUTF8.hs"
               component: "exe:WordCountUTF8"
+            - path: "./examples/WordServer.hs"
+              component: "exe:WordServer"
 
 dependencies:
   - streamly-examples.cabal
