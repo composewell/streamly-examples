@@ -5,26 +5,27 @@
 -- compile with:
 -- ghc -O2 -fspec-constr-recursive=10 -fmax-worker-args=16 word-classifier.hs
 --
+import Data.Foldable
+import Data.Function ((&))
+import Data.Functor.Identity (Identity(..))
+import Data.Hashable
+import Data.IORef
+import Foreign.Storable (Storable(..))
+import System.Environment (getArgs)
+
 import qualified Data.Char as Char
-import           Data.Foldable
-import           Data.Function ((&))
-import           Data.Functor.Identity (Identity(..))
 import qualified Data.HashMap.Strict as Map
-import           Data.Hashable
-import           Data.IORef
 import qualified Data.List as List
 import qualified Data.Ord as Ord
-import           Foreign.Storable (Storable(..))
-import qualified Streamly.Unicode.Stream as Stream
-import qualified Streamly.Internal.Unicode.Stream as Stream (words)
+import qualified Streamly.Data.Array.Foreign as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Internal.Data.Fold as Fold
-       (rollingHash, rollingHashWithSalt)
+   (rollingHash, rollingHashWithSalt)
 import qualified Streamly.Internal.Data.Unfold as Unfold (fold)
 import qualified Streamly.Internal.FileSystem.File as File (toBytes)
-import qualified Streamly.Data.Array.Foreign as Array
+import qualified Streamly.Internal.Unicode.Stream as Unicode (words)
 import qualified Streamly.Prelude as Stream
-import           System.Environment (getArgs)
+import qualified Streamly.Unicode.Stream as Unicode
 
 instance (Enum a, Storable a) => Hashable (Array.Array a) where
     hash arr = fromIntegral $ runIdentity $ Unfold.fold Fold.rollingHash Array.read arr
@@ -54,12 +55,12 @@ main = do
     -- Write the stream to a hashmap consisting of word counts
     mp <-
         let
-            alter Nothing    = fmap Just $ newIORef (1 :: Int)
+            alter Nothing    = Just <$> newIORef (1 :: Int)
             alter (Just ref) = modifyIORef' ref (+ 1) >> return (Just ref)
-        in File.toBytes inFile    -- SerialT IO Word8
-         & Stream.decodeLatin1         -- SerialT IO Char
+        in File.toBytes inFile         -- SerialT IO Word8
+         & Unicode.decodeLatin1        -- SerialT IO Char
          & Stream.map toLower          -- SerialT IO Char
-         & Stream.words Fold.toList      -- SerialT IO String
+         & Unicode.words Fold.toList   -- SerialT IO String
          & Stream.filter (all isAlpha) -- SerialT IO String
          & Stream.foldlM' (flip (Map.alterF alter)) (return Map.empty) -- IO (Map String (IORef Int))
 
