@@ -1,13 +1,9 @@
 -- Adapted from the Yampa package.
 -- Displays a square moving in a circle. To move the position drag it with the
 -- mouse.
---
--- Requires the SDL package, assuming streamly has already been built, you can
--- compile it like this:
--- stack ghc --package SDL CirclingSquare.hs
 
 import Data.Function ((&))
-import Data.IORef
+import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Graphics.UI.SDL as SDL
 import Streamly.Prelude as Stream
 
