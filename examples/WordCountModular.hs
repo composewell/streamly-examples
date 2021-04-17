@@ -33,7 +33,7 @@ _wcb file =
 -------------------------------------------------------------------------------
 
 countl :: Int -> Word8 -> Int
-countl n ch = if (ch == 10) then n + 1 else n
+countl n ch = if ch == 10 then n + 1 else n
 
 -- The fold accepts a stream of `Word8` and returns a line count (`Int`).
 nlines :: Monad m => Fold m Word8 Int
@@ -50,13 +50,13 @@ _wcl file =
 
 countw :: (Int, Bool) -> Word8 -> (Int, Bool)
 countw (n, wasSpace) ch =
-    if (isSpace $ chr $ fromIntegral ch)
+    if isSpace $ chr $ fromIntegral ch
     then (n, True)
     else (if wasSpace then n + 1 else n, False)
 
 -- The fold accepts a stream of `Word8` and returns a word count (`Int`)
 nwords :: Monad m => Fold m Word8 Int
-nwords = fmap fst $ Fold.foldl' countw (0, True)
+nwords = fst <$> Fold.foldl' countw (0, True)
 
 _wcw :: String -> IO Int
 _wcw file =

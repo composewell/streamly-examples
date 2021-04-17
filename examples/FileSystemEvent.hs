@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
--- Report all events recusively under the paths provided as arguments
+-- Report all events recursively under the paths provided as arguments
 module Main (main) where
 
 import Control.Monad.IO.Class (MonadIO)
@@ -8,10 +8,11 @@ import Data.Word (Word8)
 import System.Environment (getArgs)
 import Streamly.Internal.Data.Array.Foreign (Array)
 
-import qualified Streamly.Unicode.Stream as Unicode
-import qualified Streamly.Internal.Data.Array.Foreign as Array
 import qualified Data.List.NonEmpty as NonEmpty
-import qualified Streamly.Internal.Data.Stream.IsStream as Stream
+import qualified Streamly.Prelude as Stream
+import qualified Streamly.Unicode.Stream as Unicode
+
+import qualified Streamly.Internal.Data.Array.Foreign as Array (fromStream)
 #if darwin_HOST_OS
 import qualified Streamly.Internal.FileSystem.Event.Darwin as Event
 #elif linux_HOST_OS

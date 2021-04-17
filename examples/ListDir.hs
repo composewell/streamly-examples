@@ -14,11 +14,13 @@ import qualified Streamly.Internal.FileSystem.Dir as Dir (toEither)
 main :: IO ()
 main = do
     hSetBuffering stdout LineBuffering
-    Stream.mapM_ print $ Stream.iterateMapLeftsWith Stream.ahead listDir (Stream.yield $ (Left "."))
+    Stream.iterateMapLeftsWith Stream.ahead listDir (Stream.yield (Left "."))
+        & Stream.mapM_ print
 
     where
 
     listDir dir =
-          Dir.toEither dir            -- SerialT IO (Either String String)
+          Dir.toEither dir                 -- SerialT IO (Either String String)
         & Stream.map (bimap prefix prefix) -- SerialT IO (Either String String)
+
         where prefix x = dir ++ "/" ++ x

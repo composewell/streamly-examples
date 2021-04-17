@@ -34,4 +34,4 @@ main =
     & Stream.concatMapWith Stream.parallel recv  -- SerialT IO String
     & Unicode.unlines Unfold.fromList            -- SerialT IO Char
     & Unicode.encodeLatin1                       -- SerialT IO Word8
-    & File.fromBytes "outFile"                   -- IO ()
+    & File.fromBytes "output.txt"                -- IO ()

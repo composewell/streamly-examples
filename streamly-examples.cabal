@@ -18,6 +18,7 @@ build-type:    Simple
 extra-source-files:
   .circleci/config.yml
   .github/workflows/haskell.yml
+  .hlint.ignore
   appveyor.yml
   README.md
   NOTICE
@@ -109,7 +110,7 @@ executable WordServer
   else
     buildable: False
 
-executable MergeServer.hs
+executable MergeServer
   import: exe-options-threaded
   main-is: MergeServer.hs
   if !impl(ghcjs)

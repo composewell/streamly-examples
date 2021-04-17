@@ -32,6 +32,8 @@ cradle:
               component: "exe:CoreUtilsHandle"
             - path: "./examples/ListDir.hs"
               component: "exe:ListDir"
+            - path: "./examples/MergeServer.hs"
+              component: "exe:MergeServer"
             - path: "./examples/MergeSort.hs"
               component: "exe:MergeSort"
             - path: "./examples/Rate.hs"
@@ -44,6 +46,14 @@ cradle:
               component: "exe:WordClassifier"
             - path: "./examples/WordCount.hs"
               component: "exe:WordCount"
+            - path: "./examples/WordCountModular.hs"
+              component: "exe:WordCountModular"
+            - path: "./examples/WordCountParallel.hs"
+              component: "exe:WordCountParallel"
+            - path: "./examples/WordCountUTF8.hs"
+              component: "exe:WordCountUTF8"
+            - path: "./examples/WordServer.hs"
+              component: "exe:WordServer"
 
 dependencies:
   - streamly-examples.cabal

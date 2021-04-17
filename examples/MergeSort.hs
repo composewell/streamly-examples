@@ -1,14 +1,14 @@
 {-# LANGUAGE FlexibleContexts    #-}
 
--- | This example generates two streams sorted in ascending order and merges
+-- This example generates two streams sorted in ascending order and merges
 -- them in ascending order, concurrently.
 --
 -- Compile with '-threaded -with-rtsopts "-N"' GHC options to use the
 -- parallelism.
 
-import Data.Word
-import System.Random (getStdGen, randoms)
 import Data.List (sort)
+import Data.Word (Word16)
+import System.Random (getStdGen, randoms)
 
 import Streamly.Prelude (Serial)
 import qualified Streamly.Prelude as Stream

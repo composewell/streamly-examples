@@ -30,18 +30,18 @@ data Counts = Counts !Int !Int !Int !Bool deriving Show
 {-# INLINE count #-}
 count :: Counts -> Char -> Counts
 count (Counts l w c wasSpace) ch =
-    let l1 = if (ch == '\n') then l + 1 else l
+    let l1 = if ch == '\n' then l + 1 else l
         (w1, wasSpace1) =
-            if (isSpace ch)
+            if isSpace ch
             then (w, True)
             else (if wasSpace then w + 1 else w, False)
-    in (Counts l1 w1 (c + 1) wasSpace1)
+    in Counts l1 w1 (c + 1) wasSpace1
 
 wc :: String -> IO Counts
 wc file =
-      Stream.unfold File.read file
-    & Stream.decodeLatin1
-    & Stream.foldl' count (Counts 0 0 0 True)
+      Stream.unfold File.read file            -- SerialT IO Word8
+    & Stream.decodeLatin1                     -- SerialT IO Char
+    & Stream.foldl' count (Counts 0 0 0 True) -- IO Counts
 
 -------------------------------------------------------------------------------
 -- Main
