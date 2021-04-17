@@ -16,31 +16,34 @@ import qualified Streamly.Internal.FileSystem.File as File (readChunks)
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Stream
 
+countArray1 :: Array Word8 -> IO Counts
+countArray1 arr =
+      Stream.unfold Array.read arr            -- SerialT IO Word8
+    & Stream.decodeLatin1                     -- SerialT IO Char
+    & Stream.foldl' count (Counts 0 0 0 True) -- IO Counts
+
 {-# NOINLINE countArray #-}
 countArray :: Array Word8 -> IO (Bool, Counts)
 countArray arr = do
     let r = Array.readIndex arr 0
     case r of
         Just x -> do
-            counts <-
-                  Stream.unfold Array.read arr
-                & Stream.decodeLatin1
-                & Stream.foldl' count (Counts 0 0 0 True)
+            counts <- countArray1 arr
             return (isSpace (chr (fromIntegral x)), counts)
         Nothing -> return (False, Counts 0 0 0 True)
 
 addCounts :: (Bool, Counts) -> (Bool, Counts) -> (Bool, Counts)
-addCounts (sp1, (Counts l1 w1 c1 ws1)) (sp2, (Counts l2 w2 c2 ws2)) =
+addCounts (sp1, Counts l1 w1 c1 ws1) (sp2, Counts l2 w2 c2 ws2) =
     let wcount = if not ws1 && not sp2 then w1 + w2 - 1 else w1 + w2
      in (sp1, Counts (l1 + l2) wcount (c1 + c2) ws2)
 
 wc :: String -> IO (Bool, Counts)
 wc file = do
-      Stream.unfold File.readChunks file
-    & Stream.mapM (countArray)
-    & Stream.maxThreads numCapabilities
-    & Stream.fromAhead
-    & Stream.foldl' addCounts (False, (Counts 0 0 0 True))
+      Stream.unfold File.readChunks file -- AheadT IO (Array Word8)
+    & Stream.mapM countArray             -- AheadT IO (Bool, Counts)
+    & Stream.maxThreads numCapabilities  -- AheadT IO (Bool, Counts)
+    & Stream.fromAhead                   -- SerialT IO (Bool, Counts)
+    & Stream.foldl' addCounts (False, Counts 0 0 0 True) -- IO (Bool, Counts)
 
 -------------------------------------------------------------------------------
 -- Main
