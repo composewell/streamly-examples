@@ -18,6 +18,7 @@ build-type:    Simple
 extra-source-files:
   .circleci/config.yml
   .github/workflows/haskell.yml
+  .hlint.ignore
   appveyor.yml
   README.md
   NOTICE

@@ -307,6 +307,22 @@ jobs:
               apt-get install -y cabal-install-3.2
               bash -c "$PACKCHECK $BUILD"
         - *save
+  hlint:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+            name: Hlint examples
+            environment:
+              BUILD: cabal-v2
+              HLINT_OPTIONS: lint
+              HLINT_TARGETS: examples
+            command: |
+              bash -c "$PACKCHECK $BUILD"
+        - *save
 
 workflows:
   version: 2
@@ -335,3 +351,5 @@ workflows:
       #- stack-ghc-8.2
       #- coveralls-ghc-8.2.2
       #- coveralls-ghc-8.8.3
+      - hlint:
+          name: Hlint examples
