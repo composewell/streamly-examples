@@ -109,7 +109,7 @@ executable WordServer
   else
     buildable: False
 
-executable MergeServer.hs
+executable MergeServer
   import: exe-options-threaded
   main-is: MergeServer.hs
   if !impl(ghcjs)

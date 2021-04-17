@@ -32,6 +32,8 @@ cradle:
               component: "exe:CoreUtilsHandle"
             - path: "./examples/ListDir.hs"
               component: "exe:ListDir"
+            - path: "./examples/MergeServer.hs"
+              component: "exe:MergeServer"
             - path: "./examples/MergeSort.hs"
               component: "exe:MergeSort"
             - path: "./examples/Rate.hs"
