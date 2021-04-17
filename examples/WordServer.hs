@@ -27,9 +27,9 @@ lookupWords sk =
       Stream.unfold Socket.read sk               -- SerialT IO Word8
     & Unicode.decodeLatin1                       -- SerialT IO Char
     & Unicode.words Fold.toList                  -- SerialT IO String
-    & Stream.serially                            -- AheadT  IO String
+    & Stream.fromSerial                          -- AheadT  IO String
     & Stream.mapM fetch                          -- AheadT  IO (String, String)
-    & Stream.aheadly                             -- SerialT IO (String, String)
+    & Stream.fromAhead                           -- SerialT IO (String, String)
     & Stream.map show                            -- SerialT IO String
     & Stream.intercalateSuffix "\n" Unfold.identity -- SerialT IO String
     & Stream.fold (Socket.writeStrings Unicode.encodeLatin1 sk) -- IO ()
@@ -43,7 +43,7 @@ serve sk = finally (lookupWords sk) (close sk)
 main :: IO ()
 main =
       Stream.unfold TCP.acceptOnPort 8091 -- SerialT IO Socket
-    & Stream.serially                     -- AsyncT IO ()
+    & Stream.fromSerial                   -- AsyncT IO ()
     & Stream.mapM serve                   -- AsyncT IO ()
-    & Stream.asyncly                      -- SerialT IO ()
+    & Stream.fromAsync                    -- SerialT IO ()
     & Stream.drain                        -- IO ()

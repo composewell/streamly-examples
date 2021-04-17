@@ -19,12 +19,14 @@ import qualified Data.Map.Strict as Map
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Array.Foreign as Array
 import qualified Streamly.Network.Inet.TCP as TCP
+import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Prelude as Stream
+import qualified Streamly.Unicode.Stream as Unicode
 
-import qualified Streamly.Internal.Data.Fold as Fold
-import qualified Streamly.Internal.Data.Time.Clock as Clock
-import qualified Streamly.Internal.Unicode.Stream as Unicode
-import qualified Streamly.Internal.Network.Socket as Socket
+import qualified Streamly.Internal.Data.Fold as Fold (demuxDefault)
+import qualified Streamly.Internal.Data.Time.Clock as Clock (getTime, Clock(..))
+import qualified Streamly.Internal.Unicode.Stream as Unicode (words)
+import qualified Streamly.Internal.Network.Socket as Socket (handleWithM, writeChunk)
 
 ------------------------------------------------------------------------------
 -- Utility functions
@@ -48,7 +50,7 @@ random :: Socket -> IO ()
 random sk = (randomIO :: IO Int) >>= sendValue sk
 
 def :: (String, Socket) -> IO ()
-def (str, sk) = return ("Unknown command: " ++ str) >>= sendValue sk
+def (str, sk) = sendValue sk ("Unknown command: " ++ str)
 
 commands :: Map.Map String (Fold IO Socket ())
 commands = Map.fromList
@@ -57,7 +59,7 @@ commands = Map.fromList
     ]
 
 demux :: Fold IO (String, Socket) ()
-demux = fmap snd $ Fold.demuxDefault commands (Fold.drainBy def)
+demux = snd <$> Fold.demuxDefault commands (Fold.drainBy def)
 
 ------------------------------------------------------------------------------
 -- Parse and handle commands on a socket
@@ -78,9 +80,11 @@ handler sk =
 
 server :: IO ()
 server =
-      (Stream.serially $ Stream.unfold TCP.acceptOnPort 8091)  -- SerialT IO Socket
-    & (Stream.asyncly  . Stream.mapM (Socket.handleWithM handler)) -- AsyncT IO ()
-    & Stream.drain                                        -- IO ()
+      Stream.unfold TCP.acceptOnPort 8091      -- SerialT IO Socket
+    & Stream.fromSerial                        -- AsyncT IO Socket
+    & Stream.mapM (Socket.handleWithM handler) -- AsyncT IO ()
+    & Stream.fromAsync                         -- SerialT IO ()
+    & Stream.drain                             -- IO ()
 
 main :: IO ()
 main = server

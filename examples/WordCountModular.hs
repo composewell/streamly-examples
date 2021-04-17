@@ -37,7 +37,7 @@ countl n ch = if (ch == 10) then n + 1 else n
 
 -- The fold accepts a stream of `Word8` and returns a line count (`Int`).
 nlines :: Monad m => Fold m Word8 Int
-nlines = Fold.mkFoldl countl 0
+nlines = Fold.foldl' countl 0
 
 _wcl :: String -> IO Int
 _wcl file =
@@ -56,7 +56,7 @@ countw (n, wasSpace) ch =
 
 -- The fold accepts a stream of `Word8` and returns a word count (`Int`)
 nwords :: Monad m => Fold m Word8 Int
-nwords = fmap fst $ Fold.mkFoldl countw (0, True)
+nwords = fmap fst $ Fold.foldl' countw (0, True)
 
 _wcw :: String -> IO Int
 _wcw file =

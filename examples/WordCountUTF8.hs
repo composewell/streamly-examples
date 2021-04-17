@@ -601,7 +601,7 @@ countArray src = do
 wc_mwl_parallel :: Handle -> Int -> IO (V.IOVector Int)
 wc_mwl_parallel src n = do
     Stream.foldlM' addCounts newCounts
-        $ Stream.aheadly
+        $ Stream.fromAhead
         $ Stream.maxThreads numCapabilities
         $ Stream.mapM (countArray)
         $ Stream.unfold FH.readChunksWithBufferOf (n, src)

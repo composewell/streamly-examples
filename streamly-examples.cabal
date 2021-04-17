@@ -93,9 +93,9 @@ common exe-options-threaded
 -- Examples                                                                 --
 ------------------------------------------------------------------------------
 
-executable Examples
+executable Intro
   import: exe-options-threaded
-  main-is: Examples.hs
+  main-is: Intro.hs
   if !impl(ghcjs)
     buildable: True
   else
@@ -167,13 +167,13 @@ executable ControlFlow
   import: exe-options
   main-is: ControlFlow.hs
 
-executable HandleIO
+executable CoreUtilsHandle
   import: exe-options
-  main-is: HandleIO.hs
+  main-is: CoreUtilsHandle.hs
 
-executable FileIOExamples
+executable CoreUtils
   import: exe-options
-  main-is: FileIOExamples.hs
+  main-is: CoreUtils.hs
 
 executable EchoServer
   import: exe-options-threaded

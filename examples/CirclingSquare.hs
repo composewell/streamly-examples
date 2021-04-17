@@ -6,6 +6,7 @@
 -- compile it like this:
 -- stack ghc --package SDL CirclingSquare.hs
 
+import Data.Function ((&))
 import Data.IORef
 import Graphics.UI.SDL as SDL
 import Streamly.Prelude as Stream
@@ -62,9 +63,9 @@ updateController ref = do
 ------------------------------------------------------------------------------
 
 updateDisplay :: IORef (Double, Double) -> IO ()
-updateDisplay cref = do
+updateDisplay ref = do
     time <- SDL.getTicks
-    (x, y) <- readIORef cref
+    (x, y) <- readIORef ref
     let t = fromIntegral time * speed / 1000
      in display (x + cos t * radius, y + sin t * radius)
 
@@ -76,7 +77,11 @@ updateDisplay cref = do
 main :: IO ()
 main = do
     sdlInit
-    cref <- newIORef (0,0)
-    Stream.drain $ Stream.asyncly $ Stream.constRate 40
-        $ Stream.repeatM (updateController cref)
-              `Stream.parallel` Stream.repeatM (updateDisplay cref)
+    ref <- newIORef (0,0)
+    let mouseStream = Stream.repeatM (updateController ref)
+        displayStream = Stream.repeatM (updateDisplay ref)
+
+    mouseStream `Stream.parallel` displayStream -- AsyncT IO ()
+        & Stream.constRate 40                   -- AsyncT IO ()
+        & Stream.fromAsync                      -- SerialT IO ()
+        & Stream.drain                          -- IO ()
