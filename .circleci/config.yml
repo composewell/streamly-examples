@@ -63,7 +63,7 @@ env: &env
 executors:
   amd64-executor:
     docker:
-      - image: ubuntu:xenial
+      - image: ubuntu:bionic
   x86-executor:
     docker:
       - image: i386/ubuntu:eoan
@@ -92,7 +92,7 @@ preinstall: &preinstall
         apt-get install -y zlib1g-dev
         add-apt-repository -y ppa:hvr/ghc
         # echo "deb http://downloads.haskell.org/debian stretch main" >> /etc/apt/sources.list
-        echo "deb-src http://ppa.launchpad.net/hvr/ghc/ubuntu xenial main" >> /etc/apt/sources.list
+        echo "deb-src http://ppa.launchpad.net/hvr/ghc/ubuntu bionic main" >> /etc/apt/sources.list
         apt-get update
 
         # required for packcheck
@@ -229,8 +229,8 @@ jobs:
               DISABLE_SDIST_BUILD: "yes"
             command: |
               add-apt-repository -y ppa:hvr/ghcjs
-              add-apt-repository -y 'deb https://deb.nodesource.com/node_11.x xenial main'
               curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
+              add-apt-repository -y 'deb https://deb.nodesource.com/node_11.x bionic main'
               apt-get update
               apt-get install -y cabal-install-3.2
               apt-get install -y nodejs
@@ -267,7 +267,7 @@ jobs:
              BUILD: "cabal-v2"
              CABAL_BUILD_OPTIONS: "--flag examples-sdl"
            command: |
-              apt-get install -y libsdl1.2-dev
+              apt-get install -y libsdl2-dev
               apt-get install -y ghc-8.10.2
               apt-get install -y cabal-install-3.2
               bash -c "$PACKCHECK $BUILD"
@@ -302,7 +302,7 @@ jobs:
              BUILD: "cabal-v2"
              CABAL_BUILD_OPTIONS: "--flag examples-sdl --flag fusion-plugin"
            command: |
-              apt-get install -y libsdl1.2-dev
+              apt-get install -y libsdl2-dev
               apt-get install -y ghc-8.10.2
               apt-get install -y cabal-install-3.2
               bash -c "$PACKCHECK $BUILD"

@@ -160,9 +160,12 @@ executable CirclingSquare
   if flag(examples-sdl)
     buildable: True
     build-Depends:
-        SDL  >= 0.6.5 && < 0.7
+          text >= 1.2.3 && < 1.2.5
+        , sdl2  >= 2.5.0 && < 2.6
   else
     buildable: False
+  if os(darwin)
+      frameworks: Cocoa
 
 executable ControlFlow
   import: exe-options
