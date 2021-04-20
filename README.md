@@ -46,14 +46,14 @@ $ cabal run --flag examples-sdl CirclingSquare
 ## Text Processing
 
 * [CamelCase](examples/CamelCase.hs): Convert a file to camel case.
-* [WordClassifier](examples/WordClassifier.hs): Count word frequency in
-  a file and print top 25 words.
 * [WordCount](examples/WordCount.hs): Simple word counting (`wc`) program.
 * [WordCount.c](examples/WordCount.c): C equivalent for perf comparison.
 * [WordCountModular](examples/WordCountModular.hs): Modular version.
 * [WordCountParallel](examples/WordCountParallel.hs): Concurrent version.
 * [WordCountUTF8](examples/WordCountUTF8.hs): Concurrent version with
   full UTF8 handling.
+* [WordFrequency](examples/WordFrequency.hs): Count word frequency in
+  a file and print top 25 words.
 
 ## Networking
 

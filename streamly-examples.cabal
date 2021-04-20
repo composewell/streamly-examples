@@ -203,9 +203,9 @@ executable FromFileClient
   else
     buildable: False
 
-executable WordClassifier
+executable WordFrequency
   import: exe-options
-  main-is: WordClassifier.hs
+  main-is: WordFrequency.hs
   if !impl(ghcjs)
     buildable: True
   else

@@ -2,14 +2,12 @@
 
 {-# OPTIONS_GHC -Wno-orphans #-}
 
--- compile with:
--- ghc -O2 -fspec-constr-recursive=10 -fmax-worker-args=16 word-classifier.hs
---
-import Data.Foldable
+import Data.Char (isSpace)
+import Data.Foldable (traverse_)
 import Data.Function ((&))
 import Data.Functor.Identity (Identity(..))
-import Data.Hashable
-import Data.IORef
+import Data.Hashable (Hashable(..))
+import Data.IORef (newIORef, readIORef, modifyIORef')
 import Foreign.Storable (Storable(..))
 import System.Environment (getArgs)
 
@@ -19,18 +17,22 @@ import qualified Data.List as List
 import qualified Data.Ord as Ord
 import qualified Streamly.Data.Array.Foreign as Array
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Internal.Data.Fold as Fold
-   (rollingHash, rollingHashWithSalt)
-import qualified Streamly.Internal.Data.Unfold as Unfold (fold)
 import qualified Streamly.Internal.FileSystem.File as File (toBytes)
-import qualified Streamly.Internal.Unicode.Stream as Unicode (words)
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Unicode
 
+hashArray :: (Storable a, Integral b, Num c) =>
+    Fold.Fold Identity a b -> Array.Array a -> c
+hashArray f arr =
+      Stream.unfold Array.read arr
+    & Stream.fold f
+    & fromIntegral . runIdentity
+
 instance (Enum a, Storable a) => Hashable (Array.Array a) where
-    hash arr = fromIntegral $ runIdentity $ Unfold.fold Fold.rollingHash Array.read arr
-    hashWithSalt salt arr = fromIntegral $ runIdentity $
-        Unfold.fold (Fold.rollingHashWithSalt $ fromIntegral salt) Array.read arr
+    hash = hashArray Fold.rollingHash
+
+    hashWithSalt salt =
+        hashArray (Fold.rollingHashWithSalt (fromIntegral salt))
 
 {-# INLINE toLower #-}
 toLower :: Char -> Char
@@ -57,11 +59,11 @@ main = do
         let
             alter Nothing    = Just <$> newIORef (1 :: Int)
             alter (Just ref) = modifyIORef' ref (+ 1) >> return (Just ref)
-        in File.toBytes inFile         -- SerialT IO Word8
-         & Unicode.decodeLatin1        -- SerialT IO Char
-         & Stream.map toLower          -- SerialT IO Char
-         & Unicode.words Fold.toList   -- SerialT IO String
-         & Stream.filter (all isAlpha) -- SerialT IO String
+        in File.toBytes inFile                  -- SerialT IO Word8
+         & Unicode.decodeLatin1                 -- SerialT IO Char
+         & Stream.map toLower                   -- SerialT IO Char
+         & Stream.wordsBy isSpace Fold.toList   -- SerialT IO String
+         & Stream.filter (all isAlpha)          -- SerialT IO String
          & Stream.foldlM' (flip (Map.alterF alter)) (return Map.empty) -- IO (Map String (IORef Int))
 
     -- Print the top hashmap entries
