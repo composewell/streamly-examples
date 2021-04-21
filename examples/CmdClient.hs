@@ -4,13 +4,12 @@ import Control.Monad (when)
 import Data.Function ((&))
 import Data.Word (Word8)
 import Network.Socket (PortNumber)
-
 import Streamly.Prelude (SerialT)
-import qualified Streamly.Data.Unfold as Unfold
-import qualified Streamly.Prelude as Stream
+
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Internal.Network.Inet.TCP as TCP (transformBytesWith)
-import qualified Streamly.Internal.Unicode.Stream as Unicode (unwords, lines)
+import qualified Streamly.Data.Unfold as Unfold
+import qualified Streamly.Internal.Network.Inet.TCP as TCP (processBytes)
+import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Unicode
 
 remoteAddr :: (Word8,Word8,Word8,Word8)
@@ -35,11 +34,11 @@ counter tag n () = do
 sender :: SerialT IO ()
 sender =
       Stream.repeat "time\nrandom\n"               -- SerialT IO String
-    & Unicode.unwords Unfold.fromList              -- SerialT IO Char
+    & Stream.unfoldMany Unfold.fromList            -- SerialT IO Char
     & Unicode.encodeLatin1                         -- SerialT IO Word8
-    & TCP.transformBytesWith remoteAddr remotePort -- SerialT IO Word8
+    & TCP.processBytes remoteAddr remotePort       -- SerialT IO Word8
     & Unicode.decodeLatin1                         -- SerialT IO Char
-    & Unicode.lines Fold.drain                     -- SerialT IO String
+    & Stream.splitOnSuffix (== '\n') Fold.drain    -- SerialT IO String
     & Stream.chunksOf chunkSize Fold.drain         -- SerialT IO ()
 
 main :: IO ()
