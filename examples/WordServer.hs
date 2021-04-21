@@ -1,5 +1,6 @@
 import Control.Concurrent (threadDelay)
 import Control.Exception (finally)
+import Data.Char (isSpace)
 import Data.Function ((&))
 import Network.Socket (Socket, close)
 
@@ -8,11 +9,6 @@ import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Unicode.Stream as Unicode
-
-import qualified Streamly.Internal.Data.Stream.IsStream as Stream (intercalateSuffix)
-import qualified Streamly.Internal.Unicode.Stream as Unicode (words)
-import qualified Streamly.Internal.Data.Unfold as Unfold (identity)
-import qualified Streamly.Internal.Network.Socket as Socket (writeStrings)
 
 -- Simulate network/db query by adding a delay
 fetch :: String -> IO (String, String)
@@ -26,13 +22,14 @@ lookupWords :: Socket -> IO ()
 lookupWords sk =
       Stream.unfold Socket.read sk               -- SerialT IO Word8
     & Unicode.decodeLatin1                       -- SerialT IO Char
-    & Unicode.words Fold.toList                  -- SerialT IO String
+    & Stream.wordsBy isSpace Fold.toList         -- SerialT IO String
     & Stream.fromSerial                          -- AheadT  IO String
     & Stream.mapM fetch                          -- AheadT  IO (String, String)
     & Stream.fromAhead                           -- SerialT IO (String, String)
     & Stream.map show                            -- SerialT IO String
-    & Stream.intercalateSuffix "\n" Unfold.identity -- SerialT IO String
-    & Stream.fold (Socket.writeStrings Unicode.encodeLatin1 sk) -- IO ()
+    & Stream.intersperse "\n"                    -- SerialT IO String
+    & Unicode.encodeStrings Unicode.encodeLatin1 -- SerialT IO (Array Word8)
+    & Stream.fold (Socket.writeChunks sk)        -- IO ()
 
 serve :: Socket -> IO ()
 serve sk = finally (lookupWords sk) (close sk)
