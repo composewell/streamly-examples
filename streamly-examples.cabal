@@ -187,14 +187,6 @@ executable EchoServer
   else
     buildable: False
 
-executable FileSinkServer
-  import: exe-options-threaded
-  main-is: FileSinkServer.hs
-  if !impl(ghcjs)
-    buildable: True
-  else
-    buildable: False
-
 executable FromFileClient
   import: exe-options-threaded
   main-is: FromFileClient.hs

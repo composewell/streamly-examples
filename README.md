@@ -59,9 +59,8 @@ $ cabal run --flag examples-sdl CirclingSquare
 
 * [EchoServer](examples/EchoServer.hs): A concurrent TCP server that
   echoes everything that it receives.
-* [FileSinkServer](examples/FileSinkServer.hs): Merges lines received from
+* [MergeServer](examples/MergeServer.hs): Merges lines received from
   several client connections and writes them to a file.
-* [MergeServer](examples/MergeServer.hs): Same as above.
 * [FromFileClient](examples/FromFileClient.hs): Send many files concurrently to
   a server over multiple connections. Can be used to test `FileSinkServer`.
 * [CmdServer](examples/CmdServer.hs): Receive a stream of commands from many
