@@ -6,13 +6,13 @@ import Control.Monad.IO.Class (MonadIO)
 import Data.Function ((&))
 import Data.Word (Word8)
 import System.Environment (getArgs)
-import Streamly.Internal.Data.Array.Foreign (Array)
+import Streamly.Data.Array.Foreign (Array)
 
 import qualified Data.List.NonEmpty as NonEmpty
+import qualified Streamly.Data.Array.Foreign as Array
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Unicode
 
-import qualified Streamly.Internal.Data.Array.Foreign as Array (fromStream)
 #if darwin_HOST_OS
 import qualified Streamly.Internal.FileSystem.Event.Darwin as Event
 #elif linux_HOST_OS
@@ -28,7 +28,7 @@ import qualified Streamly.Internal.FileSystem.Event.Windows as Event
 -------------------------------------------------------------------------------
 
 toUtf8 :: MonadIO m => String -> m (Array Word8)
-toUtf8 = Array.fromStream . Unicode.encodeUtf8' . Stream.fromList
+toUtf8 s = Stream.fold Array.write (Unicode.encodeUtf8' $ Stream.fromList s)
 
 -------------------------------------------------------------------------------
 -- Main
