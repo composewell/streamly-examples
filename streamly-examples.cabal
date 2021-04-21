@@ -187,9 +187,9 @@ executable EchoServer
   else
     buildable: False
 
-executable FromFileClient
+executable FileSender
   import: exe-options-threaded
-  main-is: FromFileClient.hs
+  main-is: FileSender.hs
   if !impl(ghcjs)
     buildable: True
   else

@@ -61,8 +61,8 @@ $ cabal run --flag examples-sdl CirclingSquare
   echoes everything that it receives.
 * [MergeServer](examples/MergeServer.hs): Merges lines received from
   several client connections and writes them to a file.
-* [FromFileClient](examples/FromFileClient.hs): Send many files concurrently to
-  a server over multiple connections. Can be used to test `FileSinkServer`.
+* [FileSender](examples/FileSender.hs): Send many files concurrently to
+  a server over multiple connections. Can be used to test `MergeServer`.
 * [CmdServer](examples/CmdServer.hs): Receive a stream of commands from many
   clients and respond to them using command handlers.
 * [CmdClient](examples/CmdClient.hs): Run multiple concurrent clients sending
