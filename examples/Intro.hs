@@ -1,7 +1,7 @@
 -- Introductory example programs
 
 import Control.Concurrent (threadDelay)
-import Data.Char (ord)
+import Data.Char (ord, isSpace)
 import Data.Functor.Identity (Identity(..))
 import Data.Function ((&))
 import Data.Map.Strict (Map)
@@ -11,8 +11,8 @@ import System.IO (stdout)
 
 import Streamly.Prelude (SerialT)
 import Streamly.Data.Fold (Fold)
+import Streamly.Data.Fold.Tee (Tee(..))
 import Streamly.Data.Unfold (Unfold)
-import Streamly.Internal.Data.Fold.Tee (Tee(..))
 
 import qualified Streamly.Data.Array.Foreign as Array
 import qualified Streamly.Data.Fold as Fold
@@ -21,11 +21,8 @@ import qualified Streamly.Prelude as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Unicode.Stream as Unicode
 
-import qualified Streamly.Internal.Data.Stream.IsStream as Stream (intercalateSuffix)
-import qualified Streamly.Internal.Unicode.Stream as Unicode (words)
-import qualified Streamly.Internal.Data.Unfold as Unfold (enumerateFromToIntegral, identity)
+import qualified Streamly.Internal.Data.Unfold as Unfold (enumerateFromToIntegral)
 import qualified Streamly.Internal.Data.Fold as Fold (classify)
-import qualified Streamly.Internal.Data.Fold.Tee as Tee (toFold)
 import qualified Streamly.Internal.FileSystem.File as File (toBytes)
 
 -------------------------------------------------------------------------------
@@ -105,7 +102,7 @@ avgLineLength =
     toDouble = fmap (fromIntegral :: Int -> Double)
 
     avg :: Fold IO Int Double
-    avg = Tee.toFold $ (/)
+    avg = toFold $ (/)
             <$> Tee (toDouble Fold.sum)
             <*> Tee (toDouble Fold.length)
 
@@ -128,9 +125,9 @@ lineLengthHistogram =
 -- | Read text from a file and generate a histogram of word length
 wordLengthHistogram :: IO (Map Int Int)
 wordLengthHistogram =
-      File.toBytes "inFile"                   -- SerialT IO Word8
+      File.toBytes "input.txt"                -- SerialT IO Word8
     & Unicode.decodeLatin1                    -- SerialT IO Char
-    & Unicode.words Fold.length               -- SerialT IO Int
+    & Stream.wordsBy isSpace Fold.length      -- SerialT IO Int
     & Stream.map bucket                       -- SerialT IO (Int, Int)
     & Stream.fold (Fold.classify Fold.length) -- IO (Map (Int, Int))
 
@@ -161,9 +158,11 @@ getWords =
       Stream.fromListM meanings                     -- AheadT  IO (String, String)
     & Stream.fromAhead                              -- SerialT IO (String, String)
     & Stream.map show                               -- SerialT IO String
-    & Stream.intercalateSuffix "\n" Unfold.identity -- SerialT IO String
+    & unlinesBy "\n"                                -- SerialT IO String
     & Stream.map Array.fromList                     -- SerialT IO (Array Word8)
     & Stream.fold (Handle.writeChunks stdout)       -- IO ()
+
+    where unlinesBy = Stream.intercalateSuffix (Unfold.function id)
 
 main :: IO ()
 main = do
