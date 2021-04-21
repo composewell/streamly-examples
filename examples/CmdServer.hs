@@ -5,15 +5,18 @@
 -- or more space separated commands e.g. "time random time" followed by a
 -- newline.
 
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
 module Main (main) where
 
+import Control.Monad (void)
+import Control.Monad.Catch (catch, SomeException)
+import Data.Char (isSpace)
 import Data.Function ((&))
 import Network.Socket (Socket)
 import Streamly.Data.Fold (Fold)
 import System.Random (randomIO)
-import Streamly.Internal.Control.Monad (discard)
 
 import qualified Data.Map.Strict as Map
 import qualified Streamly.Data.Fold as Fold
@@ -25,8 +28,6 @@ import qualified Streamly.Unicode.Stream as Unicode
 
 import qualified Streamly.Internal.Data.Fold as Fold (demuxDefault)
 import qualified Streamly.Internal.Data.Time.Clock as Clock (getTime, Clock(..))
-import qualified Streamly.Internal.Unicode.Stream as Unicode (words)
-import qualified Streamly.Internal.Network.Socket as Socket (handleWithM, writeChunk)
 
 ------------------------------------------------------------------------------
 -- Utility functions
@@ -67,12 +68,16 @@ demux = snd <$> Fold.demuxDefault commands (Fold.drainBy def)
 
 handler :: Socket -> IO ()
 handler sk =
-      Stream.unfold Socket.read sk    -- SerialT IO Word8
-    & Unicode.decodeLatin1            -- SerialT IO Char
-    & Unicode.words Fold.toList       -- SerialT IO String
-    & Stream.map (, sk)               -- SerialT IO (String, Socket)
-    & Stream.fold demux               -- IO () + Exceptions
-    & discard                         -- IO ()
+      Stream.unfold Socket.read sk       -- SerialT IO Word8
+    & Unicode.decodeLatin1               -- SerialT IO Char
+    & Stream.wordsBy isSpace Fold.toList -- SerialT IO String
+    & Stream.map (, sk)                  -- SerialT IO (String, Socket)
+    & Stream.fold demux                  -- IO () + Exceptions
+    & discard                            -- IO ()
+
+    where
+
+    discard action = void action `catch` (\(_ :: SomeException) -> return ())
 
 ------------------------------------------------------------------------------
 -- Accept connecttions and handle connected sockets
@@ -82,7 +87,7 @@ server :: IO ()
 server =
       Stream.unfold TCP.acceptOnPort 8091      -- SerialT IO Socket
     & Stream.fromSerial                        -- AsyncT IO Socket
-    & Stream.mapM (Socket.handleWithM handler) -- AsyncT IO ()
+    & Stream.mapM (Socket.forSocketM handler)  -- AsyncT IO ()
     & Stream.fromAsync                         -- SerialT IO ()
     & Stream.drain                             -- IO ()
 
