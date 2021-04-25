@@ -6,12 +6,11 @@ import Data.Char (chr, ord)
 import Data.Function ((&))
 import Data.Word (Word8)
 import Streamly.Data.Fold (Fold)
-import Streamly.Internal.Data.Fold.Tee (Tee(..))
+import Streamly.Data.Fold.Tee (Tee(..))
 import System.Environment (getArgs)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Internal.FileSystem.File as File (toBytes)
-import qualified Streamly.Internal.Data.Fold.Tee as Tee (toFold)
 import qualified Streamly.Prelude as Stream
 
 {-# INLINE isSpace #-}
@@ -68,7 +67,7 @@ _wcw file =
 -------------------------------------------------------------------------------
 
 countAll :: Fold IO Word8 (Int, Int, Int)
-countAll = Tee.toFold $ (,,) <$> Tee Fold.length <*> Tee nlines <*> Tee nwords
+countAll = toFold $ (,,) <$> Tee Fold.length <*> Tee nlines <*> Tee nwords
 
 wc :: String -> IO (Int, Int, Int)
 wc file =
