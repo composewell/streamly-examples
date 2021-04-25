@@ -11,7 +11,6 @@ import Streamly.Data.Array.Foreign (Array)
 import WordCount (count, Counts(..), isSpace)
 
 import qualified Streamly.Data.Array.Foreign as Array
-import qualified Streamly.Internal.Data.Array.Foreign as Array (readIndex)
 import qualified Streamly.Internal.FileSystem.File as File (readChunks)
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Stream
@@ -25,7 +24,7 @@ countArray1 arr =
 {-# NOINLINE countArray #-}
 countArray :: Array Word8 -> IO (Bool, Counts)
 countArray arr = do
-    let r = Array.readIndex arr 0
+    let r = Array.getIndex arr 0
     case r of
         Just x -> do
             counts <- countArray1 arr
