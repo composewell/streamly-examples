@@ -11,7 +11,6 @@ import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Unicode
 
 import qualified Streamly.Internal.Data.Array.Stream.Foreign as ArrayStream (splitOn)
-import qualified Streamly.Internal.Unicode.Stream as Unicode (lines)
 
 -- | Read the contents of a file to stdout.
 --
@@ -60,10 +59,10 @@ cp src dst =
 -- and counts the lines..
 wclChar :: Handle -> IO Int
 wclChar src =
-      Stream.unfold Handle.read src -- SerialT IO Word8
-    & Unicode.decodeLatin1          -- SerialT IO Char
-    & Unicode.lines Fold.drain      -- SerialT IO ()
-    & Stream.length                 -- IO ()
+      Stream.unfold Handle.read src             -- SerialT IO Word8
+    & Unicode.decodeLatin1                      -- SerialT IO Char
+    & Stream.splitOnSuffix (== '\n') Fold.drain -- SerialT IO ()
+    & Stream.length                             -- IO ()
 
 -- | More efficient chunked version. Reads chunks from the input handles and
 -- splits the chunks directly instead of converting them into byte stream
