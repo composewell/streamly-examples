@@ -5,7 +5,7 @@ import System.Environment (getArgs)
 import System.IO (Handle, IOMode(..), openFile, hClose)
 
 import qualified Streamly.Prelude as Stream
-import qualified Streamly.Internal.Data.Stream.IsStream as Stream (chunksOf2, evalStateT)
+import qualified Streamly.Internal.Data.Stream.IsStream as Stream (chunksOf2)
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Internal.FileSystem.Handle as Handle (write2)
 
@@ -28,8 +28,9 @@ splitFile inHandle =
       Stream.unfold Handle.read inHandle -- SerialT IO Word8
     & Stream.liftInner -- SerialT (StateT (Maybe (Handle, Int)) IO) Word8
     & Stream.chunksOf2 (180 * 1024 * 1024) newHandle Handle.write2 -- SerialT (StateT (Maybe (Handle, Int)) IO) ()
-    & Stream.evalStateT (return Nothing)  -- SerialT IO ()
-    & Stream.drain                        -- SerialT IO ()
+    & Stream.runStateT (return Nothing)  -- SerialT IO (Maybe (Handle, Int), ())
+    & Stream.map snd                     -- SerialT IO ()
+    & Stream.drain                       -- SerialT IO ()
 
 main :: IO ()
 main = do
