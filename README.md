@@ -31,7 +31,7 @@ $ cabal run --flag examples-sdl CirclingSquare
 * [ControlFlow](examples/ControlFlow.hs): Combining control flow manipulating
   transformers (`MaybeT`, `ExceptT`, `ContT`) with streamly.
 
-## CoreUtils/FileSystem
+## FileSystem
 
 * [CoreUtils](examples/CoreUtils.hs): Implement simplified coreutils
   like `cat`, `cp`, `tee`, `grep` using `Streamly.FileSystem.File` API.
