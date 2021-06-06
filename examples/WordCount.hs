@@ -25,6 +25,7 @@ isSpace c = uc == 0x20 || uc - 0x9 <= 4
 -- Counting
 -------------------------------------------------------------------------------
 
+-- Counts lines words chars lastCharWasSpace
 data Counts = Counts !Int !Int !Int !Bool deriving Show
 
 {-# INLINE count #-}

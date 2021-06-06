@@ -2,6 +2,8 @@
 --
 -- cabal run --flag fusion-plugin WordCountModular test-data.txt
 --
+module Main (main) where
+
 import Data.Char (chr, ord)
 import Data.Function ((&))
 import Data.Word (Word8)
@@ -10,6 +12,7 @@ import Streamly.Data.Fold.Tee (Tee(..))
 import System.Environment (getArgs)
 
 import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Fold.Tee as Tee
 import qualified Streamly.Internal.FileSystem.File as File (toBytes)
 import qualified Streamly.Prelude as Stream
 
@@ -19,29 +22,25 @@ isSpace c = uc == 0x20 || uc - 0x9 <= 4
   where uc = fromIntegral (ord c) :: Word
 
 -------------------------------------------------------------------------------
--- Count Bytes
+-- Fold the bytes from an input file
 -------------------------------------------------------------------------------
 
-_wcb :: String -> IO Int
-_wcb file =
-    File.toBytes file        -- SerialT IO Word8
-  & Stream.fold Fold.length  -- IO Int
+-- The fold accepts a stream of `Word8` and returns a value of type "a".
+foldWith :: Fold IO Word8 a -> String -> IO a
+foldWith f file =
+    File.toBytes file -- SerialT IO Word8
+  & Stream.fold f     -- IO a
 
 -------------------------------------------------------------------------------
 -- Count Lines
 -------------------------------------------------------------------------------
 
+-- ASCII character 10 is newline
 countl :: Int -> Word8 -> Int
 countl n ch = if ch == 10 then n + 1 else n
 
--- The fold accepts a stream of `Word8` and returns a line count (`Int`).
 nlines :: Monad m => Fold m Word8 Int
 nlines = Fold.foldl' countl 0
-
-_wcl :: String -> IO Int
-_wcl file =
-    File.toBytes file  -- SerialT IO Word8
-  & Stream.fold nlines -- IO Int
 
 -------------------------------------------------------------------------------
 -- Count Words
@@ -57,22 +56,13 @@ countw (n, wasSpace) ch =
 nwords :: Monad m => Fold m Word8 Int
 nwords = fst <$> Fold.foldl' countw (0, True)
 
-_wcw :: String -> IO Int
-_wcw file =
-    File.toBytes file   -- SerialT IO Word8
-  & Stream.fold nwords  -- IO Int
-
 -------------------------------------------------------------------------------
 -- Count Bytes, Lines, Words
 -------------------------------------------------------------------------------
 
+-- The fold accepts a stream of `Word8` and returns the three counts
 countAll :: Fold IO Word8 (Int, Int, Int)
-countAll = toFold $ (,,) <$> Tee Fold.length <*> Tee nlines <*> Tee nwords
-
-wc :: String -> IO (Int, Int, Int)
-wc file =
-    File.toBytes file    -- SerialT IO Word8
-  & Stream.fold countAll -- IO (Int, Int, Int)
+countAll = Tee.toFold $ (,,) <$> Tee Fold.length <*> Tee nlines <*> Tee nwords
 
 -------------------------------------------------------------------------------
 -- Main
@@ -81,9 +71,8 @@ wc file =
 main :: IO ()
 main = do
     name <- fmap head getArgs
-    -- _wcb name >>= print
-    -- _wcl name >>= print
-    -- _wcw name >>= print
-    -- wc name >>= print
-    (c, l, w) <- wc name
+    -- foldWith Fold.length name >>= print -- count bytes only
+    -- foldWith nlines name >>= print      -- count lines only
+    -- foldWith nwords name >>= print      -- count words only
+    (c, l, w) <- foldWith countAll name    -- count all at once
     putStrLn $ show l ++ " " ++ show w ++ " " ++ show c ++ " " ++ name

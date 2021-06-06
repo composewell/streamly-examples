@@ -12,7 +12,7 @@ import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Unicode
 
--- | Read a line stream from a socket. Note lines are buffered, we could add
+-- | Read a line stream from a socket. Note, lines are buffered, we could add
 -- a limit to the buffering for safety.
 readLines :: Socket -> SerialT IO (Array Char)
 readLines sk =
