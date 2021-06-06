@@ -53,8 +53,8 @@ let haskellPackages =
                     fusion-plugin =
                       super.callHackageDirect
                         { pkg = "fusion-plugin";
-                          ver = "0.2.2";
-                          sha256 = "1g7j50wa7ffyizv6fdnr09dr4w7bc0hskb46h7y0paw6rh9yz4zj";
+                          ver = "0.2.3";
+                          sha256 = "073wbhdxj1sh5160blaihbzkkhabs8s71pqhag16lvmgbb7a3hla";
                         } {};
 
                     # Example to Use a different version of a package
@@ -79,6 +79,7 @@ let haskellPackages =
 
     hspkgs = mkHaskellPackages true;
 
+    # A fake package to add some additional deps to the shell env
     additionalDeps = hspkgs.mkDerivation rec {
               version = "0.1";
               pname   = "streamly-examples-additional";
