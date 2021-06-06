@@ -31,7 +31,6 @@ jobs:
       CABAL_PROJECT: ${{ matrix.cabal_project }}
       DISABLE_DOCS: ${{ matrix.disable_docs }}
       DISABLE_TEST: "y"
-      DISABLE_SDIST_GIT_CHECK: "y"
 
     runs-on: macos-latest
     strategy:

@@ -189,6 +189,7 @@ jobs:
         - *preinstall
         - *restore
         - run:
+            name: GHC 8.2.2
             environment:
               BUILD: "cabal-v2"
             command: |
@@ -204,6 +205,7 @@ jobs:
         - *preinstall
         - *restore
         - run:
+            name: GHC 8.0.2
             environment:
               BUILD: "cabal-v2"
             command: |
@@ -237,7 +239,7 @@ jobs:
               apt-get install -y ghcjs-8.4
               bash -c "$PACKCHECK $BUILD"
         - *save
-  cabal-ghc-8_10_2:
+  cabal-ghc-8_10_4:
       <<: *env
       executor: amd64-executor
       steps:
@@ -245,16 +247,16 @@ jobs:
         - *preinstall
         - *restore
         - run:
-            name: GHC 8.10.2
+            name: GHC 8.10.4
             environment:
               BUILD: "cabal-v2"
             command: |
-              apt-get install -y ghc-8.10.2
+              apt-get install -y ghc-8.10.4
               apt-get install -y cabal-install-3.2
               bash -c "$PACKCHECK $BUILD"
             no_output_timeout: 25m
         - *save
-  cabal-ghc-8_10_2_sdl:
+  cabal-ghc-8_10_4_sdl:
       <<: *env
       executor: amd64-executor
       steps:
@@ -262,17 +264,17 @@ jobs:
         - *preinstall
         - *restore
         - run:
-           name: GHC 8.10.2 + examples-sdl
+           name: GHC 8.10.4 + examples-sdl
            environment:
              BUILD: "cabal-v2"
              CABAL_BUILD_OPTIONS: "--flag examples-sdl"
            command: |
               apt-get install -y libsdl2-dev
-              apt-get install -y ghc-8.10.2
+              apt-get install -y ghc-8.10.4
               apt-get install -y cabal-install-3.2
               bash -c "$PACKCHECK $BUILD"
         - *save
-  cabal-ghc-8_10_2_fusion_plugin:
+  cabal-ghc-8_10_4_fusion_plugin:
       <<: *env
       executor: amd64-executor
       steps:
@@ -280,16 +282,16 @@ jobs:
         - *preinstall
         - *restore
         - run:
-           name: GHC 8.10.2 + fusion-plugin
+           name: GHC 8.10.4 + fusion-plugin
            environment:
              BUILD: "cabal-v2"
              CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
            command: |
-              apt-get install -y ghc-8.10.2
+              apt-get install -y ghc-8.10.4
               apt-get install -y cabal-install-3.2
               bash -c "$PACKCHECK $BUILD"
         - *save
-  cabal-ghc-8_10_2_all_plugins:
+  cabal-ghc-8_10_4_all_plugins:
       <<: *env
       executor: amd64-executor
       steps:
@@ -297,14 +299,50 @@ jobs:
         - *preinstall
         - *restore
         - run:
-           name: GHC 8.10.2 + examples-sdl + fusion-plugin
+           name: GHC 8.10.4 + examples-sdl + fusion-plugin
            environment:
              BUILD: "cabal-v2"
              CABAL_BUILD_OPTIONS: "--flag examples-sdl --flag fusion-plugin"
            command: |
               apt-get install -y libsdl2-dev
-              apt-get install -y ghc-8.10.2
+              apt-get install -y ghc-8.10.4
               apt-get install -y cabal-install-3.2
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+  cabal-ghc-9_0_1_fusion_plugin:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+           name: GHC 9.0.1 + fusion-plugin + Werror
+           environment:
+             BUILD: "cabal-v2"
+             CABAL_PROJECT: "cabal.project.ci"
+             CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
+           command: |
+              apt-get install -y ghc-9.0.1
+              apt-get install -y cabal-install-3.4
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+  cabal-ghc-9_0_1_sdist:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+           name: GHC 9.0.1 + sdist + fusion-plugin
+           environment:
+             BUILD: "cabal-v2"
+             CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
+             DISABLE_SDIST_BUILD: "no"
+           command: |
+              apt-get install -y ghc-9.0.1
+              apt-get install -y cabal-install-3.4
               bash -c "$PACKCHECK $BUILD"
         - *save
   hlint:
@@ -328,28 +366,20 @@ workflows:
   version: 2
   build:
     jobs:
-      - cabal-ghc-8_10_2:
-           name: GHC 8.10.2
-      - cabal-ghc-8_10_2_sdl:
-           name: GHC 8.10.2 + examples-sdl
-      - cabal-ghc-8_10_2_fusion_plugin:
-           name: GHC 8.10.2 + fusion-plugin
-      - cabal-ghc-8_10_2_all_plugins:
-           name: GHC 8.10.2 + examples-sdl + fusion-plugin
-      - cabal-ghc-8_6_5:
-          name: GHC 8.6.5
-      - cabal-ghc-8_2_2:
-          name: GHC 8.2.2
-      - cabal-ghc-8_0_2:
-          name: GHC 8.0.2
+      - cabal-ghc-9_0_1_sdist
+      - cabal-ghc-9_0_1_fusion_plugin
+      - cabal-ghc-8_10_4
+      - cabal-ghc-8_10_4_sdl
+      - cabal-ghc-8_10_4_fusion_plugin
+      - cabal-ghc-8_10_4_all_plugins
+      - stack-ghc-8_8
+      - cabal-ghc-8_6_5
+      - cabal-ghc-8_2_2
+      - cabal-ghc-8_0_2
       #- cabal-ghc-7.10.3
-      - cabal-ghcjs-8_4:
-          name: GHCJS 8.4
-      - stack-ghc-8_8:
-          name: GHC 8.8 + stack lts-16.12
+      - cabal-ghcjs-8_4
       #- stack-ghc-8.4
       #- stack-ghc-8.2
       #- coveralls-ghc-8.2.2
       #- coveralls-ghc-8.8.3
-      - hlint:
-          name: Hlint examples
+      - hlint

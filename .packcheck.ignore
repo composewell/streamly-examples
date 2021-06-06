@@ -1,0 +1,12 @@
+.packcheck.ignore
+.circleci/config.yml
+.github/workflows/haskell.yml
+.gitignore
+.hlint.ignore
+appveyor.yml
+examples/SearchQuery.hs
+hie.yaml
+stack.yaml
+cabal.project
+cabal.project.ci
+default.nix

@@ -1,6 +1,7 @@
-packages: streamly-examples.cabal
+packages: .
 
-jobs: 1
+package streamly-examples
+  ghc-options: -Werror
 
 source-repository-package
   type: git

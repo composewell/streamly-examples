@@ -13,15 +13,13 @@ copyright:     Copyright (c) 2019 Composewell Technologies
 synopsis:      Examples for streamly
 description:   Examples for streamly
 
-tested-with: GHC==8.8.1
+tested-with: GHC==8.10.4, GHC==8.8.4, GHC==8.6.5
 build-type:    Simple
 extra-source-files:
-  .circleci/config.yml
-  .github/workflows/haskell.yml
-  .hlint.ignore
-  appveyor.yml
-  README.md
+  Makefile
   NOTICE
+  README.md
+  examples/WordCount.c
 
 source-repository head
   type: git
