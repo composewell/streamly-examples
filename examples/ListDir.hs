@@ -22,6 +22,6 @@ listDir dir =
 main :: IO ()
 main = do
     hSetBuffering stdout LineBuffering
-    let start = Stream.yield (Left ".")
+    let start = Stream.fromPure (Left ".")
     Stream.iterateMapLeftsWith Stream.ahead listDir start
         & Stream.mapM_ print

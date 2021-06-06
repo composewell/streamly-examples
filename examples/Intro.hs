@@ -80,7 +80,7 @@ nestedLoops :: SerialT IO ()
 nestedLoops = do
     x <- Stream.fromList [3,4 :: Int]
     y <- Stream.fromList [1..x]
-    Stream.yieldM $ print (x, y)
+    Stream.fromEffect $ print (x, y)
 
 -------------------------------------------------------------------------------
 -- Text processing

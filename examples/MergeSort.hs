@@ -15,7 +15,7 @@ import qualified Streamly.Prelude as Stream
 
 getSorted :: Serial Word16
 getSorted = do
-    g <- Stream.yieldM getStdGen
+    g <- Stream.fromEffect getStdGen
     let ls = take 100000 (randoms g) :: [Word16]
     foldMap return (sort ls)
 

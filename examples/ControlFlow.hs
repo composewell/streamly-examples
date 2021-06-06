@@ -151,7 +151,7 @@ getSequenceEitherAsyncBelow = do
             >> lift (throwE "First task")
             >> return 1)
             <> (lift (throwE "Second task") >> return 2)
-            <> Stream.yield (3 :: Integer)
+            <> Stream.fromPure (3 :: Integer)
     liftIO $ putStrLn $ "iteration = " <> show i
 
 mainEitherAsyncBelow :: IO ()
