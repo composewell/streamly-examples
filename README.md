@@ -28,8 +28,6 @@ $ cabal run --flag examples-sdl CirclingSquare
   processing, networking, concurrency.
 * [MergeSort](examples/MergeSort.hs): Merge sorted streams concurrently.
 * [Rate](examples/Rate.hs): Run an action at a given rate.
-* [ControlFlow](examples/ControlFlow.hs): Combining control flow manipulating
-  transformers (`MaybeT`, `ExceptT`, `ContT`) with streamly.
 
 ## FileSystem
 
@@ -78,3 +76,8 @@ $ cabal run --flag examples-sdl CirclingSquare
   that can be modified by typing "harm" and "potion" commands.
 * [CirclingSquare](examples/CirclingSquare.hs): Use SDL2 to display a
   square that moves in a circle, and follows the mouse pointer.
+
+## Monad Transformers
+
+* [ControlFlow](examples/ControlFlow.hs): Combining control flow manipulating
+  transformers (`MaybeT`, `ExceptT`, `ContT`) with streamly.
