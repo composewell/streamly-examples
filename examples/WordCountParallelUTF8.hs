@@ -42,7 +42,6 @@ import qualified Streamly.Internal.Unicode.Stream as Unicode
        (DecodeState, DecodeError(..), CodePoint, decodeUtf8Either
        , resumeDecodeUtf8Either)
 import qualified Streamly.Prelude as Stream
-import qualified Streamly.Unicode.Stream as Stream
 
 -------------------------------------------------------------------------------
 -- Parallel char, line and word counting

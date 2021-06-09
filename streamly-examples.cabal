@@ -227,9 +227,9 @@ executable WordCountModular
   else
     buildable: False
 
-executable WordCountUTF8
+executable WordCountParallelUTF8
   import: exe-options-threaded
-  main-is: WordCountUTF8.hs
+  main-is: WordCountParallelUTF8.hs
   if !impl(ghcjs)
     buildable: True
   else
