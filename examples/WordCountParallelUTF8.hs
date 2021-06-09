@@ -28,6 +28,8 @@
 -- be 4. Note that the spaces in this string are not regular space chars they
 -- are different unicode space chars.
 
+module Main (main, wcMwlParserial) where
+
 import Control.Monad (when, unless)
 import Data.Char (isSpace)
 import Data.Word (Word8)
@@ -557,13 +559,13 @@ countArray src = do
         $ Stream.unfold Array.read src
     return counts
 
-{-# INLINE wc_mwl_parallel #-}
-wc_mwl_parallel :: Handle -> Int -> IO (V.IOVector Int)
-wc_mwl_parallel src n = do
+{-# INLINE wcMwlParallel #-}
+wcMwlParallel :: Handle -> Int -> IO (V.IOVector Int)
+wcMwlParallel src n = do
     Stream.foldlM' addCounts newCounts
         $ Stream.fromAhead
         $ Stream.maxThreads numCapabilities
-        $ Stream.mapM (countArray)
+        $ Stream.mapM countArray
         $ Stream.unfold Handle.readChunksWithBufferOf (n, src)
 
 -------------------------------------------------------------------------------
@@ -571,8 +573,8 @@ wc_mwl_parallel src n = do
 -------------------------------------------------------------------------------
 --
 -- This is only for perf comparison
-_wc_mwl_parserial :: Handle -> IO (V.IOVector Int)
-_wc_mwl_parserial src = do
+wcMwlParserial :: Handle -> IO (V.IOVector Int)
+wcMwlParserial src = do
     counts <- newCounts
     Stream.mapM_ (countChar counts)
         $ Unicode.decodeUtf8Either
@@ -587,7 +589,7 @@ main :: IO ()
 main = do
     name <- fmap head getArgs
     src <- openFile name ReadMode
-    -- printCounts =<< _wc_mwl_parserial src -- Unix wc -l program
+    -- printCounts =<< wcMwlParserial src -- Unix wc -l program
     -- Using different sizes of chunks (1,2,3,4,5,10,128,256) is a good testing
     -- mechanism for parallel counting code.
     {-
@@ -595,4 +597,4 @@ main = do
     let chunkSize = read $ args !! 1
     -}
     let chunkSize = 32 * 1024
-    printCounts =<< wc_mwl_parallel src chunkSize  -- Unix wc -l program
+    printCounts =<< wcMwlParallel src chunkSize  -- Unix wc -l program
