@@ -155,26 +155,41 @@ meanings = map fetch wordList
 --
 getWords :: IO ()
 getWords =
-      Stream.fromListM meanings                     -- AheadT  IO (String, String)
-    & Stream.fromAhead                              -- SerialT IO (String, String)
-    & Stream.map show                               -- SerialT IO String
-    & unlinesBy "\n"                                -- SerialT IO String
-    & Stream.map Array.fromList                     -- SerialT IO (Array Word8)
-    & Stream.fold (Handle.writeChunks stdout)       -- IO ()
+      Stream.fromListM meanings                -- AheadT  IO (String, String)
+    & Stream.fromAhead                         -- SerialT IO (String, String)
+    & Stream.map show                          -- SerialT IO String
+    & unlinesBy "\n"                           -- SerialT IO String
+    & Stream.map Array.fromList                -- SerialT IO (Array Word8)
+    & Stream.fold (Handle.writeChunks stdout)  -- IO ()
 
     where unlinesBy = Stream.intercalateSuffix (Unfold.function id)
 
+-------------------------------------------------------------------------------
+-- Main
+-------------------------------------------------------------------------------
+
+-- Usage example: Intro sumInt
+--
+-- Some examples (e.g. avgLineLength) require a text file "input.txt" in
+-- the current directory.
+--
 main :: IO ()
 main = do
     cmd <- fmap head getArgs
 
     case cmd of
-        "sumInt" -> putStrLn "sumInt" >> print (runIdentity sumInt)
-        "sumInt1" -> putStrLn "sumInt1" >> print (runIdentity sumInt1)
+        "sumInt" -> do
+            putStrLn "sumInt"
+            print (runIdentity sumInt)
+        "sumInt1" -> do
+            putStrLn "sumInt1"
+            print (runIdentity sumInt1)
         "crossProduct" -> do
             putStrLn "crossProduct"
             print $ runIdentity $ crossProduct (1,1000) (1000,2000)
-        "nestedLoops" -> putStrLn "nestedLoops" >> Stream.drain nestedLoops
+        "nestedLoops" -> do
+            putStrLn "nestedLoops"
+            Stream.drain nestedLoops
         "avgLineLength" -> do
             putStrLn "avgLineLength"
             avgLineLength >>= print
