@@ -42,6 +42,7 @@ wc :: String -> IO Counts
 wc file =
       Stream.unfold File.read file            -- SerialT IO Word8
     & Stream.decodeLatin1                     -- SerialT IO Char
+ -- & Stream.decodeUtf8                       -- SerialT IO Char
     & Stream.foldl' count (Counts 0 0 0 True) -- IO Counts
 
 -------------------------------------------------------------------------------

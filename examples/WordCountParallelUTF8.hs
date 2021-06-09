@@ -301,41 +301,6 @@ printCounts v = do
     putStrLn $ show l ++ " " ++ show w ++  " " ++ show c
 
 -------------------------------------------------------------------------------
--- Serial counting using parallel version of countChar
--------------------------------------------------------------------------------
-
-_wc_mwl_parserial :: Handle -> IO (V.IOVector Int)
-_wc_mwl_parserial src = do
-    counts <- newCounts
-    Stream.mapM_ (countChar counts)
-        $ Unicode.decodeUtf8Either
-        $ Stream.unfold Handle.read src
-    return counts
-
--------------------------------------------------------------------------------
--- Serial word counting with UTF-8 handling
--------------------------------------------------------------------------------
-
-data Counts = Counts !Int !Int !Int !Bool deriving Show
-
-{-# INLINE countCharSerial #-}
-countCharSerial :: Counts -> Char -> Counts
-countCharSerial (Counts l w c wasSpace) ch =
-    let l1 = if ch == '\n' then l + 1 else l
-        (w1, wasSpace1) =
-            if isSpace ch
-            then (w, True)
-            else (if wasSpace then w + 1 else w, False)
-    in Counts l1 w1 (c + 1) wasSpace1
-
--- Note: This counts invalid byte sequences are non-space chars
-_wc_mwl_serial :: Handle -> IO ()
-_wc_mwl_serial src = print =<< (
-      Stream.foldl' countCharSerial (Counts 0 0 0 True)
-    $ Stream.decodeUtf8
-    $ Stream.unfold Handle.read src)
-
--------------------------------------------------------------------------------
 -- Parallel counting
 -------------------------------------------------------------------------------
 
@@ -602,6 +567,19 @@ wc_mwl_parallel src n = do
         $ Stream.unfold Handle.readChunksWithBufferOf (n, src)
 
 -------------------------------------------------------------------------------
+-- Serial counting using parallel version of countChar
+-------------------------------------------------------------------------------
+--
+-- This is only for perf comparison
+_wc_mwl_parserial :: Handle -> IO (V.IOVector Int)
+_wc_mwl_parserial src = do
+    counts <- newCounts
+    Stream.mapM_ (countChar counts)
+        $ Unicode.decodeUtf8Either
+        $ Stream.unfold Handle.read src
+    return counts
+
+-------------------------------------------------------------------------------
 -- Main
 -------------------------------------------------------------------------------
 
@@ -609,7 +587,6 @@ main :: IO ()
 main = do
     name <- fmap head getArgs
     src <- openFile name ReadMode
-    -- _wc_mwl_serial src -- Unix wc -l program
     -- printCounts =<< _wc_mwl_parserial src -- Unix wc -l program
     -- Using different sizes of chunks (1,2,3,4,5,10,128,256) is a good testing
     -- mechanism for parallel counting code.
