@@ -39,6 +39,11 @@ flag examples-sdl
   manual: True
   default: False
 
+flag interop
+  description: Build examples of inter-operation with other libraries
+  manual: True
+  default: False
+
 ------------------------------------------------------------------------------
 -- Common Stanzas                                                           --
 ------------------------------------------------------------------------------
@@ -91,6 +96,41 @@ common exe-options-threaded
 ------------------------------------------------------------------------------
 -- Examples                                                                 --
 ------------------------------------------------------------------------------
+
+executable Interop.Vector
+  import: exe-options-threaded
+  main-is: Interop/Vector.hs
+  if !impl(ghcjs) && flag(interop)
+    buildable: True
+  else
+    buildable: False
+
+executable Interop.Pipes
+  import: exe-options-threaded
+  main-is: Interop/Pipes.hs
+  if !impl(ghcjs) && flag(interop)
+    buildable: True
+    build-depends: pipes >= 4.3.16 && < 4.4
+  else
+    buildable: False
+
+executable Interop.Streaming
+  import: exe-options-threaded
+  main-is: Interop/Streaming.hs
+  if !impl(ghcjs) && flag(interop)
+    buildable: True
+    build-depends: streaming >= 0.2.3.0 && < 0.3
+  else
+    buildable: False
+
+executable Interop.Conduit
+  import: exe-options-threaded
+  main-is: Interop/Conduit.hs
+  if !impl(ghcjs) && flag(interop)
+    buildable: True
+    build-depends: conduit >= 1.3.4.1 && < 1.3.5
+  else
+    buildable: False
 
 executable Intro
   import: exe-options-threaded
