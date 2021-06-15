@@ -20,6 +20,12 @@ cabal:
 $ cabal run --flag examples-sdl CirclingSquare
 ```
 
+To run interop examples, use the `interop` build flag:
+
+```
+$ cabal run --flag interop Interop.Pipes
+```
+
 # List of examples
 
 ## General
@@ -81,3 +87,14 @@ $ cabal run --flag examples-sdl CirclingSquare
 
 * [ControlFlow](examples/ControlFlow.hs): Combining control flow manipulating
   transformers (`MaybeT`, `ExceptT`, `ContT`) with streamly.
+
+## Interoperation
+
+* [Interop.Streaming](examples/Interop/Streaming.hs): Converting streamly
+  stream type to and from `streaming` stream type.
+* [Interop.Pipes](examples/Interop/Pipes.hs): Converting streamly
+  stream type to and from `pipes` stream type.
+* [Interop.Conduit](examples/Interop/Conduit.hs): Converting streamly
+  stream type to and from `conduit` stream type.
+* [Interop.Vector](examples/Interop/Vector.hs): Converting streamly
+  stream type to and from `vector` stream type.
