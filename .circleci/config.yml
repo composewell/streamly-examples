@@ -256,24 +256,6 @@ jobs:
               bash -c "$PACKCHECK $BUILD"
             no_output_timeout: 25m
         - *save
-  cabal-ghc-8_10_4_sdl:
-      <<: *env
-      executor: amd64-executor
-      steps:
-        - checkout
-        - *preinstall
-        - *restore
-        - run:
-           name: GHC 8.10.4 + examples-sdl
-           environment:
-             BUILD: "cabal-v2"
-             CABAL_BUILD_OPTIONS: "--flag examples-sdl"
-           command: |
-              apt-get install -y libsdl2-dev
-              apt-get install -y ghc-8.10.4
-              apt-get install -y cabal-install-3.2
-              bash -c "$PACKCHECK $BUILD"
-        - *save
   cabal-ghc-8_10_4_fusion_plugin:
       <<: *env
       executor: amd64-executor
@@ -291,7 +273,7 @@ jobs:
               apt-get install -y cabal-install-3.2
               bash -c "$PACKCHECK $BUILD"
         - *save
-  cabal-ghc-8_10_4_all_plugins:
+  cabal-ghc-8_10_4_all_flags:
       <<: *env
       executor: amd64-executor
       steps:
@@ -299,10 +281,10 @@ jobs:
         - *preinstall
         - *restore
         - run:
-           name: GHC 8.10.4 + examples-sdl + fusion-plugin
+           name: GHC 8.10.4 + sdl2 + interop + fusion-plugin
            environment:
              BUILD: "cabal-v2"
-             CABAL_BUILD_OPTIONS: "--flag examples-sdl --flag fusion-plugin"
+             CABAL_BUILD_OPTIONS: "--flag sdl2 --flag interop --flag fusion-plugin"
            command: |
               apt-get install -y libsdl2-dev
               apt-get install -y ghc-8.10.4
@@ -369,17 +351,11 @@ workflows:
       - cabal-ghc-9_0_1_sdist
       - cabal-ghc-9_0_1_fusion_plugin
       - cabal-ghc-8_10_4
-      - cabal-ghc-8_10_4_sdl
       - cabal-ghc-8_10_4_fusion_plugin
-      - cabal-ghc-8_10_4_all_plugins
+      - cabal-ghc-8_10_4_all_flags
       - stack-ghc-8_8
       - cabal-ghc-8_6_5
       - cabal-ghc-8_2_2
       - cabal-ghc-8_0_2
-      #- cabal-ghc-7.10.3
       - cabal-ghcjs-8_4
-      #- stack-ghc-8.4
-      #- stack-ghc-8.2
-      #- coveralls-ghc-8.2.2
-      #- coveralls-ghc-8.8.3
       - hlint

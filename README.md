@@ -17,7 +17,7 @@ the sdl2 library installed on your system and the headers are visible to
 cabal:
 
 ```
-$ cabal run --flag examples-sdl CirclingSquare
+$ cabal run --flag sdl2 CirclingSquare
 ```
 
 To run interop examples, use the `interop` build flag:

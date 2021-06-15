@@ -34,8 +34,8 @@ flag fusion-plugin
   manual: True
   default: False
 
-flag examples-sdl
-  description: Build including SDL examples
+flag sdl2
+  description: Build including SDL2 examples
   manual: True
   default: False
 
@@ -195,7 +195,7 @@ executable AcidRain
 executable CirclingSquare
   import: exe-options-threaded
   main-is: CirclingSquare.hs
-  if flag(examples-sdl)
+  if flag(sdl2)
     buildable: True
     build-Depends:
           text >= 1.2.3 && < 1.2.5
