@@ -7,9 +7,8 @@
 
 {
   nixpkgs ?
-    import (builtins.fetchTarball https://github.com/composewell/nixpkgs/archive/01dd2b4e738.tar.gz)
-        # fusion-plugin is marked as broken
-        { config.allowBroken = true;}
+    import (builtins.fetchTarball https://github.com/NixOS/nixpkgs/archive/refs/tags/21.05.tar.gz)
+        {}
 , compiler ? "default"
 , c2nix ? "" # cabal2nix CLI options
 # TODO
@@ -32,7 +31,7 @@ let haskellPackages =
                     then orig.overrideAttrs (oldAttrs: { src = null; })
                     else orig;
 
-    flags = "--flag fusion-plugin" + " " + c2nix;
+    flags = "--flag fusion-plugin --flag sdl2 --flag interop" + " " + c2nix;
 
     mkHaskellPackages = inShell:
         haskellPackages.override {
