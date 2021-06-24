@@ -13,7 +13,7 @@ copyright:     Copyright (c) 2019 Composewell Technologies
 synopsis:      Examples for streamly
 description:   Examples for streamly
 
-tested-with: GHC==8.10.4, GHC==8.8.4, GHC==8.6.5
+tested-with: GHC==9.0.1,GHC==8.10.5, GHC==8.8.4, GHC==8.6.5
 build-type:    Simple
 extra-source-files:
   Makefile
@@ -50,7 +50,7 @@ flag interop
 
 common exe-dependencies
   build-depends:
-      streamly
+      streamly              >= 0.8.0 && < 0.9
     , base                  >= 4.9   && < 5
     , directory             >= 1.2   && < 1.4
     , transformers          >= 0.4   && < 0.6

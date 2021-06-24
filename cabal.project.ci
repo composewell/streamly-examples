@@ -2,8 +2,3 @@ packages: .
 
 package streamly-examples
   ghc-options: -Werror
-
-source-repository-package
-  type: git
-  location: https://github.com/composewell/streamly
-  tag: 56e1807742553c2d3a48c3c5135c8a6bd2238100
