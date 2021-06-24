@@ -58,7 +58,7 @@ env: &env
       # If you have not committed packcheck.sh in your repo at PACKCHECK
       # then it is automatically pulled from this URL.
       PACKCHECK_GITHUB_URL: "https://raw.githubusercontent.com/composewell/packcheck"
-      PACKCHECK_GITHUB_COMMIT: "978bf5d631f43bb840adedafa97577bf0025cab2"
+      PACKCHECK_GITHUB_COMMIT: "79fb4437009a7ebdada33d0493c27ee30160ec3f"
 
 executors:
   amd64-executor:
@@ -138,10 +138,10 @@ jobs:
         - *preinstall
         - *restore
         - run:
-            name: GHC 8.8 + stack lts-16.12
+            name: GHC 8.8 + stack lts-16.31
             environment:
               BUILD: "stack"
-              RESOLVER: "lts-16.12"
+              RESOLVER: "lts-16.31"
               SDIST_OPTIONS: "--ignore-check"
             command: |
               apt-get build-dep -y ghc-8.8.4

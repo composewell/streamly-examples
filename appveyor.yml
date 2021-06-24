@@ -42,6 +42,7 @@ environment:
     # ------------------------------------------------------------------------
     # cabal options
     # ------------------------------------------------------------------------
+    CABAL_BUILD_OPTIONS: "--flag interop"
     CABAL_CHECK_RELAX: "y"
     CABAL_NO_SANDBOX: "y"
     CABAL_HACKAGE_MIRROR: "hackage.haskell.org:http://hackage.fpcomplete.com"

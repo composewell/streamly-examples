@@ -23,7 +23,7 @@ jobs:
 
       PACKCHECK_LOCAL_PATH: "./packcheck.sh"
       PACKCHECK_GITHUB_URL: "https://raw.githubusercontent.com/composewell/packcheck"
-      PACKCHECK_GITHUB_COMMIT: "978bf5d631f43bb840adedafa97577bf0025cab2"
+      PACKCHECK_GITHUB_COMMIT: "79fb4437009a7ebdada33d0493c27ee30160ec3f"
 
       BUILD: ${{ matrix.build }}
       GHCVER: ${{ matrix.ghc_version }}
@@ -36,13 +36,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [8.10.2+macOS]
+        name: [8.10.4+macOS]
         cabal_version: ["3.2"]
         include:
-          - name: 8.10.2+macOS
-            ghc_version: 8.10.2
+          - name: 8.10.4+macOS
+            ghc_version: 8.10.4
             build: cabal-v2
             cabal_project: cabal.project
+            disable_docs: "y"
+            cabal_build_options: "--flag interop"
     steps:
     - uses: actions/checkout@v2
 
