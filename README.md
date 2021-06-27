@@ -1,4 +1,15 @@
-# Running The Examples
+# Streamly Examples
+
+Practical examples to demonstrate the features and performance of
+Streamly.  Includes examples about file IO, text processing, networking,
+concurrent programming, reactive programming and more.
+
+These examples also serve as a beginner's guide to express practical
+programs using the dataflow programming (streaming) model.  Please visit
+the [Streamly homepage](https://streamly.composewell.com) for more
+details and comprehensive documentation.
+
+## Running The Examples
 
 Executable names are the same as the filenames.  To run an example:
 
@@ -26,16 +37,16 @@ To run interop examples, use the `interop` build flag:
 $ cabal run --flag interop Interop.Pipes
 ```
 
-# List of examples
+## List of examples
 
-## General
+### General
 
 * [Intro](examples/Intro.hs): Simple, introductory examples - loops, text
   processing, networking, concurrency.
 * [MergeSort](examples/MergeSort.hs): Merge sorted streams concurrently.
 * [Rate](examples/Rate.hs): Run an action at a given rate.
 
-## FileSystem
+### FileSystem
 
 * [CoreUtils](examples/CoreUtils.hs): Implement simplified coreutils
   like `cat`, `cp`, `tee`, `grep` using `Streamly.FileSystem.File` API.
@@ -47,7 +58,7 @@ $ cabal run --flag interop Interop.Pipes
 * [ListDir](examples/ListDir.hs): List a directory tree recursively and
   concurrently.
 
-## Text Processing
+### Text Processing
 
 * [CamelCase](examples/CamelCase.hs): Convert a file to camel case.
 * [WordCount](examples/WordCount.hs): Simple word counting (`wc`) program.
@@ -59,7 +70,7 @@ $ cabal run --flag interop Interop.Pipes
 * [WordFrequency](examples/WordFrequency.hs): Count word frequency in
   a file and print top 25 words.
 
-## Networking
+### Networking
 
 * [EchoServer](examples/EchoServer.hs): A concurrent TCP server that
   echoes everything that it receives.
@@ -76,19 +87,19 @@ $ cabal run --flag interop Interop.Pipes
   server, instead of performing a real DB query the server just adds a
   time delay to simulate the IO.
 
-## FRP/Games/Animation
+### FRP/Games/Animation
 
 * [AcidRain](examples/AcidRain.hs): A console game with deteriorating health
   that can be modified by typing "harm" and "potion" commands.
 * [CirclingSquare](examples/CirclingSquare.hs): Use SDL2 to display a
   square that moves in a circle, and follows the mouse pointer.
 
-## Monad Transformers
+### Monad Transformers
 
 * [ControlFlow](examples/ControlFlow.hs): Combining control flow manipulating
   transformers (`MaybeT`, `ExceptT`, `ContT`) with streamly.
 
-## Interoperation
+### Interoperation
 
 * [Interop.Streaming](examples/Interop/Streaming.hs): Converting streamly
   stream type to and from `streaming` stream type.
@@ -98,3 +109,7 @@ $ cabal run --flag interop Interop.Pipes
   stream type to and from `conduit` stream type.
 * [Interop.Vector](examples/Interop/Vector.hs): Converting streamly
   stream type to and from `vector` stream type.
+
+## Licensing
+
+Available under [Apache-2.0 license](LICENSE).
