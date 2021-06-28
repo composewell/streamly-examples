@@ -49,6 +49,22 @@ let haskellPackages =
                         mkPackage super "streamly-examples"
                             ./. flags inShell;
 
+                    streamly =
+                      nixpkgs.haskell.lib.overrideCabal
+                        (super.callHackageDirect
+                          { pkg = "streamly";
+                            ver = "0.8.0";
+                            sha256 = "0vy2lkljizlhpbpbybmg9jcmj2g4s1aaqd2dzy5c0y0n4rgwxask";
+                          } {})
+                        (old:
+                          { librarySystemDepends =
+                              if builtins.currentSystem == "x86_64-darwin"
+                              then [nixpkgs.darwin.apple_sdk.frameworks.Cocoa]
+                              else [];
+                            enableLibraryProfiling = false;
+                            doHaddock = false;
+                          });
+
                     fusion-plugin =
                       super.callHackageDirect
                         { pkg = "fusion-plugin";
@@ -101,6 +117,7 @@ let haskellPackages =
             additionalDeps
           ];
         shellHook = ''
+          export CABAL_DIR="$(pwd)/.cabal.nix"
           if test -n "$PS_SHELL"
           then
             export PS1="$PS_SHELL\[$bldred\](nix)\[$txtrst\] "
