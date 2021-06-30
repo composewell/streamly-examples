@@ -25,6 +25,7 @@ stability:     provisional
 tested-with: GHC==9.0.1, GHC==8.10.5, GHC==8.8.4, GHC==8.6.5
 build-type:    Simple
 extra-source-files:
+  Changelog.md
   Makefile
   NOTICE
   README.md
