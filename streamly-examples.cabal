@@ -17,7 +17,7 @@ description:
   .
   These examples also serve as a beginner's guide to express practical
   programs using the dataflow programming (streaming) model.  Please
-  visit the <https://streamly.composewell.com> Streamly homepage> for
+  visit the <https://streamly.composewell.com Streamly homepage> for
   more details and comprehensive documentation.
 category:
     Streamly, Streaming, Concurrency, Text, Filesystem, Network, Reactivity
