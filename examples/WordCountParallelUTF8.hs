@@ -30,20 +30,24 @@
 
 module Main (main, wcMwlParserial) where
 
-import Control.Monad (when, unless)
+import Control.Monad (when, unless, void)
 import Data.Char (isSpace)
 import Data.Word (Word8)
 import GHC.Conc (numCapabilities)
 import System.Environment (getArgs)
 import System.IO (Handle, openFile, IOMode(..))
 
-import qualified Data.Vector.Storable.Mutable as V
 import qualified Streamly.Data.Array.Foreign as Array
 import qualified Streamly.FileSystem.Handle as Handle
+import qualified Streamly.Prelude as Stream
+
+-- Internal modules
 import qualified Streamly.Internal.Unicode.Stream as Unicode
        (DecodeState, DecodeError(..), CodePoint, decodeUtf8Either
        , resumeDecodeUtf8Either)
-import qualified Streamly.Prelude as Stream
+import qualified Streamly.Internal.Data.Array.Foreign.Mut.Type as MArray
+       (unsafeIndexIO, unsafeWriteIndex, Array, newArray)
+
 
 -------------------------------------------------------------------------------
 -- Parallel char, line and word counting
@@ -174,18 +178,21 @@ data Field =
 -- Default/initial state of the block
 -------------------------------------------------------------------------------
 
-readField :: V.IOVector Int -> Field -> IO Int
-readField v fld = V.read v (fromEnum fld)
+readField :: MArray.Array Int -> Field -> IO Int
+readField v fld = MArray.unsafeIndexIO v (fromEnum fld)
 
-writeField :: V.IOVector Int -> Field -> Int -> IO ()
-writeField v fld = V.write v (fromEnum fld)
+writeField :: MArray.Array Int -> Field -> Int -> IO ()
+writeField v fld = void . MArray.unsafeWriteIndex v (fromEnum fld)
 
-modifyField :: V.IOVector Int -> Field -> (Int -> Int) -> IO ()
-modifyField v fld f = V.modify v f (fromEnum fld)
+modifyField :: MArray.Array Int -> Field -> (Int -> Int) -> IO ()
+modifyField v fld f = do
+  let index = fromEnum fld
+  val <- MArray.unsafeIndexIO v index
+  void $ MArray.unsafeWriteIndex v index (f val)
 
-newCounts :: IO (V.IOVector Int)
+newCounts :: IO (MArray.Array Int)
 newCounts = do
-    counts <- V.new (fromEnum (maxBound :: Field) + 1)
+    counts <- MArray.newArray (fromEnum (maxBound :: Field) + 1)
     writeField counts LineCount 0
     writeField counts WordCount 0
     writeField counts CharCount 0
@@ -200,7 +207,7 @@ newCounts = do
 -- Counting chars
 -------------------------------------------------------------------------------
 
-accountChar :: V.IOVector Int -> Bool -> IO ()
+accountChar :: MArray.Array Int -> Bool -> IO ()
 accountChar counts isSp = do
     c <- readField counts CharCount
     let space = if isSp then 1 else 0
@@ -212,7 +219,7 @@ accountChar counts isSp = do
 -- Manipulating the header bytes
 -------------------------------------------------------------------------------
 
-addToHeader :: V.IOVector Int -> Int -> IO Bool
+addToHeader :: MArray.Array Int -> Int -> IO Bool
 addToHeader counts cp = do
     cnt <- readField counts HeaderWordCount
     case cnt of
@@ -231,7 +238,7 @@ addToHeader counts cp = do
             return True
         _ -> return False
 
-resetHeaderOnNewChar :: V.IOVector Int -> IO ()
+resetHeaderOnNewChar :: MArray.Array Int -> IO ()
 resetHeaderOnNewChar counts = do
     hdone <- readField counts HeaderDone
     when (hdone == 0) $ writeField counts HeaderDone 1
@@ -240,13 +247,13 @@ resetHeaderOnNewChar counts = do
 -- Manipulating the trailer
 -------------------------------------------------------------------------------
 
-setTrailer :: V.IOVector Int -> Unicode.DecodeState -> Unicode.CodePoint -> IO ()
+setTrailer :: MArray.Array Int -> Unicode.DecodeState -> Unicode.CodePoint -> IO ()
 setTrailer counts st cp = do
     writeField counts TrailerState (fromIntegral st)
     writeField counts TrailerCodePoint cp
     writeField counts TrailerPresent 1
 
-resetTrailerOnNewChar :: V.IOVector Int -> IO ()
+resetTrailerOnNewChar :: MArray.Array Int -> IO ()
 resetTrailerOnNewChar counts = do
     trailer <- readField counts TrailerPresent
     when (trailer /= 0) $ do
@@ -258,7 +265,7 @@ resetTrailerOnNewChar counts = do
 -------------------------------------------------------------------------------
 
 {-# INLINE countChar #-}
-countChar :: V.IOVector Int -> Either Unicode.DecodeError Char -> IO ()
+countChar :: MArray.Array Int -> Either Unicode.DecodeError Char -> IO ()
 countChar counts inp =
     case inp of
         Right ch -> do
@@ -295,7 +302,7 @@ countChar counts inp =
                     then accountChar counts True
                     else setTrailer counts st cp
 
-printCounts :: V.IOVector Int -> IO ()
+printCounts :: MArray.Array Int -> IO ()
 printCounts v = do
     l <- readField v LineCount
     w <- readField v WordCount
@@ -312,8 +319,8 @@ printCounts v = do
 -- combine trailing bytes in preceding block with leading bytes in the next
 -- block and decode them into a codepoint
 reconstructChar :: Int
-                -> V.IOVector Int
-                -> V.IOVector Int
+                -> MArray.Array Int
+                -> MArray.Array Int
                 -> IO (Stream.SerialT IO (Either Unicode.DecodeError Char))
 reconstructChar hdrCnt v1 v2 = do
     when (hdrCnt > 3 || hdrCnt < 0) $ error "reconstructChar: hdrCnt > 3"
@@ -340,7 +347,7 @@ reconstructChar hdrCnt v1 v2 = do
     cp <- readField v1 TrailerCodePoint
     return $ Unicode.resumeDecodeUtf8Either (fromIntegral state) cp stream3
 
-getHdrChar :: V.IOVector Int -> IO (Maybe Int)
+getHdrChar :: MArray.Array Int -> IO (Maybe Int)
 getHdrChar v = do
     hdrCnt <- readField v HeaderWordCount
     case hdrCnt of
@@ -366,7 +373,7 @@ getHdrChar v = do
 
 -- If the header of the first block is not done then combine the header
 -- with the header of the next block.
-combineHeaders :: V.IOVector Int -> V.IOVector Int -> IO ()
+combineHeaders :: MArray.Array Int -> MArray.Array Int -> IO ()
 combineHeaders v1 v2 = do
     hdone1 <- readField v1 HeaderDone
     when (hdone1 == 0) $ do
@@ -381,7 +388,7 @@ combineHeaders v1 v2 = do
 -- the first vector and returning it.
 -- XXX This is a quick hack and can be refactored to reduce the size
 -- and understandability considerably.
-addCounts :: V.IOVector Int -> V.IOVector Int -> IO (V.IOVector Int)
+addCounts :: MArray.Array Int -> MArray.Array Int -> IO (MArray.Array Int)
 addCounts v1 v2 = do
     hdone1 <- readField v1 HeaderDone
     hdone2 <- readField v2 HeaderDone
@@ -551,7 +558,7 @@ addCounts v1 v2 = do
 -- Individual array processing is an isolated loop, fusing it with the bigger
 -- loop may be counter productive.
 {-# NOINLINE countArray #-}
-countArray :: Array.Array Word8 -> IO (V.IOVector Int)
+countArray :: Array.Array Word8 -> IO (MArray.Array Int)
 countArray src = do
     counts <- newCounts
     Stream.mapM_ (countChar counts)
@@ -560,7 +567,7 @@ countArray src = do
     return counts
 
 {-# INLINE wcMwlParallel #-}
-wcMwlParallel :: Handle -> Int -> IO (V.IOVector Int)
+wcMwlParallel :: Handle -> Int -> IO (MArray.Array Int)
 wcMwlParallel src n = do
     Stream.foldlM' addCounts newCounts
         $ Stream.fromAhead
@@ -573,7 +580,7 @@ wcMwlParallel src n = do
 -------------------------------------------------------------------------------
 --
 -- This is only for perf comparison
-wcMwlParserial :: Handle -> IO (V.IOVector Int)
+wcMwlParserial :: Handle -> IO (MArray.Array Int)
 wcMwlParserial src = do
     counts <- newCounts
     Stream.mapM_ (countChar counts)
