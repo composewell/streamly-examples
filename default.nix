@@ -126,4 +126,4 @@ let haskellPackages =
     };
 in if nixpkgs.lib.inNixShell
    then shell
-   else (mkHaskellPackages false).streamly
+   else (mkHaskellPackages false).streamly-examples
