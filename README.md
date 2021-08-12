@@ -69,6 +69,7 @@ $ cabal run --flag interop Interop.Pipes
   version with full UTF8 handling.
 * [WordFrequency](examples/WordFrequency.hs): Count word frequency in
   a file and print top 25 words.
+* [CSVParser](examples/CSVParser.hs): Process a CSV file
 
 ### Networking
 
