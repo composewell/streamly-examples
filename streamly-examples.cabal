@@ -293,6 +293,14 @@ executable CamelCase
   else
     buildable: False
 
+executable CSVParser
+  import: exe-options
+  main-is: CSVParser.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
 executable Rate
   import: exe-options-threaded
   main-is: Rate.hs
