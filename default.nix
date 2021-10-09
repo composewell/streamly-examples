@@ -72,6 +72,13 @@ let haskellPackages =
                           sha256 = "073wbhdxj1sh5160blaihbzkkhabs8s71pqhag16lvmgbb7a3hla";
                         } {};
 
+                    unicode-data =
+                      super.callHackageDirect
+                        { pkg = "unicode-data";
+                          ver = "0.1.0.1";
+                          sha256 = "0zwglwfpfbavsp3sjq3kb5dqj0wj1asf3zgj23silfarkr8mmyav";
+                        } {};
+
                     # Example to Use a different version of a package
                     #QuickCheck = self.QuickCheck_2_14;
 
