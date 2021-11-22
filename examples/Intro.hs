@@ -49,28 +49,19 @@ sumInt1 =
 -- nested loops (or cross product) when the two streams do not depend on each
 -- other. The loops fuse completely generating code equivalent to C.
 crossProduct :: (Int,Int) -> (Int,Int) -> Identity Int
-crossProduct (from1,to1) (from2,to2) =
+crossProduct range1 range2 =
     let
         -- cross multiply src1 and src2 e.g.
         -- if src1 = [1,2], and src2 = [3,4] then src1 x src2 =
         -- [(1*3),(1*4),(2*3),(2*4)]
-        xmult :: Unfold Identity (Int,Int) Int
-        xmult = Unfold.crossWith (*) src1 src2
+        xmult :: Unfold Identity ((Int, Int), (Int, Int)) Int
+        xmult =
+            Unfold.crossWith (*)
+                  (Unfold.lmap fst Unfold.enumerateFromToIntegral)
+                  (Unfold.lmap snd Unfold.enumerateFromToIntegral)
 
-     in Stream.unfold xmult (from1,from2)  -- SerialT Identity Int
-            & Stream.fold Fold.sum         -- Identity Int
-
-    where
-
-    -- The input to the unfold is (from1,from2)
-    -- Generate a stream from from1..to1
-    src1 :: Monad m => Unfold m (Int,Int) Int
-    src1 = Unfold.lmap fst $ Unfold.enumerateFromToIntegral to1
-
-    -- The input to the unfold is (from1,from2)
-    -- Generate a stream from from2..to2
-    src2 :: Monad m => Unfold m (Int,Int) Int
-    src2 = Unfold.lmap snd $ Unfold.enumerateFromToIntegral to2
+     in Stream.unfold xmult (range1,range2) -- SerialT Identity Int
+            & Stream.fold Fold.sum          -- Identity Int
 
 -- | Nested looping similar to 'cross' above but more general and less
 -- efficient. The second stream may depend on the first stream. The loops
