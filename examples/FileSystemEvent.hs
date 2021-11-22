@@ -38,5 +38,5 @@ main :: IO ()
 main = do
     args <- getArgs
     paths <- mapM toUtf8 args
-    Event.watchTrees (NonEmpty.fromList paths)
+    Event.watch (NonEmpty.fromList paths)
         & Stream.mapM_ (putStrLn . Event.showEvent)
