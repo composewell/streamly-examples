@@ -11,8 +11,8 @@ import Streamly.Data.Fold (Fold)
 import qualified Streamly.Console.Stdio as Stdio
 import qualified Streamly.Data.Array.Foreign as Array
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Internal.Data.Stream.IsStream as Stream (splitOnSeq)
-import qualified Streamly.Internal.Data.Stream.Parallel as Par (tapAsync)
+import qualified Streamly.Internal.Data.Stream.IsStream as Stream
+    (splitOnSeq, tapAsyncK)
 import qualified Streamly.Internal.FileSystem.Dir as Dir (toFiles)
 import qualified Streamly.Internal.FileSystem.File as File
 import qualified Streamly.Prelude as Stream
@@ -54,9 +54,10 @@ tap =
 -- output1.txt is processed/written to in a separate thread.
 tapAsync :: IO ()
 tapAsync =
-      Stream.unfold Stdio.readChunks ()            -- SerialT IO (Array Word8)
-    & Par.tapAsync (File.fromChunks "output1.txt") -- SerialT IO (Array Word8)
-    & File.fromChunks "output.txt"                 -- IO ()
+      Stream.unfold Stdio.readChunks ()   -- SerialT IO (Array Word8)
+    & Stream.tapAsyncK
+          (File.fromChunks "output1.txt") -- SerialT IO (Array Word8)
+    & File.fromChunks "output.txt"        -- IO ()
 
 -- | > cat input.txt | tee output1.txt > output.txt
 tee :: IO ()
