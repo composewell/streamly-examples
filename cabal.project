@@ -1,3 +1,13 @@
 packages: streamly-examples.cabal
 
+source-repository-package
+    type:       git
+    location:   https://github.com/composewell/streamly
+    tag:        f1a04362162d707054115a34563e1c35199bb796
+
+source-repository-package
+    type:       git
+    location:   https://github.com/composewell/unicode-data
+    tag:        e3208a437b4b71613656c0aff9165442256f89ed
+
 jobs: 1
