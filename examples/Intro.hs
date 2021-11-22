@@ -62,15 +62,18 @@ crossProduct (from1,to1) (from2,to2) =
 
     where
 
+    flipT (a, b) = (b, a)
+    replaceSnd x (a, _) = (a, x)
+
     -- The input to the unfold is (from1,from2)
     -- Generate a stream from from1..to1
     src1 :: Monad m => Unfold m (Int,Int) Int
-    src1 = Unfold.lmap fst $ Unfold.enumerateFromToIntegral to1
+    src1 = Unfold.lmap (replaceSnd to1) Unfold.enumerateFromToIntegral
 
     -- The input to the unfold is (from1,from2)
     -- Generate a stream from from2..to2
     src2 :: Monad m => Unfold m (Int,Int) Int
-    src2 = Unfold.lmap snd $ Unfold.enumerateFromToIntegral to2
+    src2 = Unfold.lmap (replaceSnd to2 . flipT) Unfold.enumerateFromToIntegral
 
 -- | Nested looping similar to 'cross' above but more general and less
 -- efficient. The second stream may depend on the first stream. The loops
