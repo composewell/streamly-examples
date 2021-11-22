@@ -49,21 +49,29 @@ let haskellPackages =
                         mkPackage super "streamly-examples"
                             ./. flags inShell;
 
-                    streamly =
-                      nixpkgs.haskell.lib.overrideCabal
-                        (super.callHackageDirect
-                          { pkg = "streamly";
-                            ver = "0.8.0";
-                            sha256 = "0vy2lkljizlhpbpbybmg9jcmj2g4s1aaqd2dzy5c0y0n4rgwxask";
-                          } {})
-                        (old:
-                          { librarySystemDepends =
-                              if builtins.currentSystem == "x86_64-darwin"
-                              then [nixpkgs.darwin.apple_sdk.frameworks.Cocoa]
-                              else [];
-                            enableLibraryProfiling = false;
-                            doHaddock = false;
-                          });
+                    # TODO: Uncomment the following after the streamly release
+
+                    # streamly =
+                    #   nixpkgs.haskell.lib.overrideCabal
+                    #     (super.callHackageDirect
+                    #       { pkg = "streamly";
+                    #         ver = "0.8.0";
+                    #         sha256 = "0vy2lkljizlhpbpbybmg9jcmj2g4s1aaqd2dzy5c0y0n4rgwxask";
+                    #       } {})
+                    #     (old:
+                    #       { librarySystemDepends =
+                    #           if builtins.currentSystem == "x86_64-darwin"
+                    #           then [nixpkgs.darwin.apple_sdk.frameworks.Cocoa]
+                    #           else [];
+                    #         enableLibraryProfiling = false;
+                    #         doHaddock = false;
+
+                    # unicode-data =
+                    #   super.callHackageDirect
+                    #     { pkg = "unicode-data";
+                    #       ver = "0.2.0";
+                    #       sha256 = "073wbhdxj1sh5160blaihbzkkhabs8s71pqhag16lvmgbb7a3hla";
+                    #     } {};
 
                     fusion-plugin =
                       super.callHackageDirect
