@@ -1,8 +1,12 @@
-resolver: lts-16.31
+resolver: lts-18.18
 packages:
 - '.'
 extra-deps:
-- streamly-0.8.0@sha256:9784c80ee1ada51477520cabc4e92a0c76a6bb265f968a188f2fce818e7398e0,19654
+- unicode-data-0.2.0
+# TODO Replace this with streamly-0.8.1 once streamly is released
+- git: https://github.com/composewell/streamly
+  commit: e76169324103e38972760541d1255ae5efe1295f
+
 # For mac ports installed SDL library on Mac OS X
 extra-include-dirs:
 - /opt/local/include
