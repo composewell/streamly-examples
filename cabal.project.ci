@@ -2,3 +2,10 @@ packages: .
 
 package streamly-examples
   ghc-options: -Werror
+
+-- TODO: Comment the following after the streamly release
+
+source-repository-package
+    type:       git
+    location:   https://github.com/composewell/streamly
+    tag:        e76169324103e38972760541d1255ae5efe1295f
