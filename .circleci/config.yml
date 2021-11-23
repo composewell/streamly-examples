@@ -321,7 +321,8 @@ jobs:
            environment:
              BUILD: "cabal-v2"
              CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
-             DISABLE_SDIST_BUILD: "no"
+             DISABLE_SDIST_BUILD: "yes"
+             CABAL_PROJECT: "cabal.project"
            command: |
               apt-get install -y ghc-9.0.1
               apt-get install -y cabal-install-3.4
