@@ -7,8 +7,10 @@
 
 {
   nixpkgs ?
-    import (builtins.fetchTarball https://github.com/NixOS/nixpkgs/archive/refs/tags/21.05.tar.gz)
-        {}
+    import
+      (builtins.fetchTarball
+          https://github.com/NixOS/nixpkgs/archive/refs/tags/21.11.tar.gz)
+      {}
 , compiler ? "default"
 , c2nix ? "" # cabal2nix CLI options
 # TODO
