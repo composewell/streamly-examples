@@ -179,15 +179,15 @@ data Field =
 -------------------------------------------------------------------------------
 
 readField :: MArray.Array Int -> Field -> IO Int
-readField v fld = MArray.getIndexUnsafe v (fromEnum fld)
+readField v fld = MArray.getIndexUnsafe (fromEnum fld) v
 
 writeField :: MArray.Array Int -> Field -> Int -> IO ()
-writeField v fld = void . MArray.putIndexUnsafe v (fromEnum fld)
+writeField v fld i = void $ MArray.putIndexUnsafe (fromEnum fld) i v
 
 modifyField :: MArray.Array Int -> Field -> (Int -> Int) -> IO ()
 modifyField v fld f = do
   let index = fromEnum fld
-  MArray.modifyIndexUnsafe v index (\x -> (f x, ()))
+  MArray.modifyIndexUnsafe index (\x -> (f x, ())) v
 
 newCounts :: IO (MArray.Array Int)
 newCounts = do

@@ -60,7 +60,7 @@ flag interop
 
 common exe-dependencies
   build-depends:
-      streamly              >= 0.8.1 && < 0.8.2
+      streamly              == 0.8.1.*
     , base                  >= 4.9   && < 4.17
     , directory             >= 1.2   && < 1.4
     , transformers          >= 0.4   && < 0.6
