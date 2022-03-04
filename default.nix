@@ -55,8 +55,8 @@ let haskellPackages =
                       nixpkgs.haskell.lib.overrideCabal
                         (super.callHackageDirect
                           { pkg = "streamly";
-                            ver = "0.8.1";
-                            sha256 = "0ywyy7gxjnp32hx8kki0lfn94bnc9mzjh8g6mg65ff3vv28k2vdr";
+                            ver = "0.8.2";
+                            sha256 = "0jhsdd71kqw0k0aszg1qb1l0wbxl1r73hsmkdgch4vlx43snlc8a";
                           } {})
                         (old:
                           { librarySystemDepends =
@@ -70,8 +70,8 @@ let haskellPackages =
                     unicode-data =
                       super.callHackageDirect
                         { pkg = "unicode-data";
-                          ver = "0.2.0";
-                          sha256 = "14crb68g79yyw87fgh49z2fn4glqx0zr53v6mapihaxzkikhkkc3";
+                          ver = "0.3.0";
+                          sha256 = "0izxxk7qgq22ammzmwc4cs4nlhzp7y55gzyas2a8bzhdpac1j7yx";
                         } {};
 
                     fusion-plugin =
