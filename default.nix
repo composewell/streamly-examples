@@ -109,6 +109,9 @@ let haskellPackages =
               pname   = "streamly-examples-additional";
               license = "BSD-3-Clause";
 
+              libraryHaskellDepends = with hspkgs; [
+                deque
+              ];
               setupHaskellDepends = with hspkgs; [
                 cabal-doctest
               ];
