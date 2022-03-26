@@ -27,7 +27,7 @@ catBytes src =
 -- the file in 256KB chunks and writes those chunks to stdout.
 cat :: Handle -> IO ()
 cat src =
-      Stream.unfold Handle.readChunksWithBufferOf (256*1024, src) -- SerialT IO (Array Word8)
+      Stream.unfold Handle.readChunksWith (256*1024, src) -- SerialT IO (Array Word8)
     & Stream.fold (Handle.writeChunks stdout) -- IO ()
 
 -- | Read from standard input write to standard output
@@ -51,7 +51,7 @@ cpBytes src dst =
 cp :: Handle -> Handle -> IO ()
 cp src dst =
       Stream.fold (Handle.writeChunks dst)
-    $ Stream.unfold Handle.readChunksWithBufferOf (256*1024, src)
+    $ Stream.unfold Handle.readChunksWith (256*1024, src)
 
 -- | Count lines like wc -l.
 --

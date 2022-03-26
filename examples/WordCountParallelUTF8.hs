@@ -572,7 +572,7 @@ wcMwlParallel src n = do
         $ Stream.fromAhead
         $ Stream.maxThreads numCapabilities
         $ Stream.mapM countArray
-        $ Stream.unfold Handle.readChunksWithBufferOf (n, src)
+        $ Stream.unfold Handle.readChunksWith (n, src)
 
 -------------------------------------------------------------------------------
 -- Serial counting using parallel version of countChar
