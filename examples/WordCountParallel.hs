@@ -29,7 +29,7 @@ countArray arr =
 {-# NOINLINE partialCounts #-}
 partialCounts :: Array Word8 -> IO (Bool, Counts)
 partialCounts arr = do
-    let r = Array.getIndex arr 0
+    let r = Array.getIndex 0 arr
     case r of
         Just x -> do
             counts <- countArray arr
