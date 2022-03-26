@@ -38,6 +38,7 @@ environment:
     STACK_UPGRADE: "y"
     RESOLVER: "lts-18.21"
     STACK_ROOT: "c:\\sr"
+    STACK_YAML: "stack.yaml"
 
     # ------------------------------------------------------------------------
     # cabal options

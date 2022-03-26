@@ -3,7 +3,12 @@ packages:
 - '.'
 extra-deps:
 - unicode-data-0.3.0
-- streamly-0.8.2
+- git: https://github.com/composewell/streamly
+  commit: e078bae64a2414c0b90c39ce4436e518b5816456
+- git: https://github.com/composewell/streamly
+  commit: e078bae64a2414c0b90c39ce4436e518b5816456
+  subdirs:
+      - core
 
 # For mac ports installed SDL library on Mac OS X
 extra-include-dirs:

@@ -142,6 +142,7 @@ jobs:
             environment:
               BUILD: "stack"
               RESOLVER: "lts-16.31"
+              STACK_YAML: "stack.yaml"
               SDIST_OPTIONS: "--ignore-check"
             command: |
               apt-get build-dep -y ghc-8.8.4
@@ -320,11 +321,31 @@ jobs:
            name: GHC 9.0.1 + sdist + fusion-plugin
            environment:
              BUILD: "cabal-v2"
+             CABAL_PROJECT: "cabal.project"
              CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
              DISABLE_SDIST_BUILD: "no"
            command: |
               apt-get install -y ghc-9.0.1
               apt-get install -y cabal-install-3.4
+              bash -c "$PACKCHECK $BUILD"
+        - *save
+  cabal-ghc-9_2_2:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *preinstall
+        - *restore
+        - run:
+           name: GHC 9.2.2
+           environment:
+             BUILD: "cabal"
+             CABAL_PROJECT: "cabal.project"
+             #CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
+             #DISABLE_SDIST_BUILD: "no"
+           command: |
+              apt-get install -y ghc-9.2.2
+              apt-get install -y cabal-install-3.6
               bash -c "$PACKCHECK $BUILD"
         - *save
   hlint:
@@ -348,6 +369,7 @@ workflows:
   version: 2
   build:
     jobs:
+      - cabal-ghc-9_2_2
       - cabal-ghc-9_0_1_sdist
       - cabal-ghc-9_0_1_fusion_plugin
       - cabal-ghc-8_10_4
@@ -355,7 +377,5 @@ workflows:
       - cabal-ghc-8_10_4_all_flags
       - stack-ghc-8_8
       - cabal-ghc-8_6_5
-      - cabal-ghc-8_2_2
-      - cabal-ghc-8_0_2
       - cabal-ghcjs-8_4
       - hlint
