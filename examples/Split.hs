@@ -6,8 +6,9 @@ import System.Environment (getArgs)
 import System.IO (Handle, IOMode(..), openFile, hClose)
 import Streamly.Prelude (SerialT)
 
-import qualified Streamly.Prelude as Stream
-import qualified Streamly.Internal.Data.Stream.IsStream as Stream (refoldMany)
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Internal.Data.Stream as Stream (refoldMany)
 import qualified Streamly.Internal.Data.Refold.Type as Refold (take)
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Internal.FileSystem.Handle as Handle (consumer)
@@ -33,8 +34,8 @@ splitFile inHandle =
     -- SerialT (StateT (Maybe (Handle, Int)) IO) ()
     & Stream.refoldMany (Refold.take (180 * mb) Handle.consumer) newHandle
     & Stream.runStateT (return Nothing)  -- SerialT IO (Maybe (Handle, Int), ())
-    & Stream.map snd                     -- SerialT IO ()
-    & Stream.drain                       -- SerialT IO ()
+    & fmap snd                     -- SerialT IO ()
+    & Stream.fold Fold.drain                       -- SerialT IO ()
 
     where
 

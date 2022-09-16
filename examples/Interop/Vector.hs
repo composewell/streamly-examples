@@ -1,11 +1,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-import Streamly.Prelude (MonadAsync, SerialT)
-import qualified Streamly.Prelude as Stream
+import Streamly.Data.Stream (Stream)
+
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Stream as Stream
 import qualified Data.Vector.Fusion.Stream.Monadic as Vector
 
 --  | vector to streamly
-fromVector :: (Stream.IsStream t, MonadAsync  m) => Vector.Stream m a -> t m a
+fromVector :: Monad m => Vector.Stream m a -> Stream m a
 fromVector = Stream.unfoldrM unconsV
     where
     unconsV v = do
@@ -17,10 +19,10 @@ fromVector = Stream.unfoldrM unconsV
             return $ Just (h, Vector.tail v)
 
 --  | streamly to vector
-toVector :: Monad m => SerialT m a -> Vector.Stream m a
-toVector = Vector.unfoldrM (Stream.uncons . Stream.adapt)
+toVector :: Monad m => Stream m a -> Vector.Stream m a
+toVector = Vector.unfoldrM (Stream.uncons)
 
 main :: IO ()
 main = do
-    Stream.toList (fromVector (Vector.fromList ([1..3]::[Int])))   >>= print
+    Stream.fold Fold.toList (fromVector (Vector.fromList ([1..3]::[Int])))   >>= print
     Vector.toList (toVector (Stream.fromFoldable ([1..3]::[Int]))) >>= print

@@ -14,7 +14,7 @@ import Streamly.Data.Fold (Fold)
 import Streamly.Data.Fold.Tee (Tee(..))
 import Streamly.Data.Unfold (Unfold)
 
-import qualified Streamly.Data.Array.Foreign as Array
+import qualified Streamly.Data.Array.Unboxed as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Unfold as Unfold
 import qualified Streamly.Prelude as Stream

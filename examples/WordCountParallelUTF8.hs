@@ -37,7 +37,7 @@ import GHC.Conc (numCapabilities)
 import System.Environment (getArgs)
 import System.IO (Handle, openFile, IOMode(..))
 
-import qualified Streamly.Data.Array.Foreign as Array
+import qualified Streamly.Data.Array.Unboxed as Array
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Prelude as Stream
 
@@ -45,8 +45,8 @@ import qualified Streamly.Prelude as Stream
 import qualified Streamly.Internal.Unicode.Stream as Unicode
        (DecodeState, DecodeError(..), CodePoint, decodeUtf8Either
        , resumeDecodeUtf8Either)
-import qualified Streamly.Internal.Data.Array.Foreign.Mut.Type as MArray
-       (getIndexUnsafe, putIndexUnsafe, modifyIndexUnsafe, Array, newArray)
+import qualified Streamly.Internal.Data.Array.Unboxed.Mut.Type as MArray
+       (getIndexUnsafe, putIndexUnsafe, modifyIndexUnsafe, Array, newPinned)
 
 
 -------------------------------------------------------------------------------
@@ -191,7 +191,7 @@ modifyField v fld f = do
 
 newCounts :: IO (MArray.Array Int)
 newCounts = do
-    counts <- MArray.newArray (fromEnum (maxBound :: Field) + 1)
+    counts <- MArray.newPinned (fromEnum (maxBound :: Field) + 1)
     writeField counts LineCount 0
     writeField counts WordCount 0
     writeField counts CharCount 0

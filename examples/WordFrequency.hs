@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances, CPP #-}
 
 {-# OPTIONS_GHC -Wno-orphans #-}
 
@@ -7,28 +7,33 @@ import Data.Foldable (traverse_)
 import Data.Function ((&))
 import Data.Functor.Identity (Identity(..))
 import Data.Hashable (Hashable(..))
-import Foreign.Storable (Storable(..))
+import Data.Map.Strict (Map)
 import System.Environment (getArgs)
+import Streamly.Data.Unbox (Unbox)
 
 import qualified Data.Char as Char
-import qualified Data.HashMap.Strict as Map
+import qualified Data.Map.Strict as Map
 import qualified Data.List as List
 import qualified Data.Ord as Ord
-import qualified Streamly.Data.Array.Foreign as Array
+import qualified Streamly.Data.Array.Unboxed as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Internal.Data.Fold as Fold (classifyMutWith)
 import qualified Streamly.Internal.FileSystem.File as File (toBytes)
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Unicode
 
-hashArray :: (Storable a, Integral b, Num c) =>
+hashArray :: (Unbox a, Integral b, Num c) =>
     Fold.Fold Identity a b -> Array.Array a -> c
 hashArray f arr =
       Stream.unfold Array.read arr
     & Stream.fold f
     & fromIntegral . runIdentity
 
-instance (Enum a, Storable a) => Hashable (Array.Array a) where
+#if MIN_VERSION_hashable(1,4,0)
+instance (Eq a, Enum a, Unbox a) => Hashable (Array.Array a) where
+#else
+instance (Enum a, Unbox a) => Hashable (Array.Array a) where
+#endif
     hash = hashArray Fold.rollingHash
 
     hashWithSalt salt =
@@ -63,7 +68,7 @@ main = do
          & Stream.map toLower                   -- SerialT IO Char
          & Stream.wordsBy isSpace Fold.toList   -- SerialT IO String
          & Stream.filter (all isAlpha)          -- SerialT IO String
-         & Stream.fold classifier
+         & Stream.fold classifier :: IO (Map String Int)
 
     traverse_ print $ List.sortOn (Ord.Down . snd) (Map.toList mp)
                     & List.take 25

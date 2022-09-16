@@ -20,7 +20,7 @@ main =
 
     echo :: Socket -> IO ()
     echo sk =
-          Stream.unfold Socket.readChunksWithBufferOf (32768, sk) -- SerialT IO (Array Word8)
+          Stream.unfold Socket.readChunksWith (32768, sk) -- SerialT IO (Array Word8)
         & Stream.fold (Socket.writeChunks sk)                     -- IO ()
 
     handleWithM :: (Socket -> IO ()) -> Socket -> IO ()

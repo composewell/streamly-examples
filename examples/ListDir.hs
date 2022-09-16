@@ -6,7 +6,7 @@ import Streamly.Prelude (SerialT)
 import System.IO (stdout, hSetBuffering, BufferMode(LineBuffering))
 
 import qualified Streamly.Prelude as Stream
-import qualified Streamly.Internal.Data.Stream.IsStream as Stream
+import qualified Streamly.Internal.Data.Stream as Stream
        (iterateMapLeftsWith)
 import qualified Streamly.Internal.FileSystem.Dir as Dir (toEither)
 

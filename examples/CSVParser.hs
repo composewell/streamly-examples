@@ -8,12 +8,12 @@ import Streamly.Prelude (SerialT)
 import System.Environment (getArgs)
 import System.IO (IOMode(..))
 
-import qualified Streamly.Data.Array.Foreign as Array
+import qualified Streamly.Data.Array.Unboxed as Array
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Prelude as Stream
 import qualified System.IO as IO
-import qualified Streamly.Internal.Data.Array.Stream.Foreign as ArrayStream
+import qualified Streamly.Internal.Data.Array.Unboxed.Stream as ArrayStream
 
 main :: IO ()
 main = do

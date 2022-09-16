@@ -20,13 +20,13 @@ import System.Random (randomIO)
 
 import qualified Data.Map.Strict as Map
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Array.Foreign as Array
+import qualified Streamly.Data.Array.Unboxed as Array
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Unicode
 
-import qualified Streamly.Internal.Data.Fold as Fold (demuxDefault)
+import qualified Streamly.Internal.Data.Fold as Fold (demux)
 import qualified Streamly.Internal.Data.Time.Clock as Clock (getTime, Clock(..))
 
 ------------------------------------------------------------------------------
@@ -50,17 +50,18 @@ time sk = Clock.getTime Clock.Monotonic >>= sendValue sk
 random :: Socket -> IO ()
 random sk = (randomIO :: IO Int) >>= sendValue sk
 
-def :: (String, Socket) -> IO ()
-def (str, sk) = sendValue sk ("Unknown command: " ++ str)
+def :: String -> Socket -> IO ()
+def str sk = sendValue sk ("Unknown command: " ++ str)
 
-commands :: Map.Map String (Fold IO Socket ())
-commands = Map.fromList
-    [ ("time"  , Fold.drainBy time)
-    , ("random", Fold.drainBy random)
-    ]
+commands :: String -> IO (Fold IO Socket ())
+commands cmd =
+    case cmd of
+        "time"    -> return (Fold.drainBy time)
+        "random"  -> return (Fold.drainBy random)
+        _         -> return (Fold.drainBy (def cmd))
 
 demux :: Fold IO (String, Socket) ()
-demux = snd <$> Fold.demuxDefault commands (Fold.drainBy def)
+demux = void (Fold.demux commands :: Fold IO (String, Socket) (Map.Map String ()))
 
 ------------------------------------------------------------------------------
 -- Parse and handle commands on a socket

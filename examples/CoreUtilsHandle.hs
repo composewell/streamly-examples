@@ -10,7 +10,7 @@ import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Unicode
 
-import qualified Streamly.Internal.Data.Array.Stream.Foreign as ArrayStream (splitOn)
+import qualified Streamly.Internal.Data.Array.Unboxed.Stream as ArrayStream (splitOn)
 
 -- | Read the contents of a file to stdout.
 --

@@ -1,11 +1,11 @@
 import Control.Monad.IO.Class (liftIO)
 import Data.Function ((&))
 import Network.Socket (Socket, close)
-import Streamly.Data.Array.Foreign (Array)
+import Streamly.Data.Array.Unboxed (Array)
 import Streamly.Prelude (SerialT)
 import System.IO (Handle, withFile, IOMode(..))
 
-import qualified Streamly.Data.Array.Foreign as Array
+import qualified Streamly.Data.Array.Unboxed as Array
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Network.Inet.TCP as TCP

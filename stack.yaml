@@ -4,11 +4,12 @@ packages:
 extra-deps:
 - unicode-data-0.3.0
 - git: https://github.com/composewell/streamly
-  commit: e078bae64a2414c0b90c39ce4436e518b5816456
+  commit: ba4d23b489eccbebfbd2f1facb9cbebcd1dff689
 - git: https://github.com/composewell/streamly
-  commit: e078bae64a2414c0b90c39ce4436e518b5816456
+  commit: ba4d23b489eccbebfbd2f1facb9cbebcd1dff689
   subdirs:
       - core
+- lockfree-queue-0.2.4@sha256:156e7ccc193fc5d8b43f065e9cd31c3171c79ec25863283d546900d92930846d,2963
 
 # For mac ports installed SDL library on Mac OS X
 extra-include-dirs:
