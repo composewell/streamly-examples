@@ -11,7 +11,7 @@
       (builtins.fetchTarball
           https://github.com/NixOS/nixpkgs/archive/refs/tags/22.05.tar.gz)
       {}
-, compiler ? "default"
+, compiler ? "ghc922"
 , c2nix ? "" # cabal2nix CLI options
 # TODO
 #, sources ? [] # e.g. [./. ./benchmark]
@@ -33,7 +33,9 @@ let haskellPackages =
                     then orig.overrideAttrs (oldAttrs: { src = null; })
                     else orig;
 
-    flags = "--flag fusion-plugin --flag sdl2 --flag interop" + " " + c2nix;
+    # sdl2 needs to be updated for ghc922
+    # flags = "--flag fusion-plugin --flag sdl2 --flag interop" + " " + c2nix;
+    flags = "--flag fusion-plugin --flag interop" + " " + c2nix;
 
     mkHaskellPackages = inShell:
         haskellPackages.override {
@@ -103,8 +105,8 @@ let haskellPackages =
                     fusion-plugin =
                       super.callHackageDirect
                         { pkg = "fusion-plugin";
-                          ver = "0.2.3";
-                          sha256 = "073wbhdxj1sh5160blaihbzkkhabs8s71pqhag16lvmgbb7a3hla";
+                          ver = "0.2.5";
+                          sha256 = "sha256-a5ZIi810Utsj0UsQZwnCaRYIJ8RWLUqppg4lYaNvOkM=";
                         } {};
 
                     # Example to Use a different version of a package
