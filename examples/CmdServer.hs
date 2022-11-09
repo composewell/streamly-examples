@@ -19,15 +19,19 @@ import Streamly.Data.Fold (Fold)
 import System.Random (randomIO)
 
 import qualified Data.Map.Strict as Map
+import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Array.Unboxed as Array
+import qualified Streamly.Data.Parser as Parser
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Data.Stream.Concurrent as Concur
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Network.Socket as Socket
-import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Unicode
 
-import qualified Streamly.Internal.Data.Fold as Fold (demux)
-import qualified Streamly.Internal.Data.Time.Clock as Clock (getTime, Clock(..))
+-- import qualified Streamly.Internal.Data.Fold as Fold (wordBy)
+import qualified Streamly.Internal.Data.Fold.Extra as Fold (demux)
+import qualified Streamly.Internal.Data.Time.Clock as Clock
+    (getTime, Clock(..))
 
 ------------------------------------------------------------------------------
 -- Utility functions
@@ -38,7 +42,7 @@ sendValue sk x =
       Stream.fromList (show x ++ "\n")
     & Unicode.encodeLatin1
     & Stream.fold (Array.writeN 60)
-    >>= Socket.writeChunk sk
+    >>= Socket.putChunk sk
 
 ------------------------------------------------------------------------------
 -- Command Handlers
@@ -56,9 +60,9 @@ def str sk = sendValue sk ("Unknown command: " ++ str)
 commands :: String -> IO (Fold IO Socket ())
 commands cmd =
     case cmd of
-        "time"    -> return (Fold.drainBy time)
-        "random"  -> return (Fold.drainBy random)
-        _         -> return (Fold.drainBy (def cmd))
+        "time"    -> return (Fold.drainMapM time)
+        "random"  -> return (Fold.drainMapM random)
+        _         -> return (Fold.drainMapM (def cmd))
 
 demux :: Fold IO (String, Socket) ()
 demux = void (Fold.demux commands :: Fold IO (String, Socket) (Map.Map String ()))
@@ -69,15 +73,16 @@ demux = void (Fold.demux commands :: Fold IO (String, Socket) (Map.Map String ()
 
 handler :: Socket -> IO ()
 handler sk =
-      Stream.unfold Socket.read sk       -- SerialT IO Word8
-    & Unicode.decodeLatin1               -- SerialT IO Char
-    & Stream.wordsBy isSpace Fold.toList -- SerialT IO String
-    & Stream.map (, sk)                  -- SerialT IO (String, Socket)
+      Stream.unfold Socket.reader sk     -- Stream IO Word8
+    & Unicode.decodeLatin1               -- Stream IO Char
+    & Stream.parseMany word              -- Stream IO String
+    & fmap (, sk)                        -- Stream IO (String, Socket)
     & Stream.fold demux                  -- IO () + Exceptions
     & discard                            -- IO ()
 
     where
 
+    word = Parser.wordBy isSpace Fold.toList
     discard action = void action `catch` (\(_ :: SomeException) -> return ())
 
 ------------------------------------------------------------------------------
@@ -86,11 +91,9 @@ handler sk =
 
 server :: IO ()
 server =
-      Stream.unfold TCP.acceptOnPort 8091      -- SerialT IO Socket
-    & Stream.fromSerial                        -- AsyncT IO Socket
-    & Stream.mapM (Socket.forSocketM handler)  -- AsyncT IO ()
-    & Stream.fromAsync                         -- SerialT IO ()
-    & Stream.drain                             -- IO ()
+      Stream.unfold TCP.acceptorOnPort 8091    -- Stream IO Socket
+    & Concur.mapM (Socket.forSocketM handler)  -- Stream IO ()
+    & Stream.fold Fold.drain                   -- IO ()
 
 main :: IO ()
 main = server

@@ -9,20 +9,22 @@ import Data.Word (Word8)
 import System.Environment (getArgs)
 import System.IO (stdout)
 
-import Streamly.Prelude (SerialT)
 import Streamly.Data.Fold (Fold)
 import Streamly.Data.Fold.Tee (Tee(..))
+import Streamly.Data.Stream (Stream)
 import Streamly.Data.Unfold (Unfold)
 
-import qualified Streamly.Data.Array.Unboxed as Array
+import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Parser as Parser
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Data.Stream.Concurrent as Concur
 import qualified Streamly.Data.Unfold as Unfold
-import qualified Streamly.Prelude as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Unicode.Stream as Unicode
 
 import qualified Streamly.Internal.Data.Unfold as Unfold (enumerateFromToIntegral)
-import qualified Streamly.Internal.Data.Fold as Fold (classify)
+import qualified Streamly.Internal.Data.Fold.Extra as Fold (classify)
 import qualified Streamly.Internal.FileSystem.File as File (toBytes)
 
 -------------------------------------------------------------------------------
@@ -32,14 +34,14 @@ import qualified Streamly.Internal.FileSystem.File as File (toBytes)
 -- | Sum a list of Int
 sumInt :: Identity Int
 sumInt =
-      Stream.unfold Unfold.fromList [1..10] -- SerialT Identity Int
+      Stream.unfold Unfold.fromList [1..10] -- Stream Identity Int
     & Stream.fold Fold.sum                  -- Identity Int
 
 -- | Sum a list of Int
 sumInt1 :: Identity Int
 sumInt1 =
-      Stream.fromList [1..10]       -- SerialT Identity Int
-    & Stream.sum                    -- Identity Int
+      Stream.fromList [1..10]       -- Stream Identity Int
+    & Stream.fold Fold.sum          -- Identity Int
 
 -------------------------------------------------------------------------------
 -- Nested loops
@@ -60,14 +62,14 @@ crossProduct range1 range2 =
                   (Unfold.lmap fst Unfold.enumerateFromToIntegral)
                   (Unfold.lmap snd Unfold.enumerateFromToIntegral)
 
-     in Stream.unfold xmult (range1,range2) -- SerialT Identity Int
+     in Stream.unfold xmult (range1,range2) -- Stream Identity Int
             & Stream.fold Fold.sum          -- Identity Int
 
 -- | Nested looping similar to 'cross' above but more general and less
 -- efficient. The second stream may depend on the first stream. The loops
 -- cannot fuse completely.
 --
-nestedLoops :: SerialT IO ()
+nestedLoops :: Stream IO ()
 nestedLoops = do
     x <- Stream.fromList [3,4 :: Int]
     y <- Stream.fromList [1..x]
@@ -77,11 +79,13 @@ nestedLoops = do
 -- Text processing
 -------------------------------------------------------------------------------
 
+splitOn p f = Stream.foldMany (Fold.takeEndBy_ p f)
+
 -- | Find average line length for lines in a text file
 avgLineLength :: IO Double
 avgLineLength =
-      File.toBytes "input.txt"                    -- SerialT IO Word8
-    & Stream.splitOnSuffix isNewLine Fold.length  -- SerialT IO Int
+      File.toBytes "input.txt"                    -- Stream IO Word8
+    & splitOn isNewLine Fold.length               -- Stream IO Int
     & Stream.fold avg                             -- IO Double
 
     where
@@ -100,9 +104,9 @@ avgLineLength =
 -- | Read text from a file and generate a histogram of line length
 lineLengthHistogram :: IO (Map Int Int)
 lineLengthHistogram =
-      File.toBytes "input.txt"                   -- SerialT IO Word8
-    & Stream.splitOnSuffix isNewLine Fold.length -- SerialT IO Int
-    & Stream.map bucket                          -- SerialT IO (Int, Int)
+      File.toBytes "input.txt"                   -- Stream IO Word8
+    & splitOn isNewLine Fold.length              -- Stream IO Int
+    & fmap bucket                                -- Stream IO (Int, Int)
     & Stream.fold (Fold.classify Fold.length)    -- IO (Map Int Int)
 
     where
@@ -116,16 +120,18 @@ lineLengthHistogram =
 -- | Read text from a file and generate a histogram of word length
 wordLengthHistogram :: IO (Map Int Int)
 wordLengthHistogram =
-      File.toBytes "input.txt"                -- SerialT IO Word8
-    & Unicode.decodeLatin1                    -- SerialT IO Char
-    & Stream.wordsBy isSpace Fold.length      -- SerialT IO Int
-    & Stream.map bucket                       -- SerialT IO (Int, Int)
+      File.toBytes "input.txt"                -- Stream IO Word8
+    & Unicode.decodeLatin1                    -- Stream IO Char
+    & Stream.parseMany wordLen                -- Stream IO Int
+    & fmap bucket                             -- Stream IO (Int, Int)
     & Stream.fold (Fold.classify Fold.length) -- IO (Map (Int, Int))
 
     where
 
     bucket :: Int -> (Int, Int)
     bucket n = let i = n `mod` 10 in if i > 9 then (9,n) else (i,n)
+
+    wordLen = Parser.wordBy isSpace Fold.length
 
 -------------------------------------------------------------------------------
 -- Network/Concurrency
@@ -146,12 +152,13 @@ meanings = map fetch wordList
 --
 getWords :: IO ()
 getWords =
-      Stream.fromListM meanings                -- AheadT  IO (String, String)
-    & Stream.fromAhead                         -- SerialT IO (String, String)
-    & Stream.map show                          -- SerialT IO String
-    & unlinesBy "\n"                           -- SerialT IO String
-    & Stream.map Array.fromList                -- SerialT IO (Array Word8)
-    & Stream.fold (Handle.writeChunks stdout)  -- IO ()
+      Stream.fromList meanings              -- Stream IO (IO (String, String))
+    & Concur.sequenceWith
+        (Concur.ordered True)               -- Stream IO (String, String)
+    & fmap show                               -- Stream IO String
+    & unlinesBy "\n"                          -- Stream IO String
+    & fmap Array.fromList                     -- Stream IO (Array Word8)
+    & Stream.fold (Handle.writeChunks stdout) -- IO ()
 
     where unlinesBy = Stream.intercalateSuffix (Unfold.function id)
 
@@ -180,7 +187,7 @@ main = do
             print $ runIdentity $ crossProduct (1,1000) (1000,2000)
         "nestedLoops" -> do
             putStrLn "nestedLoops"
-            Stream.drain nestedLoops
+            Stream.fold Fold.drain nestedLoops
         "avgLineLength" -> do
             putStrLn "avgLineLength"
             avgLineLength >>= print

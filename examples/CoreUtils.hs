@@ -1,71 +1,68 @@
 -- Implement some simple coreutils commands
 
 import Control.Monad (void)
-import Data.Char (ord)
 import Data.Function ((&))
 import Data.Word (Word8)
 import System.Environment (getArgs)
-import Streamly.Data.Array.Unboxed (Array)
+import Streamly.Data.Array (Array)
 import Streamly.Data.Fold (Fold)
 
 import qualified Streamly.Console.Stdio as Stdio
-import qualified Streamly.Data.Array.Unboxed as Array
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Internal.Data.Stream as Stream
+import qualified Streamly.Data.Stream as Stream
 
-import qualified Streamly.Internal.FileSystem.Dir as Dir (toFiles)
+import qualified Streamly.Internal.FileSystem.Dir as Dir (readFiles)
 import qualified Streamly.Internal.FileSystem.File as File
---import qualified Streamly.Prelude as Stream
 
 -- | > cat input.txt
 cat :: IO ()
 cat =
-      File.toChunks "input.txt"     -- SerialT IO (Array Word8)
+      File.readChunks "input.txt"     -- Stream IO (Array Word8)
     & Stream.fold Stdio.writeChunks -- IO ()
 
 -- | Read all files from a directory and write to a single output file.
 -- > cat dir/* > output.txt
 catDirTo :: IO ()
 catDirTo =
-      Dir.toFiles "dir"                 -- SerialT IO String
-    & Stream.unfoldMany File.readChunks -- SerialT IO (Array Word8)
-    & File.fromChunks "output.txt"      -- IO ()
+      Dir.readFiles "dir"                -- Stream IO String
+    & Stream.unfoldMany File.chunkReader -- Stream IO (Array Word8)
+    & File.fromChunks "output.txt"       -- IO ()
 
 -- | > cp input.txt output.txt
 cp :: IO ()
 cp =
-      File.toChunks "input.txt"    -- SerialT IO (Array Word8)
+      File.readChunks "input.txt"    -- Stream IO (Array Word8)
     & File.fromChunks "output.txt" -- IO ()
 
 -- | > cat input.txt >> output.txt
 append :: IO ()
 append =
-      File.toChunks "input.txt"      -- SerialT IO (Array Word8)
+      File.readChunks "input.txt"      -- Stream IO (Array Word8)
     & File.appendChunks "output.txt" -- IO ()
 
 -- | > cat input.txt | tee output1.txt > output.txt
 tap :: IO ()
 tap =
-      File.toChunks "input.txt"                   -- SerialT IO (Array Word8)
-    & Stream.tap (File.writeChunks "output1.txt") -- SerialT IO (Array Word8)
+      File.readChunks "input.txt"                   -- Stream IO (Array Word8)
+    & Stream.tap (File.writeChunks "output1.txt") -- Stream IO (Array Word8)
     & File.fromChunks "output.txt"                -- IO ()
 {-
 -- | > cat input.txt | tee output1.txt > output.txt
 -- output1.txt is processed/written to in a separate thread.
 tapAsync :: IO ()
 tapAsync =
-      Stream.unfold Stdio.readChunks ()   -- SerialT IO (Array Word8)
+      Stream.unfold Stdio.readChunks ()   -- Stream IO (Array Word8)
     & Stream.tapAsyncK
-          (File.fromChunks "output1.txt") -- SerialT IO (Array Word8)
+          (File.fromChunks "output1.txt") -- Stream IO (Array Word8)
     & File.fromChunks "output.txt"        -- IO ()
 -}
 
 -- | > cat input.txt | tee output1.txt > output.txt
 tee :: IO ()
 tee =
-      File.toChunks "input.txt" -- SerialT IO (Array Word8)
-    & Stream.fold t             -- IO ((),())
-    & void                      -- IO ()
+      File.readChunks "input.txt" -- Stream IO (Array Word8)
+    & Stream.fold t               -- IO ((),())
+    & void                        -- IO ()
 
     where
 

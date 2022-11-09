@@ -9,15 +9,15 @@ import Data.Functor.Identity (Identity(..))
 import Data.Hashable (Hashable(..))
 import Data.Map.Strict (Map)
 import System.Environment (getArgs)
-import Streamly.Data.Unbox (Unbox)
+import Streamly.Data.Array (Unbox)
 
 import qualified Data.Char as Char
 import qualified Data.Map.Strict as Map
 import qualified Data.List as List
 import qualified Data.Ord as Ord
-import qualified Streamly.Data.Array.Unboxed as Array
+import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Internal.Data.Fold as Fold (classifyMutWith)
+import qualified Streamly.Internal.Data.Fold.Extra as Fold (classifyMutWith)
 import qualified Streamly.Internal.FileSystem.File as File (toBytes)
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Unicode

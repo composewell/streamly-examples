@@ -4,12 +4,13 @@ import Control.Monad (when)
 import Data.Function ((&))
 import Data.Word (Word8)
 import Network.Socket (PortNumber)
-import Streamly.Prelude (SerialT)
+import Streamly.Data.Stream (Stream)
 
 import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Data.Stream.Concurrent as Concur
 import qualified Streamly.Data.Unfold as Unfold
-import qualified Streamly.Internal.Network.Inet.TCP as TCP (processBytes)
-import qualified Streamly.Prelude as Stream
+import qualified Streamly.Internal.Network.Inet.TCP as TCP (pipeBytes)
 import qualified Streamly.Unicode.Stream as Unicode
 
 remoteAddr :: (Word8,Word8,Word8,Word8)
@@ -31,20 +32,28 @@ counter tag n () = do
         putStrLn $ tag ++ show (i * chunkSize)
     return i
 
-sender :: SerialT IO ()
+sender :: Stream IO ()
 sender =
-      Stream.repeat "time\nrandom\n"               -- SerialT IO String
-    & Stream.unfoldMany Unfold.fromList            -- SerialT IO Char
-    & Unicode.encodeLatin1                         -- SerialT IO Word8
-    & TCP.processBytes remoteAddr remotePort       -- SerialT IO Word8
-    & Unicode.decodeLatin1                         -- SerialT IO Char
-    & Stream.splitOnSuffix (== '\n') Fold.drain    -- SerialT IO String
-    & Stream.chunksOf chunkSize Fold.drain         -- SerialT IO ()
+      Stream.repeat "time\nrandom\n"               -- Stream IO String
+    & Stream.unfoldMany Unfold.fromList            -- Stream IO Char
+    & Unicode.encodeLatin1                         -- Stream IO Word8
+    & TCP.pipeBytes remoteAddr remotePort          -- Stream IO Word8
+    & Unicode.decodeLatin1                         -- Stream IO Char
+    & split (== '\n') Fold.drain                   -- Stream IO String
+    & Stream.foldMany chunk                        -- Stream IO ()
+
+    where
+
+    chunk = Fold.take chunkSize Fold.drain
+    split p f = Stream.foldMany (Fold.takeEndBy_ p f)
 
 main :: IO ()
 main = do
-      Stream.replicate 4 sender                    -- SerialT IO (SerialT IO ())
-    & Stream.concatMapWith Stream.async id         -- SerialT IO ()
-    & Stream.postscanlM' (counter "rcvd: ")
-        (return 0 :: IO Int)                       -- SerialT IO Int
-    & Stream.drain                                 -- IO ()
+      Stream.replicate 4 sender                    -- Stream IO (Stream IO ())
+    & Concur.concat                                -- Stream IO ()
+    & Stream.postscan counts                       -- Stream IO Int
+    & Stream.fold Fold.drain                       -- IO ()
+
+    where
+
+    counts = Fold.foldlM' (counter "rcvd") (return 0 :: IO Int)

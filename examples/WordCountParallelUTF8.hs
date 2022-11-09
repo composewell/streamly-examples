@@ -34,18 +34,21 @@ import Control.Monad (when, unless, void)
 import Data.Char (isSpace)
 import Data.Word (Word8)
 import GHC.Conc (numCapabilities)
+import Streamly.Data.Stream (Stream)
 import System.Environment (getArgs)
 import System.IO (Handle, openFile, IOMode(..))
 
-import qualified Streamly.Data.Array.Unboxed as Array
+import qualified Streamly.Data.Array as Array
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Data.Stream.Concurrent as Concur
 import qualified Streamly.FileSystem.Handle as Handle
-import qualified Streamly.Prelude as Stream
 
 -- Internal modules
 import qualified Streamly.Internal.Unicode.Stream as Unicode
        (DecodeState, DecodeError(..), CodePoint, decodeUtf8Either
        , resumeDecodeUtf8Either)
-import qualified Streamly.Internal.Data.Array.Unboxed.Mut.Type as MArray
+import qualified Streamly.Internal.Data.Array.Mut.Type as MArray
        (getIndexUnsafe, putIndexUnsafe, modifyIndexUnsafe, Array, newPinned)
 
 
@@ -320,7 +323,7 @@ printCounts v = do
 reconstructChar :: Int
                 -> MArray.Array Int
                 -> MArray.Array Int
-                -> IO (Stream.SerialT IO (Either Unicode.DecodeError Char))
+                -> IO (Stream IO (Either Unicode.DecodeError Char))
 reconstructChar hdrCnt v1 v2 = do
     when (hdrCnt > 3 || hdrCnt < 0) $ error "reconstructChar: hdrCnt > 3"
     stream1 <-
@@ -477,7 +480,7 @@ addCounts v1 v2 = do
                     case res of
                         Nothing -> error "addCounts: Bug. empty reconstructed char"
                         Just (h, t) -> do
-                            tlength <- Stream.length t
+                            tlength <- Stream.fold Fold.length t
                             case h of
                                 Right ch -> do
                                     -- If we have an error case after this
@@ -516,7 +519,7 @@ addCounts v1 v2 = do
                                     -- in partially decoded char to be written
                                     -- as trailer. Check if the last error is
                                     -- an incomplete decode.
-                                    r <- Stream.last t
+                                    r <- Stream.fold Fold.latest t
                                     let (st', cp') =
                                             case r of
                                                 Nothing -> (st, cp)
@@ -560,19 +563,21 @@ addCounts v1 v2 = do
 countArray :: Array.Array Word8 -> IO (MArray.Array Int)
 countArray src = do
     counts <- newCounts
-    Stream.mapM_ (countChar counts)
+    Stream.fold (Fold.drainMapM (countChar counts))
         $ Unicode.decodeUtf8Either
-        $ Stream.unfold Array.read src
+        $ Stream.unfold Array.reader src
     return counts
 
 {-# INLINE wcMwlParallel #-}
 wcMwlParallel :: Handle -> Int -> IO (MArray.Array Int)
 wcMwlParallel src n = do
-    Stream.foldlM' addCounts newCounts
-        $ Stream.fromAhead
-        $ Stream.maxThreads numCapabilities
-        $ Stream.mapM countArray
-        $ Stream.unfold Handle.readChunksWith (n, src)
+    Stream.fold (Fold.foldlM' addCounts newCounts)
+        $ Concur.mapMWith
+            ( Concur.maxThreads numCapabilities
+            . Concur.ordered True
+            )
+            countArray
+        $ Stream.unfold Handle.chunkReaderWith (n, src)
 
 -------------------------------------------------------------------------------
 -- Serial counting using parallel version of countChar
@@ -582,9 +587,9 @@ wcMwlParallel src n = do
 wcMwlParserial :: Handle -> IO (MArray.Array Int)
 wcMwlParserial src = do
     counts <- newCounts
-    Stream.mapM_ (countChar counts)
+    Stream.fold (Fold.drainMapM (countChar counts))
         $ Unicode.decodeUtf8Either
-        $ Stream.unfold Handle.read src
+        $ Stream.unfold Handle.reader src
     return counts
 
 -------------------------------------------------------------------------------

@@ -11,7 +11,7 @@ import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Internal.Data.Stream as Stream (refoldMany)
 import qualified Streamly.Internal.Data.Refold.Type as Refold (take)
 import qualified Streamly.FileSystem.Handle as Handle
-import qualified Streamly.Internal.FileSystem.Handle as Handle (consumer)
+import qualified Streamly.Internal.FileSystem.Handle as Handle (writer)
 
 newHandle :: StateT (Maybe (Handle, Int)) IO Handle
 newHandle = do
@@ -32,7 +32,7 @@ splitFile inHandle =
       (Stream.unfold Handle.read inHandle :: SerialT IO Word8) -- SerialT IO Word8
     & Stream.liftInner -- SerialT (StateT (Maybe (Handle, Int)) IO) Word8
     -- SerialT (StateT (Maybe (Handle, Int)) IO) ()
-    & Stream.refoldMany (Refold.take (180 * mb) Handle.consumer) newHandle
+    & Stream.refoldMany (Refold.take (180 * mb) Handle.writer) newHandle
     & Stream.runStateT (return Nothing)  -- SerialT IO (Maybe (Handle, Int), ())
     & fmap snd                     -- SerialT IO ()
     & Stream.fold Fold.drain                       -- SerialT IO ()

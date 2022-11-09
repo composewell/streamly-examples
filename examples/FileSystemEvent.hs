@@ -6,10 +6,10 @@ import Control.Monad.IO.Class (MonadIO)
 import Data.Function ((&))
 import Data.Word (Word8)
 import System.Environment (getArgs)
-import Streamly.Data.Array.Unboxed (Array)
+import Streamly.Data.Array (Array)
 
 import qualified Data.List.NonEmpty as NonEmpty
-import qualified Streamly.Data.Array.Unboxed as Array
+import qualified Streamly.Data.Array as Array
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Unicode
 

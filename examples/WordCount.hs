@@ -8,8 +8,9 @@ import Data.Char (ord)
 import Data.Function ((&))
 import System.Environment (getArgs)
 
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Internal.FileSystem.File as File
-import qualified Streamly.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Stream
 
 -------------------------------------------------------------------------------
@@ -40,10 +41,10 @@ count (Counts l w c wasSpace) ch =
 
 wc :: String -> IO Counts
 wc file =
-      Stream.unfold File.read file            -- SerialT IO Word8
-    & Stream.decodeLatin1                     -- SerialT IO Char
- -- & Stream.decodeUtf8                       -- SerialT IO Char
-    & Stream.foldl' count (Counts 0 0 0 True) -- IO Counts
+      File.read file                                      -- Stream IO Word8
+    & Stream.decodeLatin1                                 -- Stream IO Char
+ -- & Stream.decodeUtf8                                   -- Stream IO Char
+    & Stream.fold (Fold.foldl' count (Counts 0 0 0 True)) -- IO Counts
 
 -------------------------------------------------------------------------------
 -- Main

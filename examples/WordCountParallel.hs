@@ -7,20 +7,22 @@ import Data.Function ((&))
 import Data.Word (Word8)
 import GHC.Conc (numCapabilities)
 import System.Environment (getArgs)
-import Streamly.Data.Array.Unboxed (Array)
+import Streamly.Data.Array (Array)
 import WordCount (count, Counts(..), isSpace)
 
-import qualified Streamly.Data.Array.Unboxed as Array
+import qualified Streamly.Data.Array as Array
+import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Internal.FileSystem.File as File (readChunks)
-import qualified Streamly.Prelude as Stream
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Data.Stream.Concurrent as Concur
 import qualified Streamly.Unicode.Stream as Stream
 
 -- Get the line, word, char counts in one chunk.
 countArray :: Array Word8 -> IO Counts
 countArray arr =
-      Stream.unfold Array.read arr            -- SerialT IO Word8
-    & Stream.decodeLatin1                     -- SerialT IO Char
-    & Stream.foldl' count (Counts 0 0 0 True) -- IO Counts
+      Stream.unfold Array.reader arr          -- Stream IO Word8
+    & Stream.decodeLatin1                     -- Stream IO Char
+    & Stream.fold (Fold.foldl' count (Counts 0 0 0 True)) -- IO Counts
 
 -- When combining the counts in two contiguous chunks, we would also need to
 -- know whether the first element of the next chunk was a space char or
@@ -49,11 +51,17 @@ addCounts (sp1, Counts l1 w1 c1 ws1) (sp2, Counts l2 w2 c2 ws2) =
 -- apply our counting function to each array and then combine all the counts.
 wc :: String -> IO (Bool, Counts)
 wc file = do
-      Stream.unfold File.readChunks file -- AheadT IO (Array Word8)
-    & Stream.mapM partialCounts          -- AheadT IO (Bool, Counts)
-    & Stream.maxThreads numCapabilities  -- AheadT IO (Bool, Counts)
-    & Stream.fromAhead                   -- SerialT IO (Bool, Counts)
-    & Stream.foldl' addCounts (False, Counts 0 0 0 True) -- IO (Bool, Counts)
+      File.readChunks file               -- Stream IO (Array Word8)
+    & Concur.mapMWith
+        ( Concur.maxThreads numCapabilities
+        . Concur.ordered True
+        )
+        partialCounts                   -- Stream IO (Bool, Counts)
+    & Stream.fold foldCounts            -- IO (Bool, Counts)
+
+    where
+
+    foldCounts = Fold.foldl' addCounts (False, Counts 0 0 0 True)
 
 -------------------------------------------------------------------------------
 -- Main
