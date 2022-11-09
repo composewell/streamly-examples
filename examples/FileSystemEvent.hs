@@ -10,7 +10,8 @@ import Streamly.Data.Array (Array)
 
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Streamly.Data.Array as Array
-import qualified Streamly.Prelude as Stream
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Unicode.Stream as Unicode
 
 #if darwin_HOST_OS
@@ -39,4 +40,4 @@ main = do
     args <- getArgs
     paths <- mapM toUtf8 args
     Event.watch (NonEmpty.fromList paths)
-        & Stream.mapM_ (putStrLn . Event.showEvent)
+        & Stream.fold (Fold.drainMapM (putStrLn . Event.showEvent))

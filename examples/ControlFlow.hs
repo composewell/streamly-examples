@@ -1,6 +1,9 @@
 {-# LANGUAGE CPP                 #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE MonoLocalBinds #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wmissing-methods #-}
 
 -------------------------------------------------------------------------------
 -- Combining control flow manipulating monad transformers (MaybeT, exceptT,
@@ -30,13 +33,39 @@ import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Maybe (MaybeT (..))
 import Control.Monad.Trans.Except (ExceptT, runExceptT, throwE, catchE)
 import Control.Monad.Trans.Cont (ContT(..), callCC)
-
 import Streamly.Data.Stream (Stream)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Internal.Data.Stream as Stream (crossApplySnd)
 
+------------------------------------------------------------------------------
+-- Applicative/Monad instances
+------------------------------------------------------------------------------
 
+instance Monad m => Applicative (Stream m) where
+
+    {-# INLINE pure #-}
+    pure = Stream.fromPure
+
+    {-# INLINE (*>) #-}
+    s1 *> s2 = Stream.crossApplySnd s1 s2
+
+instance Monad m => Monad (Stream m) where
+    return = pure
+
+    {-# INLINE (>>) #-}
+    (>>) = (*>)
+
+instance MonadThrow m => MonadThrow (Stream m) where
+  throwM = lift . throwM
+
+instance MonadTrans Stream where
+    {-# INLINE lift #-}
+    lift = Stream.fromEffect
+
+instance (MonadIO m) => MonadIO (Stream m) where
+    liftIO x = Stream.fromEffect $ liftIO x
 
 -------------------------------------------------------------------------------
 -- Using MaybeT below streamly
@@ -139,7 +168,6 @@ mainEitherBelow = do
 getSequenceEitherAsyncBelow
     :: (  MonadIO m
        , MonadIO (Stream (ExceptT String m))
-       , Semigroup (Stream (ExceptT String m) Integer)
        )
     => Stream (ExceptT String m) ()
 getSequenceEitherAsyncBelow = do

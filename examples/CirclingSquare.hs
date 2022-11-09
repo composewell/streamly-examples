@@ -77,8 +77,8 @@ main = do
     ref <- newIORef (0,0)
 
     _ <- forkIO $ do
-            Stream.repeatM (updateDisplay ref rend) -- SerialT IO ()
-                & Stream.delay (1/60)               -- SerialT IO ()
+            Stream.repeatM (updateDisplay ref rend) -- Stream IO ()
+                & Stream.delay (1/60)               -- Stream IO ()
                 & Stream.drain                      -- IO ()
 
     -- MacOS requires pollEvents to run in the Main thread.

@@ -32,6 +32,7 @@ jobs:
       CABAL_PROJECT: ${{ matrix.cabal_project }}
       DISABLE_DOCS: ${{ matrix.disable_docs }}
       DISABLE_TEST: "y"
+      DISABLE_BENCH: "y"
 
     runs-on: macos-latest
     strategy:
@@ -40,17 +41,27 @@ jobs:
         include:
           - name: 8.10.4+macOS
             ghc_version: 8.10.4
-            build: cabal-v2
+            build: cabal
             cabal_project: cabal.project
-            cabal_version: 3.2
+            cabal_version: 3.6.2.0
             disable_docs: "y"
             cabal_build_options: "--flag interop"
+          - name: 9.2.4.Werror
+            ghc_version: 9.2.4
+            runner: ubuntu-latest
+            build: cabal
+            cabal_project: cabal.project.Werror
+            cabal_version: 3.6.2.0
+            disable_docs: "y"
+            disable_sdist_build: "y"
+            ignore_error: false
           - name: 9.2.4
             ghc_version: 9.2.4
             runner: ubuntu-latest
             build: cabal
             cabal_project: cabal.project
             cabal_version: 3.6.2.0
+            disable_docs: "y"
             disable_sdist_build: "y"
             ignore_error: false
     steps:

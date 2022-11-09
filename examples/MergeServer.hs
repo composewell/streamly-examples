@@ -36,7 +36,7 @@ recv sk = Stream.finallyIO (liftIO $ close sk) (readLines sk)
 server :: Handle -> IO ()
 server file =
       Stream.unfold TCP.acceptorOnPort 8090         -- Stream IO Socket
-    & Concur.concatMapWith (Concur.eager True) recv -- Stream IO (Array Char)
+    & Concur.parConcatMap (Concur.eager True) recv -- Stream IO (Array Char)
     & Stream.unfoldMany Array.reader                -- Stream IO Char
     & Unicode.encodeLatin1                          -- Stream IO Word8
     & Stream.fold (Handle.write file)               -- IO ()

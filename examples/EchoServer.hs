@@ -14,7 +14,7 @@ import qualified Streamly.Network.Socket as Socket
 main :: IO ()
 main =
       Stream.unfold TCP.acceptorOnPort 8091 -- Stream IO Socket
-    & Concur.mapM (handleWithM echo)        -- Stream IO ()
+    & Concur.parMapM id (handleWithM echo)  -- Stream IO ()
     & Stream.fold Fold.drain                -- IO ()
 
     where

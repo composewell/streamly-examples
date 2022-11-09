@@ -58,7 +58,7 @@ env: &env
       # If you have not committed packcheck.sh in your repo at PACKCHECK
       # then it is automatically pulled from this URL.
       PACKCHECK_GITHUB_URL: "https://raw.githubusercontent.com/composewell/packcheck"
-      PACKCHECK_GITHUB_COMMIT: "79fb4437009a7ebdada33d0493c27ee30160ec3f"
+      PACKCHECK_GITHUB_COMMIT: "a68b7b9c7c21eef8ed273e67030efb1d4fec027c"
 
 executors:
   amd64-executor:
@@ -374,7 +374,7 @@ jobs:
         - run:
             name: Hlint examples
             environment:
-              BUILD: cabal-v2
+              BUILD: hlint
               HLINT_OPTIONS: lint
               HLINT_TARGETS: examples
             command: |
@@ -385,7 +385,6 @@ workflows:
   version: 2
   build:
     jobs:
-      - cabal-ghc-9_2_4
       - cabal-ghc-9_0_1_sdist
       - cabal-ghc-9_0_1_fusion_plugin
       - cabal-ghc-8_10_4
@@ -393,5 +392,4 @@ workflows:
       - cabal-ghc-8_10_4_all_flags
       - stack-ghc-8_8
       - cabal-ghc-8_6_5
-      - cabal-ghcjs-8_4
       - hlint

@@ -4,9 +4,11 @@
 .gitignore
 .hlint.ignore
 appveyor.yml
+examples/ControlFlow.hs
 examples/SearchQuery.hs
 hie.yaml
 stack.yaml
 cabal.project
 cabal.project.ci
+cabal.project.Werror
 default.nix

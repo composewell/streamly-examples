@@ -32,13 +32,13 @@ catDirTo =
 cp :: IO ()
 cp =
       File.readChunks "input.txt"    -- Stream IO (Array Word8)
-    & File.fromChunks "output.txt" -- IO ()
+    & File.fromChunks "output.txt"   -- IO ()
 
 -- | > cat input.txt >> output.txt
 append :: IO ()
 append =
       File.readChunks "input.txt"      -- Stream IO (Array Word8)
-    & File.appendChunks "output.txt" -- IO ()
+    & File.appendChunks "output.txt"   -- IO ()
 
 -- | > cat input.txt | tee output1.txt > output.txt
 tap :: IO ()
@@ -75,8 +75,8 @@ tee =
 -- | > grep -c "the" input.txt
 grepc :: IO ()
 grepc = do
-    File.toBytes "input.txt"                                -- SerialT IO Word8
-        & Stream.splitOnSeq (Array.fromList pat) Fold.drain -- SerialT IO ()
+    File.toBytes "input.txt"                                -- Stream IO Word8
+        & Stream.splitOnSeq (Array.fromList pat) Fold.drain -- Stream IO ()
         & Stream.length                                     -- IO Int
         >>= print . subtract 1                              -- IO ()
 

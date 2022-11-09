@@ -86,7 +86,7 @@ foldDateTime arr =
 
 {-# INLINE check #-}
 check ::  (Char -> Bool) -> Fold m Char a -> Fold m Char a
-check p f = Fold.lmap (\x -> if (p x) then x else error "parse failed") f
+check p = Fold.lmap (\x -> if p x then x else error "parse failed")
 
 {-# INLINE decimal #-}
 decimal :: Monad m  => Int -> Fold m Char Int
@@ -98,7 +98,7 @@ decimal n = Fold.take n (check isDigit (Fold.foldl' step 0))
 
 {-# INLINE char #-}
 char :: Monad m => Char -> Fold m Char Char
-char c = fmap fromJust $ Fold.satisfy (== c)
+char c = fromJust <$> Fold.satisfy (== c)
 
 {-# NOINLINE _foldDateTimeAp #-}
 _foldDateTimeAp :: Array Char -> IO Int
@@ -147,17 +147,17 @@ _foldBreakDateTime arr = do
 _parseBreakDateTime :: Array Char -> IO Int
 _parseBreakDateTime arr = do
     let s = Stream.unfold Array.reader arr
-    (year, s1) <- Stream.parseBreak (Parser.fromFold $ decimal 4) s
+    (Right year, s1) <- Stream.parseBreak (Parser.fromFold $ decimal 4) s
     (_, s2) <- Stream.parseBreak (Parser.fromFold $ char '-') s1
-    (month, s3) <- Stream.parseBreak (Parser.fromFold $ decimal 2) s2
+    (Right month, s3) <- Stream.parseBreak (Parser.fromFold $ decimal 2) s2
     (_, s4) <- Stream.parseBreak (Parser.fromFold $ char '-') s3
-    (day, s5) <- Stream.parseBreak (Parser.fromFold $ decimal 2) s4
+    (Right day, s5) <- Stream.parseBreak (Parser.fromFold $ decimal 2) s4
     (_, s6) <- Stream.parseBreak (Parser.fromFold $ char 'T') s5
-    (hr, s7) <- Stream.parseBreak (Parser.fromFold $ decimal 2) s6
+    (Right hr, s7) <- Stream.parseBreak (Parser.fromFold $ decimal 2) s6
     (_, s8) <- Stream.parseBreak (Parser.fromFold $ char ':') s7
-    (mn, s9) <- Stream.parseBreak (Parser.fromFold $ decimal 2) s8
+    (Right mn, s9) <- Stream.parseBreak (Parser.fromFold $ decimal 2) s8
     (_, s10) <- Stream.parseBreak (Parser.fromFold $ char ':') s9
-    (sec, s11) <- Stream.parseBreak (Parser.fromFold $ decimal 2) s10
+    (Right sec, s11) <- Stream.parseBreak (Parser.fromFold $ decimal 2) s10
     (_, _) <- Stream.parseBreak (Parser.fromFold $ char 'Z') s11
     return (year + month + day + hr + mn + sec)
 

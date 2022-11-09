@@ -13,8 +13,8 @@ import System.Environment (getArgs)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Fold.Tee as Tee
-import qualified Streamly.Internal.FileSystem.File as File (toBytes)
-import qualified Streamly.Prelude as Stream
+import qualified Streamly.Internal.FileSystem.File as File (read)
+import qualified Streamly.Data.Stream as Stream
 
 {-# INLINE isSpace #-}
 isSpace :: Char -> Bool
@@ -28,7 +28,7 @@ isSpace c = uc == 0x20 || uc - 0x9 <= 4
 -- The fold accepts a stream of `Word8` and returns a value of type "a".
 foldWith :: Fold IO Word8 a -> String -> IO a
 foldWith f file =
-    File.toBytes file -- SerialT IO Word8
+    File.read file    -- Stream IO Word8
   & Stream.fold f     -- IO a
 
 -------------------------------------------------------------------------------

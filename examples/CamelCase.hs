@@ -6,22 +6,24 @@ import Data.Word (Word8)
 import System.Environment (getArgs)
 import System.IO (Handle, IOMode(..), openFile, stdout)
 
-import qualified Streamly.Prelude as Stream
+import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.FileSystem.Handle as Handle
+import qualified Streamly.Data.Stream as Stream
 
 -- | @camelCase source-file dest-file@
 camelCase :: Handle -> Handle -> IO ()
 camelCase src dst =
-      Stream.unfold Handle.read src      -- SerialT IO Word8
-    & Stream.scanl' step (True, Nothing) -- SerialT IO (Bool, Maybe Word8)
-    & Stream.mapMaybe snd                -- SerialT IO Word8
-    & Stream.fold (Handle.write dst)     -- IO ()
+      Stream.unfold Handle.reader src      -- Stream IO Word8
+    & Stream.postscan fold                 -- Stream IO (Bool, Maybe Word8)
+    & Stream.mapMaybe snd                  -- Stream IO Word8
+    & Stream.fold (Handle.write dst)       -- IO ()
 
     where
 
     isNewline x = x == 0x0a
     isUpper x = x >= 0x41 && x <= 0x5a
     isLower x = x >= 0x61 && x <= 0x7a
+    fold = Fold.foldl' step (True, Nothing)
 
     -- Scan accumulator @(wasSpace, output)@ contains whether the previous
     -- character was white space, and if the current char should be emitted in

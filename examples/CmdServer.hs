@@ -22,13 +22,13 @@ import qualified Data.Map.Strict as Map
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Parser as Parser
-import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Concurrent as Concur
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Unicode.Stream as Unicode
+import qualified Streamly.Data.Stream as Stream
 
--- import qualified Streamly.Internal.Data.Fold as Fold (wordBy)
+import qualified Streamly.Internal.Data.Stream as Stream (catRights)
+import qualified Streamly.Internal.Data.Stream.Concurrent as Concur (mapM)
 import qualified Streamly.Internal.Data.Fold.Extra as Fold (demux)
 import qualified Streamly.Internal.Data.Time.Clock as Clock
     (getTime, Clock(..))
@@ -76,6 +76,7 @@ handler sk =
       Stream.unfold Socket.reader sk     -- Stream IO Word8
     & Unicode.decodeLatin1               -- Stream IO Char
     & Stream.parseMany word              -- Stream IO String
+    & Stream.catRights
     & fmap (, sk)                        -- Stream IO (String, Socket)
     & Stream.fold demux                  -- IO () + Exceptions
     & discard                            -- IO ()

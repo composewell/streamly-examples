@@ -572,7 +572,7 @@ countArray src = do
 wcMwlParallel :: Handle -> Int -> IO (MArray.Array Int)
 wcMwlParallel src n = do
     Stream.fold (Fold.foldlM' addCounts newCounts)
-        $ Concur.mapMWith
+        $ Concur.parMapM
             ( Concur.maxThreads numCapabilities
             . Concur.ordered True
             )
