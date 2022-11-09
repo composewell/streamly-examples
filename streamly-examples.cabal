@@ -325,3 +325,12 @@ executable FileSystemEvent
     buildable: True
   else
     buildable: False
+
+executable DateTimeParser
+  import: exe-options
+  main-is: DateTimeParser.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-depends: tasty-bench >= 0.3
+  else
+    buildable: False
