@@ -9,7 +9,7 @@ import Streamly.Data.Stream (Stream)
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Data.Unfold as Unfold
-import qualified Streamly.Internal.Data.Stream.Concurrent as Concur (concat)
+import qualified Streamly.Data.Stream.Concurrent as Stream (parConcat)
 import qualified Streamly.Internal.Network.Inet.TCP as TCP (pipeBytes)
 import qualified Streamly.Unicode.Stream as Unicode
 
@@ -50,7 +50,7 @@ sender =
 main :: IO ()
 main = do
       Stream.replicate 4 sender                    -- Stream IO (Stream IO ())
-    & Concur.concat                                -- Stream IO ()
+    & Stream.parConcat id                          -- Stream IO ()
     & Stream.postscan counts                       -- Stream IO Int
     & Stream.fold Fold.drain                       -- IO ()
 

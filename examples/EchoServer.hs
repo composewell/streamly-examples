@@ -7,14 +7,14 @@ import Network.Socket (Socket)
 import qualified Network.Socket as Net
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Concurrent as Concur
+import qualified Streamly.Data.Stream.Concurrent as Stream
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Network.Socket as Socket
 
 main :: IO ()
 main =
       Stream.unfold TCP.acceptorOnPort 8091 -- Stream IO Socket
-    & Concur.parMapM id (handleWithM echo)  -- Stream IO ()
+    & Stream.parMapM id (handleWithM echo)  -- Stream IO ()
     & Stream.fold Fold.drain                -- IO ()
 
     where

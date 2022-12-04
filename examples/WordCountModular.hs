@@ -13,8 +13,8 @@ import System.Environment (getArgs)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Fold.Tee as Tee
-import qualified Streamly.Internal.FileSystem.File as File (read)
 import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Internal.FileSystem.File as File (read)
 
 {-# INLINE isSpace #-}
 isSpace :: Char -> Bool

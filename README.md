@@ -95,12 +95,10 @@ $ cabal run --flag interop Interop.Pipes
 * [CirclingSquare](examples/CirclingSquare.hs): Use SDL2 to display a
   square that moves in a circle, and follows the mouse pointer.
 
-<!---
 ### Monad Transformers
 
 * [ControlFlow](examples/ControlFlow.hs): Combining control flow manipulating
   transformers (`MaybeT`, `ExceptT`, `ContT`) with streamly.
--->
 
 ### Interoperation
 

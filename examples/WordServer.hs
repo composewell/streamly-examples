@@ -7,7 +7,7 @@ import Network.Socket (Socket, close)
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Parser as Parser
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Concurrent as Concur
+import qualified Streamly.Data.Stream.Concurrent as Stream
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Unicode.Stream as Unicode
@@ -28,7 +28,7 @@ lookupWords sk =
     & Unicode.decodeLatin1                       -- Stream IO Char
     & Stream.parseMany word
     & Stream.catRights                           -- Stream IO String
-    & Concur.parMapM (Concur.ordered True) fetch
+    & Stream.parMapM (Stream.ordered True) fetch
     & fmap show                                  -- Stream IO String
     & Stream.intersperse "\n"                    -- Stream IO String
     & Unicode.encodeStrings Unicode.encodeLatin1 -- Stream IO (Array Word8)
@@ -47,5 +47,5 @@ serve sk = finally (lookupWords sk) (close sk)
 main :: IO ()
 main =
       Stream.unfold TCP.acceptorOnPort 8091             -- Stream IO Socket
-    & Concur.parMapM id (Socket.forSocketM serve)       -- Stream IO ()
+    & Stream.parMapM id (Socket.forSocketM serve)       -- Stream IO ()
     & Stream.fold Fold.drain                            -- IO ()

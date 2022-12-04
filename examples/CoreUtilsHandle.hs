@@ -6,8 +6,8 @@ import System.Environment (getArgs)
 import System.IO (IOMode(..), stdin, stdout, Handle, openFile)
 
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Unicode.Stream as Unicode
 
 import qualified Streamly.Internal.Data.Stream.Chunked as ArrayStream (splitOn)

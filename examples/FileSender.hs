@@ -13,10 +13,11 @@ import System.IO (Handle, withFile, IOMode(..))
 import qualified Control.Monad.Catch as Catch
 import qualified Network.Socket as Net
 import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Data.Stream.Concurrent as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Network.Socket as Socket
-import qualified Streamly.Data.Stream as Stream
 
 main :: IO ()
 main = do
@@ -40,6 +41,6 @@ main = do
 
     sendAll :: [String] -> IO ()
     sendAll files =
-          Stream.fromList files           -- Stream IO String
-        & Stream.mapM sendFile            -- Stream IO ()
-        & Stream.fold Fold.drain          -- IO ()
+          Stream.fromList files        -- Stream IO String
+        & Stream.parMapM id sendFile   -- Stream IO ()
+        & Stream.fold Fold.drain       -- IO ()

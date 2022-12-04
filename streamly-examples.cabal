@@ -216,9 +216,9 @@ executable CirclingSquare
   else
     buildable: False
 
--- executable ControlFlow
---  import: exe-options
---  main-is: ControlFlow.hs
+executable ControlFlow
+  import: exe-options
+  main-is: ControlFlow.hs
 
 executable CoreUtilsHandle
   import: exe-options

@@ -4,7 +4,6 @@
 .gitignore
 .hlint.ignore
 appveyor.yml
-examples/ControlFlow.hs
 examples/SearchQuery.hs
 hie.yaml
 stack.yaml

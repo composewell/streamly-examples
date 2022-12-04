@@ -22,14 +22,14 @@ import qualified Data.Map.Strict as Map
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Parser as Parser
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Data.Stream.Concurrent as Stream (parMapM)
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Unicode.Stream as Unicode
-import qualified Streamly.Data.Stream as Stream
 
-import qualified Streamly.Internal.Data.Stream as Stream (catRights)
-import qualified Streamly.Internal.Data.Stream.Concurrent as Concur (mapM)
 import qualified Streamly.Internal.Data.Fold.Extra as Fold (demux)
+import qualified Streamly.Internal.Data.Stream as Stream (catRights)
 import qualified Streamly.Internal.Data.Time.Clock as Clock
     (getTime, Clock(..))
 
@@ -92,9 +92,9 @@ handler sk =
 
 server :: IO ()
 server =
-      Stream.unfold TCP.acceptorOnPort 8091    -- Stream IO Socket
-    & Concur.mapM (Socket.forSocketM handler)  -- Stream IO ()
-    & Stream.fold Fold.drain                   -- IO ()
+      Stream.unfold TCP.acceptorOnPort 8091          -- Stream IO Socket
+    & Stream.parMapM id (Socket.forSocketM handler)  -- Stream IO ()
+    & Stream.fold Fold.drain                         -- IO ()
 
 main :: IO ()
 main = server

@@ -7,23 +7,22 @@ import System.Environment (getArgs)
 import System.IO (Handle, IOMode(..), openFile, stdout)
 
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.FileSystem.Handle as Handle
 
 -- | @camelCase source-file dest-file@
 camelCase :: Handle -> Handle -> IO ()
 camelCase src dst =
-      Stream.unfold Handle.reader src      -- Stream IO Word8
-    & Stream.postscan fold                 -- Stream IO (Bool, Maybe Word8)
-    & Stream.mapMaybe snd                  -- Stream IO Word8
-    & Stream.fold (Handle.write dst)       -- IO ()
+      Stream.unfold Handle.reader src    -- Stream IO Word8
+    & Stream.postscan fold               -- Stream IO (Bool, Maybe Word8)
+    & Stream.mapMaybe snd                -- Stream IO Word8
+    & Stream.fold (Handle.write dst)     -- IO ()
 
     where
 
     isNewline x = x == 0x0a
     isUpper x = x >= 0x41 && x <= 0x5a
     isLower x = x >= 0x61 && x <= 0x7a
-    fold = Fold.foldl' step (True, Nothing)
 
     -- Scan accumulator @(wasSpace, output)@ contains whether the previous
     -- character was white space, and if the current char should be emitted in
@@ -35,6 +34,8 @@ camelCase src dst =
         -- Convert lower to upper if preceded by whitespace
         | isLower x = (False, Just $ if wasSpace then x - 32 else x)
         | otherwise = (True, Nothing)
+
+    fold = Fold.foldl' step (True, Nothing)
 
 main :: IO ()
 main = do

@@ -23,10 +23,11 @@ import qualified Streamly.Data.Stream.Concurrent as Concur
 import qualified Streamly.Data.Unfold as Unfold
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Unicode.Stream as Unicode
+
+import qualified Streamly.Internal.Data.Stream as Stream (catRights)
 import qualified Streamly.Internal.Data.Unfold as Unfold (enumerateFromToIntegral)
 import qualified Streamly.Internal.Data.Fold.Extra as Fold (classify)
 import qualified Streamly.Internal.FileSystem.File as File (read)
-import qualified Streamly.Internal.Data.Stream as Stream (catRights)
 
 -------------------------------------------------------------------------------
 -- Simple loops
@@ -106,7 +107,7 @@ avgLineLength =
 -- | Read text from a file and generate a histogram of line length
 lineLengthHistogram :: IO (Map Int Int)
 lineLengthHistogram =
-      File.read "input.txt"                   -- Stream IO Word8
+      File.read "input.txt"                      -- Stream IO Word8
     & splitOn isNewLine Fold.length              -- Stream IO Int
     & fmap bucket                                -- Stream IO (Int, Int)
     & Stream.fold (Fold.classify Fold.length)    -- IO (Map Int Int)
@@ -124,8 +125,8 @@ wordLengthHistogram :: IO (Map Int Int)
 wordLengthHistogram =
       File.read "input.txt"                -- Stream IO Word8
     & Unicode.decodeLatin1                    -- Stream IO Char
-    & Stream.parseMany wordLen                -- Stream IO Int
-    & Stream.catRights
+    & Stream.parseMany wordLen
+    & Stream.catRights                        -- Stream IO Int
     & fmap bucket                             -- Stream IO (Int, Int)
     & Stream.fold (Fold.classify Fold.length) -- IO (Map (Int, Int))
 
