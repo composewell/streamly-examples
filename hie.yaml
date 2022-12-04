@@ -22,6 +22,8 @@ cradle:
               component: "exe:Intro"
             - path: "./examples/CoreUtils.hs"
               component: "exe:CoreUtils"
+            - path: "./examples/FileSender.hs"
+              component: "exe:FileSender"
             - path: "./examples/FileSinkServer.hs"
               component: "exe:FileSinkServer"
             - path: "./examples/FileSystemEvent.hs"
@@ -54,6 +56,8 @@ cradle:
               component: "exe:WordCountUTF8"
             - path: "./examples/WordServer.hs"
               component: "exe:WordServer"
+            - path: "./examples/WordFrequency.hs"
+              component: "exe:WordFrequency"
 
 dependencies:
   - streamly-examples.cabal

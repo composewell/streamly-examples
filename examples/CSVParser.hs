@@ -13,7 +13,7 @@ import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified System.IO as IO
-import qualified Streamly.Internal.Data.Array.Stream as ArrayStream
+import qualified Streamly.Internal.Data.Stream.Chunked as ArrayStream (splitOn)
 import qualified Streamly.Internal.Data.Stream as Stream (foldManyPost)
 
 main :: IO ()

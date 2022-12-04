@@ -6,15 +6,16 @@ import Data.Word (Word8)
 import System.Environment (getArgs)
 import System.IO (Handle, IOMode(..), openFile, stdout)
 
-import qualified Streamly.Prelude as Stream
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 
 -- | @camelCase source-file dest-file@
 camelCase :: Handle -> Handle -> IO ()
 camelCase src dst =
-      Stream.unfold Handle.read src      -- SerialT IO Word8
-    & Stream.scanl' step (True, Nothing) -- SerialT IO (Bool, Maybe Word8)
-    & Stream.mapMaybe snd                -- SerialT IO Word8
+      Stream.unfold Handle.reader src    -- Stream IO Word8
+    & Stream.postscan fold               -- Stream IO (Bool, Maybe Word8)
+    & Stream.mapMaybe snd                -- Stream IO Word8
     & Stream.fold (Handle.write dst)     -- IO ()
 
     where
@@ -33,6 +34,8 @@ camelCase src dst =
         -- Convert lower to upper if preceded by whitespace
         | isLower x = (False, Just $ if wasSpace then x - 32 else x)
         | otherwise = (True, Nothing)
+
+    fold = Fold.foldl' step (True, Nothing)
 
 main :: IO ()
 main = do

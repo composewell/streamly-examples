@@ -9,4 +9,5 @@ hie.yaml
 stack.yaml
 cabal.project
 cabal.project.ci
+cabal.project.Werror
 default.nix

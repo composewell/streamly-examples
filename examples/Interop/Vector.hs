@@ -20,7 +20,7 @@ fromVector = Stream.unfoldrM unconsV
 
 --  | streamly to vector
 toVector :: Monad m => Stream m a -> Vector.Stream m a
-toVector = Vector.unfoldrM (Stream.uncons)
+toVector = Vector.unfoldrM Stream.uncons
 
 main :: IO ()
 main = do

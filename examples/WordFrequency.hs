@@ -17,15 +17,17 @@ import qualified Data.List as List
 import qualified Data.Ord as Ord
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Parser as Parser
+import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Internal.Data.Fold.Extra as Fold (classifyMutWith)
-import qualified Streamly.Internal.FileSystem.File as File (toBytes)
-import qualified Streamly.Prelude as Stream
+import qualified Streamly.Internal.Data.Stream as Stream (catRights)
+import qualified Streamly.Internal.FileSystem.File as File (read)
 import qualified Streamly.Unicode.Stream as Unicode
 
 hashArray :: (Unbox a, Integral b, Num c) =>
     Fold.Fold Identity a b -> Array.Array a -> c
 hashArray f arr =
-      Stream.unfold Array.read arr
+      Stream.unfold Array.reader arr
     & Stream.fold f
     & fromIntegral . runIdentity
 
@@ -61,13 +63,15 @@ main = do
 
     let counter = Fold.foldl' (\n _ -> n + 1) (0 :: Int)
         classifier = Fold.classifyMutWith id counter
+        word = Parser.wordBy isSpace Fold.toList
     -- Write the stream to a hashmap consisting of word counts
     mp <-
-        File.toBytes inFile                     -- SerialT IO Word8
-         & Unicode.decodeLatin1                 -- SerialT IO Char
-         & Stream.map toLower                   -- SerialT IO Char
-         & Stream.wordsBy isSpace Fold.toList   -- SerialT IO String
-         & Stream.filter (all isAlpha)          -- SerialT IO String
+        File.read inFile                    -- Stream IO Word8
+         & Unicode.decodeLatin1             -- Stream IO Char
+         & fmap toLower                     -- Stream IO Char
+         & Stream.parseMany word            -- Stream IO String
+         & Stream.catRights
+         & Stream.filter (all isAlpha)      -- Stream IO String
          & Stream.fold classifier :: IO (Map String Int)
 
     traverse_ print $ List.sortOn (Ord.Down . snd) (Map.toList mp)

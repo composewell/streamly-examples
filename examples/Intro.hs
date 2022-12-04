@@ -13,6 +13,7 @@ import Streamly.Data.Fold (Fold)
 import Streamly.Data.Fold.Tee (Tee(..))
 import Streamly.Data.Stream (Stream)
 import Streamly.Data.Unfold (Unfold)
+import Streamly.Internal.Data.Stream.Cross (CrossStream (..))
 
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
@@ -23,9 +24,10 @@ import qualified Streamly.Data.Unfold as Unfold
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Unicode.Stream as Unicode
 
+import qualified Streamly.Internal.Data.Stream as Stream (catRights)
 import qualified Streamly.Internal.Data.Unfold as Unfold (enumerateFromToIntegral)
 import qualified Streamly.Internal.Data.Fold.Extra as Fold (classify)
-import qualified Streamly.Internal.FileSystem.File as File (toBytes)
+import qualified Streamly.Internal.FileSystem.File as File (read)
 
 -------------------------------------------------------------------------------
 -- Simple loops
@@ -69,22 +71,23 @@ crossProduct range1 range2 =
 -- efficient. The second stream may depend on the first stream. The loops
 -- cannot fuse completely.
 --
-nestedLoops :: Stream IO ()
+nestedLoops :: CrossStream IO ()
 nestedLoops = do
-    x <- Stream.fromList [3,4 :: Int]
-    y <- Stream.fromList [1..x]
-    Stream.fromEffect $ print (x, y)
+    x <- CrossStream $ Stream.fromList [3,4 :: Int]
+    y <- CrossStream $ Stream.fromList [1..x]
+    CrossStream $ Stream.fromEffect $ print (x, y)
 
 -------------------------------------------------------------------------------
 -- Text processing
 -------------------------------------------------------------------------------
 
+splitOn :: Monad m => (a -> Bool) -> Fold m a b -> Stream m a -> Stream m b
 splitOn p f = Stream.foldMany (Fold.takeEndBy_ p f)
 
 -- | Find average line length for lines in a text file
 avgLineLength :: IO Double
 avgLineLength =
-      File.toBytes "input.txt"                    -- Stream IO Word8
+      File.read "input.txt"                    -- Stream IO Word8
     & splitOn isNewLine Fold.length               -- Stream IO Int
     & Stream.fold avg                             -- IO Double
 
@@ -104,7 +107,7 @@ avgLineLength =
 -- | Read text from a file and generate a histogram of line length
 lineLengthHistogram :: IO (Map Int Int)
 lineLengthHistogram =
-      File.toBytes "input.txt"                   -- Stream IO Word8
+      File.read "input.txt"                      -- Stream IO Word8
     & splitOn isNewLine Fold.length              -- Stream IO Int
     & fmap bucket                                -- Stream IO (Int, Int)
     & Stream.fold (Fold.classify Fold.length)    -- IO (Map Int Int)
@@ -120,9 +123,10 @@ lineLengthHistogram =
 -- | Read text from a file and generate a histogram of word length
 wordLengthHistogram :: IO (Map Int Int)
 wordLengthHistogram =
-      File.toBytes "input.txt"                -- Stream IO Word8
+      File.read "input.txt"                -- Stream IO Word8
     & Unicode.decodeLatin1                    -- Stream IO Char
-    & Stream.parseMany wordLen                -- Stream IO Int
+    & Stream.parseMany wordLen
+    & Stream.catRights                        -- Stream IO Int
     & fmap bucket                             -- Stream IO (Int, Int)
     & Stream.fold (Fold.classify Fold.length) -- IO (Map (Int, Int))
 
@@ -152,9 +156,9 @@ meanings = map fetch wordList
 --
 getWords :: IO ()
 getWords =
-      Stream.fromList meanings              -- Stream IO (IO (String, String))
-    & Concur.sequenceWith
-        (Concur.ordered True)               -- Stream IO (String, String)
+      Stream.fromList meanings                -- Stream IO (IO (String, String))
+    & Concur.parSequence
+        (Concur.ordered True)                 -- Stream IO (String, String)
     & fmap show                               -- Stream IO String
     & unlinesBy "\n"                          -- Stream IO String
     & fmap Array.fromList                     -- Stream IO (Array Word8)
@@ -187,7 +191,7 @@ main = do
             print $ runIdentity $ crossProduct (1,1000) (1000,2000)
         "nestedLoops" -> do
             putStrLn "nestedLoops"
-            Stream.fold Fold.drain nestedLoops
+            Stream.fold Fold.drain $ unCrossStream nestedLoops
         "avgLineLength" -> do
             putStrLn "avgLineLength"
             avgLineLength >>= print

@@ -12,10 +12,12 @@ import System.IO (Handle, withFile, IOMode(..))
 
 import qualified Control.Monad.Catch as Catch
 import qualified Network.Socket as Net
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Data.Stream.Concurrent as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Network.Socket as Socket
-import qualified Streamly.Prelude as Stream
 
 main :: IO ()
 main = do
@@ -29,8 +31,8 @@ main = do
 
     fileToSocket :: Handle -> Socket -> IO ()
     fileToSocket fh sk =
-          Stream.unfold Handle.readChunks fh  -- SerialT IO (Array Word8)
-        & Stream.fold (Socket.writeChunks sk) -- IO ()
+          Stream.unfold Handle.chunkReader fh  -- Stream IO (Array Word8)
+        & Stream.fold (Socket.writeChunks sk)  -- IO ()
 
     sendFile :: String -> IO ()
     sendFile file =
@@ -39,7 +41,6 @@ main = do
 
     sendAll :: [String] -> IO ()
     sendAll files =
-          Stream.fromList files -- ParallelT IO String
-        & Stream.mapM sendFile  -- ParallelT IO ()
-        & Stream.fromParallel   -- SerialT IO ()
-        & Stream.drain          -- IO ()
+          Stream.fromList files        -- Stream IO String
+        & Stream.parMapM id sendFile   -- Stream IO ()
+        & Stream.fold Fold.drain       -- IO ()

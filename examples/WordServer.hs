@@ -4,11 +4,15 @@ import Data.Char (isSpace)
 import Data.Function ((&))
 import Network.Socket (Socket, close)
 
-import qualified Streamly.Prelude as Stream
 import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Parser as Parser
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Data.Stream.Concurrent as Stream
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Unicode.Stream as Unicode
+
+import qualified Streamly.Internal.Data.Stream as Stream (catRights)
 
 -- Simulate network/db query by adding a delay
 fetch :: String -> IO (String, String)
@@ -20,16 +24,19 @@ fetch w = threadDelay 1000000 >> return (w,w)
 -- connection is closed.
 lookupWords :: Socket -> IO ()
 lookupWords sk =
-      Stream.unfold Socket.read sk               -- SerialT IO Word8
-    & Unicode.decodeLatin1                       -- SerialT IO Char
-    & Stream.wordsBy isSpace Fold.toList         -- SerialT IO String
-    & Stream.fromSerial                          -- AheadT  IO String
-    & Stream.mapM fetch                          -- AheadT  IO (String, String)
-    & Stream.fromAhead                           -- SerialT IO (String, String)
-    & Stream.map show                            -- SerialT IO String
-    & Stream.intersperse "\n"                    -- SerialT IO String
-    & Unicode.encodeStrings Unicode.encodeLatin1 -- SerialT IO (Array Word8)
+      Stream.unfold Socket.reader sk             -- Stream IO Word8
+    & Unicode.decodeLatin1                       -- Stream IO Char
+    & Stream.parseMany word
+    & Stream.catRights                           -- Stream IO String
+    & Stream.parMapM (Stream.ordered True) fetch
+    & fmap show                                  -- Stream IO String
+    & Stream.intersperse "\n"                    -- Stream IO String
+    & Unicode.encodeStrings Unicode.encodeLatin1 -- Stream IO (Array Word8)
     & Stream.fold (Socket.writeChunks sk)        -- IO ()
+
+  where
+
+  word = Parser.wordBy isSpace Fold.toList
 
 serve :: Socket -> IO ()
 serve sk = finally (lookupWords sk) (close sk)
@@ -39,8 +46,6 @@ serve sk = finally (lookupWords sk) (close sk)
 -- "nc" as a client to try it out.
 main :: IO ()
 main =
-      Stream.unfold TCP.acceptOnPort 8091 -- SerialT IO Socket
-    & Stream.fromSerial                   -- AsyncT IO ()
-    & Stream.mapM serve                   -- AsyncT IO ()
-    & Stream.fromAsync                    -- SerialT IO ()
-    & Stream.drain                        -- IO ()
+      Stream.unfold TCP.acceptorOnPort 8091             -- Stream IO Socket
+    & Stream.parMapM id (Socket.forSocketM serve)       -- Stream IO ()
+    & Stream.fold Fold.drain                            -- IO ()

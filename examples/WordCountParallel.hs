@@ -52,7 +52,7 @@ addCounts (sp1, Counts l1 w1 c1 ws1) (sp2, Counts l2 w2 c2 ws2) =
 wc :: String -> IO (Bool, Counts)
 wc file = do
       File.readChunks file               -- Stream IO (Array Word8)
-    & Concur.mapMWith
+    & Concur.parMapM
         ( Concur.maxThreads numCapabilities
         . Concur.ordered True
         )

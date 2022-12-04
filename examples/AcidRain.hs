@@ -7,20 +7,19 @@
 -- This example is adapted from Gabriel Gonzalez's pipes-concurrency package.
 -- https://hackage.haskell.org/package/pipes-concurrency-2.0.8/docs/Pipes-Concurrent-Tutorial.html
 
-#if !(MIN_VERSION_base(4,11,0))
-import Data.Semigroup ((<>))
-#endif
-import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO(liftIO))
-import Control.Monad.State (MonadState, get, modify, runStateT)
+import Control.Monad.State (MonadState, get, modify)
 import Data.Function ((&))
-import Streamly.Prelude (MonadAsync, SerialT)
+import Streamly.Data.Stream (Stream)
+import Streamly.Data.Stream.Concurrent (MonadAsync)
 
-import qualified Streamly.Prelude as Stream
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Data.Stream.Concurrent as Stream
 
-data Event = Quit | Harm Int | Heal Int deriving (Show)
+data Event = Quit | Harm Int | Heal Int deriving (Eq, Show)
 
-userAction :: MonadAsync m => SerialT m Event
+userAction :: MonadAsync m => Stream m Event
 userAction = Stream.repeatM $ liftIO askUser
     where
     askUser = do
@@ -31,21 +30,25 @@ userAction = Stream.repeatM $ liftIO askUser
             "quit"   -> return Quit
             _        -> putStrLn "Type potion or harm or quit" >> askUser
 
-acidRain :: MonadAsync m => SerialT m Event
-acidRain =
-      Stream.repeatM (liftIO $ return $ Harm 1) -- AsyncT m Event
-    & Stream.constRate 1                        -- AsyncT m Event
-    & Stream.fromAsync                          -- SerialT m Event
+acidRain :: MonadAsync m => Stream m Event
+acidRain = Stream.parRepeatM (Stream.constRate 1) (return $ Harm 1)
+
+parallel :: MonadAsync m => [Stream m a] -> Stream m a
+parallel = Stream.parConcatList (Stream.eager True)
 
 data Result = Check | Done
 
-runEvents :: (MonadAsync m, MonadState Int m) => SerialT m Result
-runEvents = do
-    event <- userAction `Stream.parallel` acidRain -- SerialT m Event
-    case event of
-        Harm n -> modify (\h -> h - n) >> return Check
-        Heal n -> modify (\h -> h + n) >> return Check
-        Quit -> return Done
+runEvents :: (MonadAsync m, MonadState Int m) => Stream m Result
+runEvents =
+    Stream.mapM f $ parallel [userAction, acidRain]
+
+    where
+
+    f event =
+        case event of
+            Harm n -> modify (\h -> h - n) >> return Check
+            Heal n -> modify (\h -> h + n) >> return Check
+            Quit -> return Done
 
 data Status = Alive | GameOver deriving Eq
 
@@ -55,15 +58,17 @@ getStatus result =
         Done  -> liftIO $ putStrLn "You quit!" >> return GameOver
         Check -> do
             h <- get
-            liftIO $ if (h <= 0)
-                     then putStrLn "You die!" >> return GameOver
-                     else putStrLn ("Health = " <> show h) >> return Alive
+            liftIO
+                $ if (h <= 0)
+                  then putStrLn "You die!" >> return GameOver
+                  else putStrLn ("Health = " <> show h) >> return Alive
 
 main :: IO ()
 main = do
     putStrLn "Your health is deteriorating due to acid rain,\\
              \ type \"potion\" or \"quit\""
-    let runGame =
-            Stream.mapM getStatus runEvents -- SerialT (StateT Int IO) Status
-          & Stream.drainWhile (== Alive)    -- StateT Int IO ()
-    void $ runStateT runGame 60
+    Stream.mapM getStatus runEvents  -- Stream (StateT Int IO) Status
+        & Stream.runStateT (pure 60) -- Stream IO (Int, Status)
+        & fmap snd                   -- Stream IO Status
+        & Stream.fold (Fold.takeEndBy (/= Alive) Fold.drain) -- IO ()
+    return ()

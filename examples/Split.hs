@@ -4,7 +4,7 @@ import Data.Function ((&))
 import Data.Word (Word8)
 import System.Environment (getArgs)
 import System.IO (Handle, IOMode(..), openFile, hClose)
-import Streamly.Prelude (SerialT)
+import Streamly.Data.Stream (Stream)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
@@ -29,13 +29,13 @@ newHandle = do
 -- of directory names.
 splitFile :: Handle -> IO ()
 splitFile inHandle =
-      (Stream.unfold Handle.read inHandle :: SerialT IO Word8) -- SerialT IO Word8
-    & Stream.liftInner -- SerialT (StateT (Maybe (Handle, Int)) IO) Word8
-    -- SerialT (StateT (Maybe (Handle, Int)) IO) ()
+      (Stream.unfold Handle.reader inHandle :: Stream IO Word8) -- Stream IO Word8
+    & Stream.liftInner                   -- Stream (StateT (Maybe (Handle, Int)) IO) Word8
+    -- Stream (StateT (Maybe (Handle, Int)) IO) ()
     & Stream.refoldMany (Refold.take (180 * mb) Handle.writer) newHandle
-    & Stream.runStateT (return Nothing)  -- SerialT IO (Maybe (Handle, Int), ())
-    & fmap snd                     -- SerialT IO ()
-    & Stream.fold Fold.drain                       -- SerialT IO ()
+    & Stream.runStateT (return Nothing)  -- Stream IO (Maybe (Handle, Int), ())
+    & fmap snd                           -- Stream IO ()
+    & Stream.fold Fold.drain             -- Stream IO ()
 
     where
 
