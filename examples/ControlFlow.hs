@@ -284,8 +284,8 @@ main = do
     mainMaybeBelow
     Stream.fold Fold.drain $ unCrossStream $ runMaybeT mainMaybeAbove
     runContT (Stream.fold Fold.drain mainContBelow) return
-    Stream.fold Fold.drain $ unCrossStream $ (runContT mainContAbove return)
+    Stream.fold Fold.drain $ unCrossStream $ runContT mainContAbove return
     mainEitherBelow
-    Stream.fold Fold.drain $ unCrossStream $ (runExceptT mainEitherAbove)
+    Stream.fold Fold.drain $ unCrossStream $ runExceptT mainEitherAbove
     mainMonadThrow
     mainEitherAsyncBelow
