@@ -4,9 +4,9 @@ packages:
 extra-deps:
 - unicode-data-0.3.0
 - git: https://github.com/composewell/streamly
-  commit: 3f82f0035a7eb787cd9c037c0115d4630a46e069
+  commit: 769538d8d1dac434fe95dc3d4883c9d05f8ecdef
 - git: https://github.com/composewell/streamly
-  commit: 3f82f0035a7eb787cd9c037c0115d4630a46e069
+  commit: 769538d8d1dac434fe95dc3d4883c9d05f8ecdef
   subdirs:
       - core
 - lockfree-queue-0.2.4@sha256:156e7ccc193fc5d8b43f065e9cd31c3171c79ec25863283d546900d92930846d,2963
