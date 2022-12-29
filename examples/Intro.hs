@@ -8,7 +8,7 @@ import Data.Map.Strict (Map)
 import Data.Word (Word8)
 import System.Environment (getArgs)
 import System.IO (stdout)
-import Streamly.Data.Fold (Fold)
+import Streamly.Data.Fold (Fold, Tee(..))
 import Streamly.Data.Stream (Stream)
 import Streamly.Data.Unfold (Unfold)
 import Streamly.Internal.Data.Stream.Cross (CrossStream (..))
@@ -97,7 +97,9 @@ avgLineLength =
     toDouble = fmap (fromIntegral :: Int -> Double)
 
     avg :: Fold IO Int Double
-    avg = Fold.teeWith (/) (toDouble Fold.sum) (toDouble Fold.length)
+    avg = unTee $ (/)
+            <$> Tee (toDouble Fold.sum)
+            <*> Tee (toDouble Fold.length)
 
 -- | Read text from a file and generate a histogram of line length
 lineLengthHistogram :: IO (Map Int Int)

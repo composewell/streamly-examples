@@ -7,8 +7,7 @@ module Main (main) where
 import Data.Char (chr, ord)
 import Data.Function ((&))
 import Data.Word (Word8)
-import Streamly.Data.Fold (Fold)
-import Streamly.Data.Fold.Tee (Tee(..))
+import Streamly.Data.Fold (Fold, Tee(..))
 import System.Environment (getArgs)
 
 import qualified Streamly.Data.Fold as Fold

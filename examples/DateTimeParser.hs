@@ -11,7 +11,7 @@ where
 
 import Data.Maybe (fromJust)
 import Streamly.Data.Array (Array)
-import Streamly.Data.Fold.Tee (Tee(..))
+import Streamly.Data.Fold (Tee(..))
 import Streamly.Internal.Data.Fold (Fold(..), Step(..))
 import Test.Tasty.Bench
 
