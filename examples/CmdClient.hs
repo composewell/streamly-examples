@@ -9,7 +9,7 @@ import Streamly.Data.Stream (Stream)
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Data.Unfold as Unfold
-import qualified Streamly.Data.Stream.Concurrent as Stream (parConcat)
+import qualified Streamly.Data.Stream.Prelude as Stream (parConcat)
 import qualified Streamly.Internal.Network.Inet.TCP as TCP (pipeBytes)
 import qualified Streamly.Unicode.Stream as Unicode
 

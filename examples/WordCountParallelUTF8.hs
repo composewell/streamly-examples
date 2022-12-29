@@ -41,7 +41,7 @@ import System.IO (Handle, openFile, IOMode(..))
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Concurrent as Concur
+import qualified Streamly.Data.Stream.Prelude as Concur
 import qualified Streamly.FileSystem.Handle as Handle
 
 -- Internal modules

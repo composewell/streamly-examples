@@ -8,9 +8,7 @@ import Data.Map.Strict (Map)
 import Data.Word (Word8)
 import System.Environment (getArgs)
 import System.IO (stdout)
-
 import Streamly.Data.Fold (Fold)
-import Streamly.Data.Fold.Tee (Tee(..))
 import Streamly.Data.Stream (Stream)
 import Streamly.Data.Unfold (Unfold)
 import Streamly.Internal.Data.Stream.Cross (CrossStream (..))
@@ -19,14 +17,13 @@ import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Parser as Parser
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Concurrent as Concur
+import qualified Streamly.Data.Stream.Prelude as Concur
 import qualified Streamly.Data.Unfold as Unfold
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Unicode.Stream as Unicode
 
-import qualified Streamly.Internal.Data.Stream as Stream (catRights)
 import qualified Streamly.Internal.Data.Unfold as Unfold (enumerateFromToIntegral)
-import qualified Streamly.Internal.Data.Fold.Extra as Fold (classify)
+import qualified Streamly.Internal.Data.Fold.Container as Fold (kvToMap)
 import qualified Streamly.Internal.FileSystem.File as File (read)
 
 -------------------------------------------------------------------------------
@@ -100,9 +97,7 @@ avgLineLength =
     toDouble = fmap (fromIntegral :: Int -> Double)
 
     avg :: Fold IO Int Double
-    avg = toFold $ (/)
-            <$> Tee (toDouble Fold.sum)
-            <*> Tee (toDouble Fold.length)
+    avg = Fold.teeWith (/) (toDouble Fold.sum) (toDouble Fold.length)
 
 -- | Read text from a file and generate a histogram of line length
 lineLengthHistogram :: IO (Map Int Int)
@@ -110,7 +105,7 @@ lineLengthHistogram =
       File.read "input.txt"                      -- Stream IO Word8
     & splitOn isNewLine Fold.length              -- Stream IO Int
     & fmap bucket                                -- Stream IO (Int, Int)
-    & Stream.fold (Fold.classify Fold.length)    -- IO (Map Int Int)
+    & Stream.fold (Fold.kvToMap Fold.length)    -- IO (Map Int Int)
 
     where
 
@@ -128,7 +123,7 @@ wordLengthHistogram =
     & Stream.parseMany wordLen
     & Stream.catRights                        -- Stream IO Int
     & fmap bucket                             -- Stream IO (Int, Int)
-    & Stream.fold (Fold.classify Fold.length) -- IO (Map (Int, Int))
+    & Stream.fold (Fold.kvToMap Fold.length) -- IO (Map (Int, Int))
 
     where
 

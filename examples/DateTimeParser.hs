@@ -11,6 +11,7 @@ where
 
 import Data.Maybe (fromJust)
 import Streamly.Data.Array (Array)
+import Streamly.Data.Fold.Tee (Tee(..))
 import Streamly.Internal.Data.Fold (Fold(..), Step(..))
 import Test.Tasty.Bench
 
@@ -105,19 +106,19 @@ _foldDateTimeAp :: Array Char -> IO Int
 _foldDateTimeAp arr =
     let t =
                 mkTime
-            <$> decimal 4  -- year
-            <*  char '-'
-            <*> decimal 2  -- month
-            <*  char '-'
-            <*> decimal 2  -- day
-            <*  char 'T'
-            <*> decimal 2  -- hr
-            <*  char ':'
-            <*> decimal 2  -- min
-            <*  char ':'
-            <*> decimal 2  -- sec
-            <*  char 'Z'
-    in Stream.fold t $ Stream.unfold Array.reader arr
+            <$> Tee (decimal 4)  -- year
+            <*  Tee (char '-')
+            <*> Tee (decimal 2)  -- month
+            <*  Tee (char '-')
+            <*> Tee (decimal 2)  -- day
+            <*  Tee (char 'T')
+            <*> Tee (decimal 2)  -- hr
+            <*  Tee (char ':')
+            <*> Tee (decimal 2)  -- min
+            <*  Tee (char ':')
+            <*> Tee (decimal 2)  -- sec
+            <*  Tee (char 'Z')
+    in Stream.fold (unTee t) $ Stream.unfold Array.reader arr
 
 -------------------------------------------------------------------------------
 -- Using foldBreak - slower than applicative
