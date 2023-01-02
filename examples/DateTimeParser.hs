@@ -100,7 +100,7 @@ decimal n = Fold.take n (check isDigit (Fold.foldl' step 0))
 {-# INLINE char #-}
 char :: Monad m => Char -> Fold m Char Char
 char c = fromJust <$> Fold.satisfy (== c)
-
+{-
 {-# NOINLINE _foldDateTimeAp #-}
 _foldDateTimeAp :: Array Char -> IO Int
 _foldDateTimeAp arr =
@@ -119,7 +119,7 @@ _foldDateTimeAp arr =
             <*> Tee (decimal 2)  -- sec
             <*  Tee (char 'Z')
     in Stream.fold (unTee t) $ Stream.unfold Array.reader arr
-
+-}
 -------------------------------------------------------------------------------
 -- Using foldBreak - slower than applicative
 -------------------------------------------------------------------------------

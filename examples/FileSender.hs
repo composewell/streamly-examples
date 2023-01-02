@@ -13,7 +13,6 @@ import System.IO (Handle, withFile, IOMode(..))
 import qualified Control.Monad.Catch as Catch
 import qualified Network.Socket as Net
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Network.Inet.TCP as TCP

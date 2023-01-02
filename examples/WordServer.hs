@@ -6,7 +6,6 @@ import Network.Socket (Socket, close)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Parser as Parser
-import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Network.Inet.TCP as TCP

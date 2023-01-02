@@ -7,13 +7,11 @@
 -- parallelism.
 
 import Data.Word (Word16)
-import Streamly.Data.Stream (Stream)
-import Streamly.Data.Stream.Prelude (MonadAsync)
+import Streamly.Data.Stream.Prelude (MonadAsync, Stream)
 import System.Random (getStdGen, randoms)
 
 import qualified Data.List as List
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Data.Stream.Prelude as Stream
 
 getRandomSorted :: IO (Stream IO Word16)

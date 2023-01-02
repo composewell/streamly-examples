@@ -9,15 +9,14 @@ import Data.Word (Word8)
 import System.Environment (getArgs)
 import System.IO (stdout)
 import Streamly.Data.Fold (Fold, Tee(..))
-import Streamly.Data.Stream (Stream)
+import Streamly.Data.Stream.Prelude (Stream)
 import Streamly.Data.Unfold (Unfold)
 import Streamly.Internal.Data.Stream.Cross (CrossStream (..))
 
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Parser as Parser
-import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Prelude as Concur
+import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Data.Unfold as Unfold
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Unicode.Stream as Unicode
@@ -154,8 +153,8 @@ meanings = map fetch wordList
 getWords :: IO ()
 getWords =
       Stream.fromList meanings                -- Stream IO (IO (String, String))
-    & Concur.parSequence
-        (Concur.ordered True)                 -- Stream IO (String, String)
+    & Stream.parSequence
+        (Stream.ordered True)                 -- Stream IO (String, String)
     & fmap show                               -- Stream IO String
     & unlinesBy "\n"                          -- Stream IO String
     & fmap Array.fromList                     -- Stream IO (Array Word8)

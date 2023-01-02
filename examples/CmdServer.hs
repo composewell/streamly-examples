@@ -22,14 +22,13 @@ import qualified Data.Map.Strict as Map
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Parser as Parser
-import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Prelude as Stream (parMapM)
+import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Unicode.Stream as Unicode
 
 import qualified Streamly.Internal.Data.Fold.Container as Fold (demuxKvToMap)
---import qualified Streamly.Internal.Data.Stream as Stream (catRights)
+
 import qualified Streamly.Internal.Data.Time.Clock as Clock
     (getTime, Clock(..))
 

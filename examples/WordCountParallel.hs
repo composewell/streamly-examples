@@ -13,8 +13,7 @@ import WordCount (count, Counts(..), isSpace)
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Internal.FileSystem.File as File (readChunks)
-import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Prelude as Concur
+import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Unicode.Stream as Stream
 
 -- Get the line, word, char counts in one chunk.
@@ -52,9 +51,9 @@ addCounts (sp1, Counts l1 w1 c1 ws1) (sp2, Counts l2 w2 c2 ws2) =
 wc :: String -> IO (Bool, Counts)
 wc file = do
       File.readChunks file               -- Stream IO (Array Word8)
-    & Concur.parMapM
-        ( Concur.maxThreads numCapabilities
-        . Concur.ordered True
+    & Stream.parMapM
+        ( Stream.maxThreads numCapabilities
+        . Stream.ordered True
         )
         partialCounts                   -- Stream IO (Bool, Counts)
     & Stream.fold foldCounts            -- IO (Bool, Counts)

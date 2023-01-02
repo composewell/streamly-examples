@@ -34,14 +34,13 @@ import Control.Monad (when, unless, void)
 import Data.Char (isSpace)
 import Data.Word (Word8)
 import GHC.Conc (numCapabilities)
-import Streamly.Data.Stream (Stream)
+import Streamly.Data.Stream.Prelude (Stream)
 import System.Environment (getArgs)
 import System.IO (Handle, openFile, IOMode(..))
 
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Prelude as Concur
+import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 
 -- Internal modules
@@ -572,9 +571,9 @@ countArray src = do
 wcMwlParallel :: Handle -> Int -> IO (MArray.Array Int)
 wcMwlParallel src n = do
     Stream.fold (Fold.foldlM' addCounts newCounts)
-        $ Concur.parMapM
-            ( Concur.maxThreads numCapabilities
-            . Concur.ordered True
+        $ Stream.parMapM
+            ( Stream.maxThreads numCapabilities
+            . Stream.ordered True
             )
             countArray
         $ Stream.unfold Handle.chunkReaderWith (n, src)
