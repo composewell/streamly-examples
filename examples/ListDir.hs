@@ -10,7 +10,7 @@ import System.IO (stdout, hSetBuffering, BufferMode(LineBuffering))
 
 import qualified Streamly.Prelude as Stream
 import qualified Streamly.Internal.Data.Stream as Stream
-       (iterateMapLeftsWith)
+       (iterateLeftsConcatMapWith)
 import qualified Streamly.Internal.FileSystem.Dir as Dir (toEither)
 
 -- Lists a dir as a stream of (Either Dir File)
@@ -26,5 +26,5 @@ main :: IO ()
 main = do
     hSetBuffering stdout LineBuffering
     let start = Stream.fromPure (Left ".")
-    Stream.iterateMapLeftsWith Stream.ahead listDir start
+    Stream.iterateLeftsConcatMapWith Stream.ahead listDir start
         & Stream.mapM_ print

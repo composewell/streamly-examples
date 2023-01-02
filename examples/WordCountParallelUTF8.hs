@@ -184,12 +184,12 @@ readField :: MArray.Array Int -> Field -> IO Int
 readField v fld = MArray.getIndexUnsafe (fromEnum fld) v
 
 writeField :: MArray.Array Int -> Field -> Int -> IO ()
-writeField v fld i = void $ MArray.putIndexUnsafe (fromEnum fld) i v
+writeField v fld i = void $ MArray.putIndexUnsafe i v (fromEnum fld)
 
 modifyField :: MArray.Array Int -> Field -> (Int -> Int) -> IO ()
 modifyField v fld f = do
   let index = fromEnum fld
-  MArray.modifyIndexUnsafe index (\x -> (f x, ())) v
+  MArray.modifyIndexUnsafe index v (\x -> (f x, ()))
 
 newCounts :: IO (MArray.Array Int)
 newCounts = do
