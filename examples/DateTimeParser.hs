@@ -11,7 +11,6 @@ where
 
 import Data.Maybe (fromJust)
 import Streamly.Data.Array (Array)
-import Streamly.Data.Fold (Tee(..))
 import Streamly.Internal.Data.Fold (Fold(..), Step(..))
 import Test.Tasty.Bench
 
@@ -25,9 +24,10 @@ import qualified Streamly.Data.Array as Array
 -------------------------------------------------------------------------------
 -- Monolithic fold - fastest, same as rust speeddate perf
 -------------------------------------------------------------------------------
-
+{-
 mkTime :: Int -> Int -> Int -> Int -> Int -> Int -> Int
 mkTime year month day hr mn sec = year + month + day + hr + mn + sec
+-}
 
 {-# INLINE isDigit #-}
 isDigit :: Char -> Bool
