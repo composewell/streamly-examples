@@ -100,26 +100,28 @@ decimal n = Fold.take n (check isDigit (Fold.foldl' step 0))
 {-# INLINE char #-}
 char :: Monad m => Char -> Fold m Char Char
 char c = fromJust <$> Fold.satisfy (== c)
+
 {-
 {-# NOINLINE _foldDateTimeAp #-}
 _foldDateTimeAp :: Array Char -> IO Int
 _foldDateTimeAp arr =
     let t =
                 mkTime
-            <$> Tee (decimal 4)  -- year
-            <*  Tee (char '-')
-            <*> Tee (decimal 2)  -- month
-            <*  Tee (char '-')
-            <*> Tee (decimal 2)  -- day
-            <*  Tee (char 'T')
-            <*> Tee (decimal 2)  -- hr
-            <*  Tee (char ':')
-            <*> Tee (decimal 2)  -- min
-            <*  Tee (char ':')
-            <*> Tee (decimal 2)  -- sec
-            <*  Tee (char 'Z')
-    in Stream.fold (unTee t) $ Stream.unfold Array.reader arr
+            <$> decimal 4  -- year
+            <*  char '-'
+            <*> decimal 2  -- month
+            <*  char '-'
+            <*> decimal 2  -- day
+            <*  char 'T'
+            <*> decimal 2  -- hr
+            <*  char ':'
+            <*> decimal 2  -- min
+            <*  char ':'
+            <*> decimal 2  -- sec
+            <*  char 'Z'
+    in Stream.fold t $ Stream.unfold Array.reader arr
 -}
+
 -------------------------------------------------------------------------------
 -- Using foldBreak - slower than applicative
 -------------------------------------------------------------------------------

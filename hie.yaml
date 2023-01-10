@@ -16,6 +16,8 @@ cradle:
               component: "exe:CmdServer"
             - path: "./examples/ControlFlow.hs"
               component: "exe:ControlFlow"
+            - path: "./examples/DateTimeParser.hs"
+              component: "exe:DateTimeParser"
             - path: "./examples/EchoServer.hs"
               component: "exe:EchoServer"
             - path: "./examples/Intro.hs"
