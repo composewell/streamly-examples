@@ -2,13 +2,12 @@ import Control.Monad.IO.Class (liftIO)
 import Data.Function ((&))
 import Network.Socket (Socket, close)
 import Streamly.Data.Array (Array)
-import Streamly.Data.Stream (Stream)
+import Streamly.Data.Stream.Prelude (Stream)
 import System.IO (Handle, withFile, IOMode(..))
 
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Concurrent as Concur
+import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Network.Inet.TCP as TCP
@@ -36,7 +35,7 @@ recv sk = Stream.finallyIO (liftIO $ close sk) (readLines sk)
 server :: Handle -> IO ()
 server file =
       Stream.unfold TCP.acceptorOnPort 8090         -- Stream IO Socket
-    & Concur.parConcatMap (Concur.eager True) recv  -- Stream IO (Array Char)
+    & Stream.parConcatMap (Stream.eager True) recv  -- Stream IO (Array Char)
     & Stream.unfoldMany Array.reader                -- Stream IO Char
     & Unicode.encodeLatin1                          -- Stream IO Word8
     & Stream.fold (Handle.write file)               -- IO ()

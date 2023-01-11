@@ -3,28 +3,18 @@
 
 module Main (main) where
 
-import Data.Bifunctor (bimap)
 import Data.Function ((&))
-import Streamly.Prelude (SerialT)
+import Streamly.Internal.FileSystem.Dir (readEitherPaths)
 import System.IO (stdout, hSetBuffering, BufferMode(LineBuffering))
 
-import qualified Streamly.Prelude as Stream
-import qualified Streamly.Internal.Data.Stream as Stream
-       (iterateMapLeftsWith)
-import qualified Streamly.Internal.FileSystem.Dir as Dir (toEither)
-
--- Lists a dir as a stream of (Either Dir File)
-listDir :: String -> SerialT IO (Either String String)
-listDir dir =
-      Dir.toEither dir               -- SerialT IO (Either String String)
-    & Stream.map (bimap mkAbs mkAbs) -- SerialT IO (Either String String)
-
-    where mkAbs x = dir ++ "/" ++ x
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Stream.Prelude as Stream
 
 -- | List the current directory recursively using concurrent processing
 main :: IO ()
 main = do
     hSetBuffering stdout LineBuffering
     let start = Stream.fromPure (Left ".")
-    Stream.iterateMapLeftsWith Stream.ahead listDir start
-        & Stream.mapM_ print
+        mapper = either readEitherPaths (const Stream.nil)
+    Stream.parConcatIterate id mapper start
+        & Stream.fold (Fold.drainMapM print)

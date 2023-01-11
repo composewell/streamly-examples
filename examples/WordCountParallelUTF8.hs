@@ -34,14 +34,13 @@ import Control.Monad (when, unless, void)
 import Data.Char (isSpace)
 import Data.Word (Word8)
 import GHC.Conc (numCapabilities)
-import Streamly.Data.Stream (Stream)
+import Streamly.Data.Stream.Prelude (Stream)
 import System.Environment (getArgs)
 import System.IO (Handle, openFile, IOMode(..))
 
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Concurrent as Concur
+import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 
 -- Internal modules
@@ -185,12 +184,12 @@ readField :: MArray.Array Int -> Field -> IO Int
 readField v fld = MArray.getIndexUnsafe (fromEnum fld) v
 
 writeField :: MArray.Array Int -> Field -> Int -> IO ()
-writeField v fld i = void $ MArray.putIndexUnsafe (fromEnum fld) i v
+writeField v fld i = void $ MArray.putIndexUnsafe i v (fromEnum fld)
 
 modifyField :: MArray.Array Int -> Field -> (Int -> Int) -> IO ()
 modifyField v fld f = do
   let index = fromEnum fld
-  MArray.modifyIndexUnsafe index (\x -> (f x, ())) v
+  MArray.modifyIndexUnsafe index v (\x -> (f x, ()))
 
 newCounts :: IO (MArray.Array Int)
 newCounts = do
@@ -572,9 +571,9 @@ countArray src = do
 wcMwlParallel :: Handle -> Int -> IO (MArray.Array Int)
 wcMwlParallel src n = do
     Stream.fold (Fold.foldlM' addCounts newCounts)
-        $ Concur.parMapM
-            ( Concur.maxThreads numCapabilities
-            . Concur.ordered True
+        $ Stream.parMapM
+            ( Stream.maxThreads numCapabilities
+            . Stream.ordered True
             )
             countArray
         $ Stream.unfold Handle.chunkReaderWith (n, src)

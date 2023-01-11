@@ -24,9 +24,10 @@ import qualified Streamly.Data.Array as Array
 -------------------------------------------------------------------------------
 -- Monolithic fold - fastest, same as rust speeddate perf
 -------------------------------------------------------------------------------
-
+{-
 mkTime :: Int -> Int -> Int -> Int -> Int -> Int -> Int
 mkTime year month day hr mn sec = year + month + day + hr + mn + sec
+-}
 
 {-# INLINE isDigit #-}
 isDigit :: Char -> Bool
@@ -100,6 +101,7 @@ decimal n = Fold.take n (check isDigit (Fold.foldl' step 0))
 char :: Monad m => Char -> Fold m Char Char
 char c = fromJust <$> Fold.satisfy (== c)
 
+{-
 {-# NOINLINE _foldDateTimeAp #-}
 _foldDateTimeAp :: Array Char -> IO Int
 _foldDateTimeAp arr =
@@ -118,6 +120,7 @@ _foldDateTimeAp arr =
             <*> decimal 2  -- sec
             <*  char 'Z'
     in Stream.fold t $ Stream.unfold Array.reader arr
+-}
 
 -------------------------------------------------------------------------------
 -- Using foldBreak - slower than applicative

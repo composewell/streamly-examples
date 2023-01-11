@@ -32,11 +32,6 @@ import Streamly.Internal.Data.Stream.Cross (CrossStream(..))
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
 
--- We can remove this once we import CrossStream from "streamly" package
-instance MonadTrans CrossStream where
-    {-# INLINE lift #-}
-    lift = CrossStream . Stream.fromEffect
-
 -------------------------------------------------------------------------------
 -- Using MaybeT below streamly
 -------------------------------------------------------------------------------

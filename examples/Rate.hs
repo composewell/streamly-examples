@@ -1,7 +1,6 @@
 import Data.Function ((&))
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Concurrent as Stream
+import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Internal.Data.Stream as Stream (timestamped)
 
 main :: IO ()

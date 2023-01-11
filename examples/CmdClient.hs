@@ -4,12 +4,11 @@ import Control.Monad (when)
 import Data.Function ((&))
 import Data.Word (Word8)
 import Network.Socket (PortNumber)
-import Streamly.Data.Stream (Stream)
+import Streamly.Data.Stream.Prelude (Stream)
 
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Data.Unfold as Unfold
-import qualified Streamly.Data.Stream.Concurrent as Stream (parConcat)
+import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Internal.Network.Inet.TCP as TCP (pipeBytes)
 import qualified Streamly.Unicode.Stream as Unicode
 

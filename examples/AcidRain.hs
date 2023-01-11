@@ -10,12 +10,10 @@
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.State (MonadState, get, modify)
 import Data.Function ((&))
-import Streamly.Data.Stream (Stream)
-import Streamly.Data.Stream.Concurrent (MonadAsync)
+import Streamly.Data.Stream.Prelude (MonadAsync, Stream)
 
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Data.Stream.Concurrent as Stream
+import qualified Streamly.Data.Stream.Prelude as Stream
 
 data Event = Quit | Harm Int | Heal Int deriving (Eq, Show)
 

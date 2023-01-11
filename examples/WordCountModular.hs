@@ -7,12 +7,10 @@ module Main (main) where
 import Data.Char (chr, ord)
 import Data.Function ((&))
 import Data.Word (Word8)
-import Streamly.Data.Fold (Fold)
-import Streamly.Data.Fold.Tee (Tee(..))
+import Streamly.Data.Fold (Fold, Tee(..))
 import System.Environment (getArgs)
 
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Fold.Tee as Tee
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Internal.FileSystem.File as File (read)
 
@@ -62,7 +60,7 @@ nwords = fst <$> Fold.foldl' countw (0, True)
 
 -- The fold accepts a stream of `Word8` and returns the three counts
 countAll :: Fold IO Word8 (Int, Int, Int)
-countAll = Tee.toFold $ (,,) <$> Tee Fold.length <*> Tee nlines <*> Tee nwords
+countAll = unTee $ (,,) <$> Tee Fold.length <*> Tee nlines <*> Tee nwords
 
 -------------------------------------------------------------------------------
 -- Main
