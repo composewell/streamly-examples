@@ -42,7 +42,7 @@ jobs:
           - name: 8.10.4+macOS
             ghc_version: 8.10.4
             build: cabal
-            cabal_project: cabal.project
+            cabal_project: cabal.project.user
             cabal_version: 3.6.2.0
             disable_docs: "y"
             cabal_build_options: "--flag interop"
@@ -59,7 +59,7 @@ jobs:
             ghc_version: 9.2.4
             runner: ubuntu-latest
             build: cabal
-            cabal_project: cabal.project
+            cabal_project: cabal.project.user
             cabal_version: 3.6.2.0
             disable_docs: "y"
             disable_sdist_build: "y"

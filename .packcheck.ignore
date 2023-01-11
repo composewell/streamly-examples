@@ -7,7 +7,7 @@ appveyor.yml
 examples/SearchQuery.hs
 hie.yaml
 stack.yaml
-cabal.project
+cabal.project.user
 cabal.project.ci
 cabal.project.Werror
 default.nix
