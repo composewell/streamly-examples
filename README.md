@@ -43,7 +43,8 @@ $ cabal run --flag interop Interop.Pipes
 
 * [Intro](examples/Intro.hs): Simple, introductory examples - loops, text
   processing, networking, concurrency.
-* [MergeSort](examples/MergeSort.hs): Merge sorted streams concurrently.
+* [MergeSort](examples/MergeSort.hs): Sort a stream concurrently using merge
+  sort.
 * [Rate](examples/Rate.hs): Run an action at a given rate.
 
 ### FileSystem

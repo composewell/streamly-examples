@@ -1,34 +1,99 @@
-{-# LANGUAGE FlexibleContexts    #-}
+module Main
+    ( main
+    , sortMergeCombined
+    , sortMergeChunks
+    )
+where
 
--- This example generates two random streams sorted in ascending order and
--- merges them in ascending order, concurrently.
---
--- Compile with '-threaded -with-rtsopts "-N"' GHC options to use the
--- parallelism.
+import Control.Monad (void)
+import Data.Function ((&))
+import Streamly.Data.Array (Array)
+import Streamly.Data.Stream (Stream)
 
-import Data.Word (Word16)
-import Streamly.Data.Stream.Prelude (MonadAsync, Stream)
-import System.Random (getStdGen, randoms)
-
-import qualified Data.List as List
+import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream.Prelude as Stream
+import qualified Streamly.Internal.Data.Stream as Stream
 
-getRandomSorted :: IO (Stream IO Word16)
-getRandomSorted = do
-    g <- getStdGen
-    let ls = take 100000 (randoms g) :: [Word16]
-    return $ Stream.fromList (List.sort ls)
+input :: [Int]
+input = [1000000,999999..1]
 
-mergeAsync :: (MonadAsync m, Ord a) => Stream m a -> Stream m a -> Stream m a
-mergeAsync s1 s2 =
+chunkSize :: Int
+chunkSize = 32*1024
+
+streamChunk :: Array Int -> Stream IO Int
+streamChunk =
+      Stream.sortBy compare
+    . Stream.unfold Array.reader
+
+sortChunk :: Array Int -> IO (Array Int)
+sortChunk = Stream.fold Array.write . streamChunk
+
+-------------------------------------------------------------------------------
+-- Stream the unsorted chunks and sort, merge those streams.
+-------------------------------------------------------------------------------
+
+-- In contrast to sortMergeSeparate this uses much more peak memory because all
+-- the streams are open in memory at the same time.
+sortMergeCombined :: (Array Int -> Stream IO Int) -> IO ()
+sortMergeCombined f =
+    Stream.fromList input
+        & Stream.arraysOf chunkSize
+        & Stream.mergeMapWith (Stream.mergeBy compare) f
+        & Stream.fold Fold.drain
+
+-------------------------------------------------------------------------------
+-- First create a stream of sorted chunks, then stream sorted chunks and merge
+-- the streams
+-------------------------------------------------------------------------------
+
+sortMergeSeparate ::
+       (   (Array Int -> IO (Array Int))
+        -> Stream IO (Array Int)
+        -> Stream IO (Array Int)
+       )
+    -> IO ()
+sortMergeSeparate f =
+    Stream.fromList input
+        & Stream.arraysOf chunkSize
+        & f sortChunk
+        & Stream.mergeMapWith
+            (Stream.mergeBy compare) (Stream.unfold Array.reader)
+        & Stream.fold Fold.drain
+
+-------------------------------------------------------------------------------
+-- First create a stream of sorted chunks, merge sorted chunks into sorted
+-- chunks recursively.
+-------------------------------------------------------------------------------
+
+reduce :: Array Int -> Array Int -> IO (Array Int)
+reduce arr1 arr2 =
     Stream.mergeBy
         compare
-        (Stream.parEval id s1)
-        (Stream.parEval id s2)
+        (Stream.unfold Array.reader arr1)
+        (Stream.unfold Array.reader arr2)
+        & Stream.fold Array.write
 
+sortMergeChunks ::
+       (  (Array Int -> IO (Array Int))
+       -> Stream IO (Array Int)
+       -> Stream IO (Array Int)
+       )
+    -> IO ()
+sortMergeChunks f =
+    Stream.fromList input
+        & Stream.arraysOf chunkSize
+        & f sortChunk
+        & Stream.reduceIterateBfs reduce
+        & void
+
+-- | Divide a stream in chunks, sort the chunks and merge them.
 main :: IO ()
 main = do
-    s1 <- getRandomSorted
-    s2 <- getRandomSorted
-    Stream.fold Fold.latest (mergeAsync s1 s2) >>= print
+    -- Sorted in best performing first order
+    sortMergeSeparate (Stream.parMapM id)
+    -- sortMergeSeparate Stream.mapM
+    -- sortMergeCombined (Stream.parEval id . streamChunk)
+    -- sortMergeCombined streamChunk
+    -- sortMergeChunks (Stream.parMapM id)
+    -- sortMergeChunks Stream.mapM
