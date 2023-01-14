@@ -32,7 +32,7 @@ acidRain :: MonadAsync m => Stream m Event
 acidRain = Stream.parRepeatM (Stream.constRate 1) (return $ Harm 1)
 
 parallel :: MonadAsync m => [Stream m a] -> Stream m a
-parallel = Stream.parConcatList (Stream.eager True)
+parallel = Stream.parList (Stream.eager True)
 
 data Result = Check | Done
 
