@@ -11,7 +11,7 @@ import System.IO (stdout)
 import Streamly.Data.Fold (Fold, Tee(..))
 import Streamly.Data.Stream.Prelude (Stream)
 import Streamly.Data.Unfold (Unfold)
-import Streamly.Internal.Data.Stream.Cross (CrossStream (..))
+import Streamly.Internal.Data.Stream.StreamD (CrossStream, mkCross, unCross)
 
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
@@ -69,9 +69,9 @@ crossProduct range1 range2 =
 --
 nestedLoops :: CrossStream IO ()
 nestedLoops = do
-    x <- CrossStream $ Stream.fromList [3,4 :: Int]
-    y <- CrossStream $ Stream.fromList [1..x]
-    CrossStream $ Stream.fromEffect $ print (x, y)
+    x <- mkCross $  Stream.fromList [3,4 :: Int]
+    y <- mkCross $  Stream.fromList [1..x]
+    mkCross $  Stream.fromEffect $ print (x, y)
 
 -------------------------------------------------------------------------------
 -- Text processing
@@ -187,7 +187,7 @@ main = do
             print $ runIdentity $ crossProduct (1,1000) (1000,2000)
         "nestedLoops" -> do
             putStrLn "nestedLoops"
-            Stream.fold Fold.drain $ unCrossStream nestedLoops
+            Stream.fold Fold.drain $ unCross nestedLoops
         "avgLineLength" -> do
             putStrLn "avgLineLength"
             avgLineLength >>= print

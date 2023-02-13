@@ -14,6 +14,7 @@ import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Internal.Data.Stream as Stream
+import qualified Streamly.Internal.Data.Stream.StreamK as K
 
 input :: [Int]
 input = [1000000,999999..1]
@@ -23,8 +24,10 @@ chunkSize = 32*1024
 
 streamChunk :: Array Int -> Stream IO Int
 streamChunk =
-      Stream.sortBy compare
-    . Stream.unfold Array.reader
+    K.toStream
+        . K.sortBy compare
+        . K.fromStream
+        . Stream.unfold Array.reader
 
 sortChunk :: Array Int -> IO (Array Int)
 sortChunk = Stream.fold Array.write . streamChunk
@@ -32,14 +35,15 @@ sortChunk = Stream.fold Array.write . streamChunk
 -------------------------------------------------------------------------------
 -- Stream the unsorted chunks and sort, merge those streams.
 -------------------------------------------------------------------------------
-
 -- In contrast to sortMergeSeparate this uses much more peak memory because all
 -- the streams are open in memory at the same time.
 sortMergeCombined :: (Array Int -> Stream IO Int) -> IO ()
 sortMergeCombined f =
     Stream.fromList input
         & Stream.arraysOf chunkSize
-        & Stream.mergeMapWith (Stream.mergeBy compare) f
+        & K.fromStream
+        & K.mergeMapWith (K.mergeBy compare) (K.fromStream . f)
+        & K.toStream
         & Stream.fold Fold.drain
 
 -------------------------------------------------------------------------------
@@ -57,8 +61,10 @@ sortMergeSeparate f =
     Stream.fromList input
         & Stream.arraysOf chunkSize
         & f sortChunk
-        & Stream.mergeMapWith
-            (Stream.mergeBy compare) (Stream.unfold Array.reader)
+        & K.fromStream
+        & K.mergeMapWith
+            (K.mergeBy compare) (K.fromStream . Stream.unfold Array.reader)
+        & K.toStream
         & Stream.fold Fold.drain
 
 -------------------------------------------------------------------------------
