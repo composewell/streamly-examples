@@ -123,19 +123,22 @@ mainEitherBelow = do
 
 -- XXX does not work correctly yet
 --
-{-
+
 getSequenceEitherAsyncBelow :: MonadIO m => Stream (ExceptT String m) ()
-getSequenceEitherAsyncBelow = do
+getSequenceEitherAsyncBelow = unCross $ do
     liftIO $ putStrLn "ExceptT below concurrent streamly: "
 
-    i <- lift (Stream.consM ((threadDelay 1000)
-            >> (throwE "First task")
-            >> return 1
-         )
-             (Stream.consM ((throwE "Second task") >> return 2)
-                  (Stream.fromPure (3 :: Integer))))
+    i <- mkCross
+            $ Stream.consM
+                (liftIO (threadDelay 1000)
+                    >> throwE "First task"
+                    >> return 1
+                )
+                (Stream.consM
+                    (throwE "Second task" >> return 2)
+                    (Stream.fromPure (3 :: Integer))
+                )
     liftIO $ putStrLn $ "iteration = " <> show i
-
 
 mainEitherAsyncBelow :: IO ()
 mainEitherAsyncBelow = do
@@ -143,7 +146,7 @@ mainEitherAsyncBelow = do
     case r of
         Right _ -> liftIO $ putStrLn "Bingo"
         Left s  -> liftIO $ putStrLn s
--}
+
 -------------------------------------------------------------------------------
 -- Using ExceptT above streamly
 -------------------------------------------------------------------------------
@@ -286,4 +289,4 @@ main = do
     mainEitherBelow
     Stream.fold Fold.drain $ unCross $ runExceptT mainEitherAbove
     mainMonadThrow
-    --mainEitherAsyncBelow
+    mainEitherAsyncBelow
