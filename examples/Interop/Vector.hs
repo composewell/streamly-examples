@@ -4,6 +4,7 @@ import Streamly.Data.Stream (Stream)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Internal.Data.Stream.StreamK as K
 import qualified Data.Vector.Fusion.Stream.Monadic as Vector
 
 --  | vector to streamly
@@ -25,4 +26,4 @@ toVector = Vector.unfoldrM Stream.uncons
 main :: IO ()
 main = do
     Stream.fold Fold.toList (fromVector (Vector.fromList ([1..3]::[Int])))   >>= print
-    Vector.toList (toVector (Stream.fromFoldable ([1..3]::[Int]))) >>= print
+    Vector.toList (toVector (K.toStream $ K.fromFoldable ([1..3]::[Int]))) >>= print
