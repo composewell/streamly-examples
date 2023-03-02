@@ -334,3 +334,12 @@ executable DateTimeParser
     build-depends: tasty-bench >= 0.3
   else
     buildable: False
+
+executable LogParser
+  import: exe-options
+  main-is: LogParser.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-depends: tasty-bench >= 0.3
+  else
+    buildable: False
