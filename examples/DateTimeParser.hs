@@ -18,10 +18,10 @@ import qualified Data.Char as Char
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Parser as Parser
-import qualified Streamly.Data.Stream.StreamK as K
+import qualified Streamly.Data.Parser.ParserK as ParserK
+import qualified Streamly.Data.Stream.StreamK as StreamK
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Internal.Data.Fold as Fold (foldt', satisfy)
-import qualified Streamly.Internal.Data.Stream.Chunked as SA
 
 -------------------------------------------------------------------------------
 -- Monolithic fold - fastest, same as rust speeddate perf
@@ -151,19 +151,20 @@ _foldBreakDateTime arr = do
 
 _parseBreakDateTime :: Array Char -> IO Int
 _parseBreakDateTime arr = do
-    let s = K.fromStream $ Stream.fromPure arr
-    (Right year, s1) <- SA.parseBreak (Parser.fromFold $ decimal 4) s
-    (_, s2) <- SA.parseBreak (Parser.fromFold $ char '-') s1
-    (Right month, s3) <- SA.parseBreak (Parser.fromFold $ decimal 2) s2
-    (_, s4) <- SA.parseBreak (Parser.fromFold $ char '-') s3
-    (Right day, s5) <- SA.parseBreak (Parser.fromFold $ decimal 2) s4
-    (_, s6) <- SA.parseBreak (Parser.fromFold $ char 'T') s5
-    (Right hr, s7) <- SA.parseBreak (Parser.fromFold $ decimal 2) s6
-    (_, s8) <- SA.parseBreak (Parser.fromFold $ char ':') s7
-    (Right mn, s9) <- SA.parseBreak (Parser.fromFold $ decimal 2) s8
-    (_, s10) <- SA.parseBreak (Parser.fromFold $ char ':') s9
-    (Right sec, s11) <- SA.parseBreak (Parser.fromFold $ decimal 2) s10
-    (_, _) <- SA.parseBreak (Parser.fromFold $ char 'Z') s11
+    let s = StreamK.fromStream $ Stream.fromPure arr
+        p = ParserK.fromParser . Parser.fromFold
+    (Right year, s1) <- StreamK.parseBreakChunks (p $ decimal 4) s
+    (_, s2) <- StreamK.parseBreakChunks (p $ char '-') s1
+    (Right month, s3) <- StreamK.parseBreakChunks (p $ decimal 2) s2
+    (_, s4) <- StreamK.parseBreakChunks (p $ char '-') s3
+    (Right day, s5) <- StreamK.parseBreakChunks (p $ decimal 2) s4
+    (_, s6) <- StreamK.parseBreakChunks (p $ char 'T') s5
+    (Right hr, s7) <- StreamK.parseBreakChunks (p $ decimal 2) s6
+    (_, s8) <- StreamK.parseBreakChunks (p $ char ':') s7
+    (Right mn, s9) <- StreamK.parseBreakChunks (p $ decimal 2) s8
+    (_, s10) <- StreamK.parseBreakChunks (p $ char ':') s9
+    (Right sec, s11) <- StreamK.parseBreakChunks (p $ decimal 2) s10
+    (_, _) <- StreamK.parseBreakChunks (p $ char 'Z') s11
     return (year + month + day + hr + mn + sec)
 
 -------------------------------------------------------------------------------

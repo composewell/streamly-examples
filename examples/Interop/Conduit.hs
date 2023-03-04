@@ -19,4 +19,4 @@ toConduit = Conduit.unfoldM Stream.uncons
 main :: IO ()
 main = do
     Stream.fold Fold.toList (fromConduit (Conduit.sourceList ([1..3]::[Int]))) >>= print
-    Conduit.runConduit (toConduit (K.toStream $ K.fromFoldable ([1..3]::[Int])) Conduit..| Conduit.consume) >>= print
+    Conduit.runConduit (toConduit (Stream.fromList ([1..3]::[Int])) Conduit..| Conduit.consume) >>= print
