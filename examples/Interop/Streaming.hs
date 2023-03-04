@@ -23,4 +23,4 @@ toStreaming = Streaming.unfoldr unconsEither
 main :: IO ()
 main = do
     Stream.fold Fold.toList (fromStreaming (Streaming.each ([1..3]::[Int]))) >>= print
-    Streaming.toList (toStreaming (K.toStream $ K.fromFoldable ([1..3]::[Int]))) >>= print
+    Streaming.toList (toStreaming (Stream.fromList ([1..3]::[Int]))) >>= print

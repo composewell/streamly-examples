@@ -44,7 +44,7 @@ getSequenceMaybeBelow :: MonadIO m => Stream (MaybeT m) ()
 getSequenceMaybeBelow = unCross $ do
     liftIO $ putStrLn "MaybeT below streamly: Enter one char per line: "
 
-    i <- mkCross $ K.toStream $ K.fromFoldable [1..2 :: Int]
+    i <- mkCross $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -74,7 +74,7 @@ getSequenceMaybeAbove :: MonadIO m => MaybeT (CrossStream m) ()
 getSequenceMaybeAbove = do
     liftIO $ putStrLn "MaybeT above streamly: Enter one char per line: "
 
-    i <- lift $ mkCross $ K.toStream $ K.fromFoldable [1..2 :: Int]
+    i <- lift $ mkCross $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -100,7 +100,7 @@ getSequenceEitherBelow :: MonadIO m => Stream (ExceptT String m) ()
 getSequenceEitherBelow = unCross $ do
     liftIO $ putStrLn "ExceptT below streamly: Enter one char per line: "
 
-    i <- mkCross $ K.toStream $ K.fromFoldable [1..2 :: Int]
+    i <- mkCross $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -163,7 +163,7 @@ getSequenceEitherAbove :: MonadIO m => ExceptT String (CrossStream m) ()
 getSequenceEitherAbove = do
     liftIO $ putStrLn "ExceptT above streamly: Enter one char per line: "
 
-    i <- lift $ mkCross $ K.toStream $ K.fromFoldable [1..2 :: Int]
+    i <- lift $ mkCross $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -192,7 +192,7 @@ getSequenceMonadThrow :: (MonadIO m, MonadThrow m) => Stream m ()
 getSequenceMonadThrow = unCross $ do
     liftIO $ putStrLn "MonadThrow in streamly: Enter one char per line: "
 
-    i <- mkCross $ K.toStream $ K.fromFoldable [1..2 :: Int]
+    i <- mkCross $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -223,7 +223,7 @@ getSequenceContBelow :: MonadIO m => CrossStream (ContT r m) (Either String ())
 getSequenceContBelow = do
     liftIO $ putStrLn "ContT below streamly: Enter one char per line: "
 
-    i <- mkCross $ K.toStream $ K.fromFoldable [1..2 :: Int]
+    i <- mkCross $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r <- lift $ callCC $ \exit -> do
@@ -254,7 +254,7 @@ getSequenceContAbove :: MonadIO m => ContT r (CrossStream m) (Either String ())
 getSequenceContAbove = do
     liftIO $ putStrLn "ContT above streamly: Enter one char per line: "
 
-    i <- lift $ mkCross $ K.toStream $ K.fromFoldable [1..2 :: Int]
+    i <- lift $ mkCross $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     callCC $ \exit -> do

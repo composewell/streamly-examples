@@ -26,4 +26,4 @@ toPipes = Pipe.unfoldr unconsEither
 main :: IO ()
 main = do
     Stream.fold Fold.toList (fromPipes (Pipe.each ([1..3]::[Int]))) >>= print
-    Pipe.toListM (toPipes (K.toStream $ K.fromFoldable ([1..3]::[Int]))) >>= print
+    Pipe.toListM (toPipes (Stream.fromList ([1..3]::[Int]))) >>= print

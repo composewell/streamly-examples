@@ -26,4 +26,4 @@ toVector = Vector.unfoldrM Stream.uncons
 main :: IO ()
 main = do
     Stream.fold Fold.toList (fromVector (Vector.fromList ([1..3]::[Int])))   >>= print
-    Vector.toList (toVector (K.toStream $ K.fromFoldable ([1..3]::[Int]))) >>= print
+    Vector.toList (toVector (Stream.fromList ([1..3]::[Int]))) >>= print
