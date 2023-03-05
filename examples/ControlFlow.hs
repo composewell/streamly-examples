@@ -31,7 +31,6 @@ import Streamly.Internal.Data.Stream.StreamD (CrossStream, mkCross, unCross)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Internal.Data.Stream.StreamK as K
 
 -------------------------------------------------------------------------------
 -- Using MaybeT below streamly
