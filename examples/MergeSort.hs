@@ -40,7 +40,7 @@ sortChunk = Stream.fold Array.write . streamChunk
 sortMergeCombined :: (Array Int -> Stream IO Int) -> IO ()
 sortMergeCombined f =
     Stream.fromList input
-        & Stream.arraysOf chunkSize
+        & Stream.chunksOf chunkSize
         & K.fromStream
         & K.mergeMapWith (K.mergeBy compare) (K.fromStream . f)
         & K.toStream
@@ -59,7 +59,7 @@ sortMergeSeparate ::
     -> IO ()
 sortMergeSeparate f =
     Stream.fromList input
-        & Stream.arraysOf chunkSize
+        & Stream.chunksOf chunkSize
         & f sortChunk
         & K.fromStream
         & K.mergeMapWith
@@ -88,7 +88,7 @@ sortMergeChunks ::
     -> IO ()
 sortMergeChunks f =
     Stream.fromList input
-        & Stream.arraysOf chunkSize
+        & Stream.chunksOf chunkSize
         & f sortChunk
         & Stream.reduceIterateBfs reduce
         & void
