@@ -11,6 +11,14 @@ details and comprehensive documentation.
 
 ## Running The Examples
 
+When running the unstable version (downloaded from the git repository)
+you must use `--project-file cabal.project.user` option otherwise the
+build might fail. For example:
+
+```
+$ cabal run --project-file cabal.project.user AcidRain
+```
+
 Executable names are the same as the filenames.  To run an example:
 
 ```
