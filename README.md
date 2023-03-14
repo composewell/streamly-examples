@@ -25,12 +25,6 @@ Executable names are the same as the filenames.  To run an example:
 $ cabal run AcidRain
 ```
 
-For performance sensitive examples use fusion-plugin for best performance:
-
-```
-$ cabal run --flag fusion-plugin WordCount -- streamly-examples.cabal
-```
-
 To run SDL2 based examples, make sure that you have the OS package for
 the sdl2 library installed on your system and the headers are visible to
 cabal:

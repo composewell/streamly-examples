@@ -42,7 +42,7 @@ source-repository head
 flag fusion-plugin
   description: Use fusion plugin for for best performance
   manual: True
-  default: False
+  default: True
 
 flag sdl2
   description: Include graphics examples using SDL2
