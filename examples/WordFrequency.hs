@@ -7,19 +7,20 @@ import Data.Foldable (traverse_)
 import Data.Function ((&))
 import Data.Functor.Identity (Identity(..))
 import Data.Hashable (Hashable(..))
-import Data.Map.Strict (Map)
 import System.Environment (getArgs)
 import Streamly.Data.Array (Unbox)
+import Streamly.Internal.Data.IsMap.HashMap ()
 
 import qualified Data.Char as Char
-import qualified Data.Map.Strict as Map
+import qualified Data.HashMap.Strict as Map
 import qualified Data.List as List
 import qualified Data.Ord as Ord
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Parser as Parser
+import qualified Streamly.Internal.Data.Fold.Container as Fold (toContainerIO)
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Internal.FileSystem.File as File (read)
+import qualified Streamly.Internal.Data.Stream as Stream (wordsBy)
+import qualified Streamly.FileSystem.File as File
 import qualified Streamly.Unicode.Stream as Unicode
 
 hashArray :: (Unbox a, Integral b, Num c) =>
@@ -60,17 +61,16 @@ main = do
     inFile <- fmap head getArgs
 
     let counter = Fold.foldl' (\n _ -> n + 1) (0 :: Int)
-        classifier = Fold.toMapIO id counter
-        word = Parser.wordBy isSpace Fold.toList
+        classifier = Fold.toContainerIO id counter
     -- Write the stream to a hashmap consisting of word counts
     mp <-
-        File.read inFile                    -- Stream IO Word8
-         & Unicode.decodeLatin1             -- Stream IO Char
-         & fmap toLower                     -- Stream IO Char
-         & Stream.parseMany word            -- Stream IO String
-         & Stream.catRights
-         & Stream.filter (all isAlpha)      -- Stream IO String
-         & Stream.fold classifier :: IO (Map String Int)
+        File.read inFile                       -- Stream IO Word8
+         & Unicode.decodeLatin1                -- Stream IO Char
+         & fmap toLower                        -- Stream IO Char
+         & Stream.wordsBy isSpace Fold.toList  -- Stream IO String
+         & Stream.filter (all isAlpha)         -- Stream IO String
+         & Stream.fold classifier              -- IO (HashMap String Int)
 
-    traverse_ print $ List.sortOn (Ord.Down . snd) (Map.toList mp)
-                    & List.take 25
+    traverse_ print
+        $ List.sortOn (Ord.Down . snd) (Map.toList mp)
+        & List.take 25
