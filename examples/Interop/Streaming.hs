@@ -2,9 +2,7 @@
 
 import Streamly.Data.Stream (Stream)
 
-import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Internal.Data.Stream.StreamK as K
 import qualified Streaming
 import qualified Streaming.Prelude as Streaming
 
@@ -22,5 +20,5 @@ toStreaming = Streaming.unfoldr unconsEither
 
 main :: IO ()
 main = do
-    Stream.fold Fold.toList (fromStreaming (Streaming.each ([1..3]::[Int]))) >>= print
+    Stream.toList (fromStreaming (Streaming.each ([1..3]::[Int]))) >>= print
     Streaming.toList (toStreaming (Stream.fromList ([1..3]::[Int]))) >>= print

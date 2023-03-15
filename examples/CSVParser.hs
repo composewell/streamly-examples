@@ -13,8 +13,8 @@ import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified System.IO as IO
+import qualified Streamly.Internal.Data.Stream as Stream (splitOn)
 import qualified Streamly.Internal.Data.Stream.Chunked as ArrayStream (splitOn)
-import qualified Streamly.Internal.Data.Stream as Stream (foldManyPost)
 
 main :: IO ()
 main = do
@@ -29,11 +29,9 @@ main = do
 
     printList = putStr . map (chr . fromIntegral)
 
-    splitOn p f = Stream.foldManyPost (Fold.takeEndBy_ p f)
-
     parseLine arr =
         (Stream.unfold Array.reader arr :: Stream IO Word8)
-            & splitOn (== 44) Fold.toList            -- Stream IO [Word8]
+            & Stream.splitOn (== 44) Fold.toList     -- Stream IO [Word8]
             & Stream.intersperse [32]                -- Stream IO [Word8]
             & Stream.fold (Fold.drainMapM printList) -- IO ()
         >> putStrLn ""

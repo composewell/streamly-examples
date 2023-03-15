@@ -13,8 +13,9 @@ import Streamly.Data.Stream (Stream)
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream.Prelude as Stream
-import qualified Streamly.Internal.Data.Stream as Stream
-import qualified Streamly.Internal.Data.Stream.StreamK as K
+import qualified Streamly.Data.StreamK as K
+
+import qualified Streamly.Internal.Data.Stream as Stream (reduceIterateBfs)
 
 input :: [Int]
 input = [1000000,999999..1]

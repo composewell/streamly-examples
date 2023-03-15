@@ -12,8 +12,8 @@ import WordCount (count, Counts(..), isSpace)
 
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Internal.FileSystem.File as File (readChunks)
 import qualified Streamly.Data.Stream.Prelude as Stream
+import qualified Streamly.FileSystem.File as File (readChunks)
 import qualified Streamly.Unicode.Stream as Stream
 
 -- Get the line, word, char counts in one chunk.

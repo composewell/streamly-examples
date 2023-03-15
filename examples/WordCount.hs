@@ -10,7 +10,7 @@ import System.Environment (getArgs)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Internal.FileSystem.File as File
+import qualified Streamly.FileSystem.File as File
 import qualified Streamly.Unicode.Stream as Stream
 
 -------------------------------------------------------------------------------

@@ -7,9 +7,9 @@ import Streamly.Data.Parser (Parser)
 import Streamly.Unicode.String (str)
 
 import qualified Data.Char as Char
-import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Internal.Data.Parser as Parser
+import qualified Streamly.Data.Parser as Parser
+import qualified Streamly.Data.Stream as Stream
 
 -- Example of a quoted log string to be parsed
 quoted :: String
@@ -54,5 +54,5 @@ main = do
               Stream.fromList unquoted
             & Stream.parseMany parser
             & Stream.catRights
-            & Stream.fold Fold.toList
+            & Stream.toList
             >>= print

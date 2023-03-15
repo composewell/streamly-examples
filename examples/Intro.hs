@@ -11,19 +11,18 @@ import System.IO (stdout)
 import Streamly.Data.Fold (Fold, Tee(..))
 import Streamly.Data.Stream.Prelude (Stream)
 import Streamly.Data.Unfold (Unfold)
-import Streamly.Internal.Data.Stream.StreamD (CrossStream, mkCross, unCross)
+import Streamly.Internal.Data.Stream (CrossStream, mkCross, unCross)
 
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Data.Parser as Parser
 import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Data.Unfold as Unfold
 import qualified Streamly.FileSystem.Handle as Handle
+import qualified Streamly.FileSystem.File as File
 import qualified Streamly.Unicode.Stream as Unicode
 
+import qualified Streamly.Internal.Data.Stream as Stream (wordsBy)
 import qualified Streamly.Internal.Data.Unfold as Unfold (enumerateFromToIntegral)
-import qualified Streamly.Internal.Data.Fold.Container as Fold (kvToMap)
-import qualified Streamly.Internal.FileSystem.File as File (read)
 
 -------------------------------------------------------------------------------
 -- Simple loops
@@ -100,13 +99,17 @@ avgLineLength =
             <$> Tee (toDouble Fold.sum)
             <*> Tee (toDouble Fold.length)
 
+{-# INLINE kvMap #-}
+kvMap :: (Monad m, Ord k) => Fold m a b -> Fold m (k, a) (Map k b)
+kvMap = Fold.toMap fst . Fold.lmap snd
+
 -- | Read text from a file and generate a histogram of line length
 lineLengthHistogram :: IO (Map Int Int)
 lineLengthHistogram =
       File.read "input.txt"                      -- Stream IO Word8
     & splitOn isNewLine Fold.length              -- Stream IO Int
     & fmap bucket                                -- Stream IO (Int, Int)
-    & Stream.fold (Fold.kvToMap Fold.length)    -- IO (Map Int Int)
+    & Stream.fold (kvMap Fold.length)            -- IO (Map Int Int)
 
     where
 
@@ -119,19 +122,16 @@ lineLengthHistogram =
 -- | Read text from a file and generate a histogram of word length
 wordLengthHistogram :: IO (Map Int Int)
 wordLengthHistogram =
-      File.read "input.txt"                -- Stream IO Word8
+      File.read "input.txt"                   -- Stream IO Word8
     & Unicode.decodeLatin1                    -- Stream IO Char
-    & Stream.parseMany wordLen
-    & Stream.catRights                        -- Stream IO Int
+    & Stream.wordsBy isSpace Fold.length      -- Stream IO Int
     & fmap bucket                             -- Stream IO (Int, Int)
-    & Stream.fold (Fold.kvToMap Fold.length) -- IO (Map (Int, Int))
+    & Stream.fold (kvMap Fold.length)         -- IO (Map (Int, Int))
 
     where
 
     bucket :: Int -> (Int, Int)
     bucket n = let i = n `mod` 10 in if i > 9 then (9,n) else (i,n)
-
-    wordLen = Parser.wordBy isSpace Fold.length
 
 -------------------------------------------------------------------------------
 -- Network/Concurrency

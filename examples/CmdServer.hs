@@ -14,11 +14,11 @@ import Control.Monad (void)
 import Control.Monad.Catch (catch, SomeException)
 import Data.Char (isSpace)
 import Data.Function ((&))
+import Data.Map.Strict (Map)
 import Network.Socket (Socket)
 import Streamly.Data.Fold (Fold)
 import System.Random (randomIO)
 
-import qualified Data.Map.Strict as Map
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Parser as Parser
@@ -26,8 +26,6 @@ import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Network.Inet.TCP as TCP
 import qualified Streamly.Network.Socket as Socket
 import qualified Streamly.Unicode.Stream as Unicode
-
-import qualified Streamly.Internal.Data.Fold.Container as Fold (demuxKvToMap)
 
 import qualified Streamly.Internal.Data.Time.Clock as Clock
     (getTime, Clock(..))
@@ -63,8 +61,13 @@ commands cmd =
         "random"  -> return (Fold.drainMapM random)
         _         -> return (Fold.drainMapM (def cmd))
 
+{-# INLINE demuxKvToMap #-}
+demuxKvToMap :: (Monad m, Ord k) =>
+    (k -> m (Fold m a b)) -> Fold m (k, a) (Map k b)
+demuxKvToMap f = Fold.demuxToMap fst (\(k, _) -> fmap (Fold.lmap snd) (f k))
+
 demux :: Fold IO (String, Socket) ()
-demux = void (Fold.demuxKvToMap commands :: Fold IO (String, Socket) (Map.Map String ()))
+demux = void (demuxKvToMap commands)
 
 ------------------------------------------------------------------------------
 -- Parse and handle commands on a socket

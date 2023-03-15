@@ -34,13 +34,14 @@ import Control.Monad (when, unless, void)
 import Data.Char (isSpace)
 import Data.Word (Word8)
 import GHC.Conc (numCapabilities)
+import Streamly.Data.MutArray (MutArray)
 import Streamly.Data.Stream.Prelude (Stream)
 import System.Environment (getArgs)
 import System.IO (Handle, openFile, IOMode(..))
-import Streamly.Internal.Data.Array.Mut.Type (MutArray)
 
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.MutArray as MArray
 import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 
@@ -49,7 +50,7 @@ import qualified Streamly.Internal.Unicode.Stream as Unicode
        (DecodeState, DecodeError(..), CodePoint, decodeUtf8Either
        , resumeDecodeUtf8Either)
 import qualified Streamly.Internal.Data.Array.Mut.Type as MArray
-       (getIndexUnsafe, putIndexUnsafe, modifyIndexUnsafe, newPinned)
+       (getIndexUnsafe, putIndexUnsafe, modifyIndexUnsafe)
 
 
 -------------------------------------------------------------------------------

@@ -2,9 +2,7 @@
 
 import Streamly.Data.Stream (Stream)
 
-import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Internal.Data.Stream.StreamK as K
 import qualified Pipes as Pipe
 import qualified Pipes.Prelude as Pipe
 
@@ -25,5 +23,5 @@ toPipes = Pipe.unfoldr unconsEither
 
 main :: IO ()
 main = do
-    Stream.fold Fold.toList (fromPipes (Pipe.each ([1..3]::[Int]))) >>= print
+    Stream.toList (fromPipes (Pipe.each ([1..3]::[Int]))) >>= print
     Pipe.toListM (toPipes (Stream.fromList ([1..3]::[Int]))) >>= print
