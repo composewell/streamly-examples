@@ -9,6 +9,7 @@ module Main
     )
 where
 
+import Data.Either (fromRight)
 import Data.Maybe (fromJust)
 import Streamly.Data.Array (Array)
 import Streamly.Internal.Data.Fold (Fold(..), Step(..))
@@ -22,14 +23,14 @@ import qualified Streamly.Data.ParserK as ParserK
 import qualified Streamly.Data.StreamK as StreamK
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Internal.Data.Fold as Fold (foldt', satisfy)
+import qualified Streamly.Unicode.Parser as Parser
 
 -------------------------------------------------------------------------------
 -- Monolithic fold - fastest, same as rust speeddate perf
 -------------------------------------------------------------------------------
-{-
+
 mkTime :: Int -> Int -> Int -> Int -> Int -> Int -> Int
 mkTime year month day hr mn sec = year + month + day + hr + mn + sec
--}
 
 {-# INLINE isDigit #-}
 isDigit :: Char -> Bool
@@ -103,7 +104,6 @@ decimal n = Fold.take n (check isDigit (Fold.foldl' step 0))
 char :: Monad m => Char -> Fold m Char Char
 char c = fromJust <$> Fold.satisfy (== c)
 
-{-
 {-# NOINLINE _foldDateTimeAp #-}
 _foldDateTimeAp :: Array Char -> IO Int
 _foldDateTimeAp arr =
@@ -122,12 +122,12 @@ _foldDateTimeAp arr =
             <*> decimal 2  -- sec
             <*  char 'Z'
     in Stream.fold t $ Stream.unfold Array.reader arr
--}
 
 -------------------------------------------------------------------------------
 -- Using foldBreak - slower than applicative
 -------------------------------------------------------------------------------
 
+{-# INLINE _foldBreakDateTime #-}
 _foldBreakDateTime :: Array Char -> IO Int
 _foldBreakDateTime arr = do
     let s = Stream.unfold Array.reader arr
@@ -146,9 +146,10 @@ _foldBreakDateTime arr = do
     return (year + month + day + hr + mn + sec)
 
 -------------------------------------------------------------------------------
--- Using parseBreak - slower than applicative
+-- Using parseBreak - slower than foldBreak and parseK
 -------------------------------------------------------------------------------
 
+{-# NOINLINE _parseBreakDateTime #-}
 _parseBreakDateTime :: Array Char -> IO Int
 _parseBreakDateTime arr = do
     let s = StreamK.fromStream $ Stream.fromPure arr
@@ -168,20 +169,64 @@ _parseBreakDateTime arr = do
     return (year + month + day + hr + mn + sec)
 
 -------------------------------------------------------------------------------
+-- Parser -- slower than foldBreak
+-------------------------------------------------------------------------------
+
+{-# NOINLINE _parseKDateTime #-}
+_parseKDateTime :: Array Char -> IO Int
+_parseKDateTime arr = do
+    r <- StreamK.parseChunks dateParser $ StreamK.fromPure arr
+    return $ fromRight (error "failed") r
+
+    where
+
+    p = ParserK.fromParser
+
+    dateParser = do
+        year <- p $ Parser.decimal <* Parser.char '-'
+        month <- p $ Parser.decimal <* Parser.char '-'
+        day <- p $ Parser.decimal <* Parser.char 'T'
+        hr <- p $ Parser.decimal <* Parser.char ':'
+        mi <- p $ Parser.decimal <* Parser.char ':'
+        sec <- p $ Parser.decimal <* Parser.char 'Z'
+        pure (mkTime year month day hr mi sec)
+
+-- Parser Monad should not be used for more than 2-3 compositions, use ParserK
+-- instead. Something like this is doomed to not perform well.
+{-# NOINLINE _parseDateTime #-}
+_parseDateTime :: Array Char -> IO Int
+_parseDateTime arr = do
+    r <- Stream.parse dateParser $ Stream.unfold Array.reader arr
+    return $ fromRight (error "failed") r
+
+    where
+
+    dateParser = do
+        year <- Parser.decimal <* Parser.char '-'
+        month <- Parser.decimal <* Parser.char '-'
+        day <- Parser.decimal <* Parser.char 'T'
+        hr <- Parser.decimal <* Parser.char ':'
+        mi <- Parser.decimal <* Parser.char ':'
+        sec <- Parser.decimal <* Parser.char 'Z'
+        pure (mkTime year month day hr mi sec)
+
+-------------------------------------------------------------------------------
 -- Benchmarks
 -------------------------------------------------------------------------------
 
--- IMPORTANT: Enable only one benchmark at a time, the benchmark timings may
--- change drastically otherwise.
---
 timeBench :: Benchmark
 timeBench =
     let !(arr :: Array Char) = Array.fromListN 20 "2000-01-01T00:02:03Z"
     in bgroup "parseDateTime"
-        [ bench "fold monolithic" $ nfIO $ foldDateTime arr
-        -- , bench "fold applicative" $ nfIO $ _foldDateTimeAp arr
-        -- , bench "foldBreak" $ nfIO $ _foldBreakDateTime arr
-        -- , bench "parseBreak" $ nfIO $ _parseBreakDateTime arr
+        -- IMPORTANT: Enable only one benchmark at a time, the benchmark
+        -- timings may change drastically otherwise.
+        [ bench "fold monolithic" $ nfIO $ foldDateTime arr  -- 20 ns
+        {- , bench "fold applicative" $ nfIO $ _foldDateTimeAp arr -- 110 ns
+        , bench "foldBreak" $ nfIO $ _foldBreakDateTime arr  -- 275 ns
+        , bench "parseK" $ nfIO $ _parseKDateTime arr -- 340 ns
+        , bench "parseBreak" $ nfIO $ _parseBreakDateTime arr -- 700 ns
+        , bench "parseD" $ nfIO $ _parseDateTime arr -- 950 ns
+        -}
         ]
 
 main :: IO ()
