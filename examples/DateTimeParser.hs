@@ -11,10 +11,13 @@ where
 
 import Data.Either (fromRight)
 import Data.Maybe (fromJust)
+import Data.Text (Text)
 import Streamly.Data.Array (Array)
 import Streamly.Internal.Data.Fold (Fold(..), Step(..))
 import Test.Tasty.Bench
 
+import qualified Data.Attoparsec.Text as Atto
+import qualified Data.Text as Text
 import qualified Data.Char as Char
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
@@ -210,18 +213,40 @@ _parseDateTime arr = do
         pure (mkTime year month day hr mi sec)
 
 -------------------------------------------------------------------------------
+-- Attoparsec
+-------------------------------------------------------------------------------
+
+{-# NOINLINE _attoDateTime #-}
+_attoDateTime :: Text -> Int
+_attoDateTime = fromJust . Atto.maybeResult . Atto.parse dateParser
+
+    where
+
+    dateParser = do
+        year <- Atto.decimal <* Atto.char '-'
+        month <- Atto.decimal <* Atto.char '-'
+        day <- Atto.decimal <* Atto.char 'T'
+        hr <- Atto.decimal <* Atto.char ':'
+        mi <- Atto.decimal <* Atto.char ':'
+        sec <- Atto.decimal <* Atto.char 'Z'
+        pure (mkTime year month day hr mi sec)
+
+-------------------------------------------------------------------------------
 -- Benchmarks
 -------------------------------------------------------------------------------
 
 timeBench :: Benchmark
 timeBench =
+    -- Should use array Word8/Utf encoded test to compare with attoparsec?
     let !(arr :: Array Char) = Array.fromListN 20 "2000-01-01T00:02:03Z"
+        !txt = Text.pack "2000-01-01T00:02:03Z"
     in bgroup "parseDateTime"
         -- IMPORTANT: Enable only one benchmark at a time, the benchmark
         -- timings may change drastically otherwise.
         [ bench "fold monolithic" $ nfIO $ foldDateTime arr  -- 20 ns
         {- , bench "fold applicative" $ nfIO $ _foldDateTimeAp arr -- 110 ns
         , bench "foldBreak" $ nfIO $ _foldBreakDateTime arr  -- 275 ns
+        , bench "attoparsec" $ nf _attoDateTime txt -- 275 ns
         , bench "parseK" $ nfIO $ _parseKDateTime arr -- 340 ns
         , bench "parseBreak" $ nfIO $ _parseBreakDateTime arr -- 700 ns
         , bench "parseD" $ nfIO $ _parseDateTime arr -- 950 ns
