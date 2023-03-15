@@ -22,7 +22,7 @@ description:
 category:
     Streamly, Streaming, Concurrency, Text, Filesystem, Network, Reactivity
 stability:     provisional
-tested-with: GHC==9.0.1, GHC==8.10.5, GHC==8.8.4, GHC==8.6.5
+tested-with: GHC==9.4.4, GHC==9.2.7, GHC==9.0.1, GHC==8.10.7
 build-type:    Simple
 extra-source-files:
   Changelog.md

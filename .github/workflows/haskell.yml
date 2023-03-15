@@ -39,15 +39,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: 8.10.4+macOS
-            ghc_version: 8.10.4
+          - name: 8.10.7+macOS
+            ghc_version: 8.10.7
             build: cabal
             cabal_project: cabal.project.user
             cabal_version: 3.6.2.0
             disable_docs: "y"
             cabal_build_options: "--flag interop"
-          - name: 9.2.4.Werror
-            ghc_version: 9.2.4
+          - name: 9.2.7.Werror
+            ghc_version: 9.2.7
             runner: ubuntu-latest
             build: cabal
             cabal_project: cabal.project.Werror
@@ -55,12 +55,12 @@ jobs:
             disable_docs: "y"
             disable_sdist_build: "y"
             ignore_error: false
-          - name: 9.2.4
-            ghc_version: 9.2.4
+          - name: 9.4.4
+            ghc_version: 9.4.4
             runner: ubuntu-latest
             build: cabal
             cabal_project: cabal.project.user
-            cabal_version: 3.6.2.0
+            cabal_version: 3.8.1.0
             disable_docs: "y"
             disable_sdist_build: "y"
             ignore_error: false

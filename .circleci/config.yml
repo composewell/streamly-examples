@@ -394,6 +394,6 @@ workflows:
       - cabal-ghc-8_10_4
       - cabal-ghc-8_10_4_fusion_plugin
       - cabal-ghc-8_10_4_all_flags
-      - stack-ghc-8_8
+      #- stack-ghc-8_8
       - cabal-ghc-8_6_5
       - hlint
