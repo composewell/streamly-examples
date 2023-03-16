@@ -72,7 +72,9 @@ $ cabal run --flag interop Interop.Pipes
   version with full UTF8 handling.
 * [WordFrequency](examples/WordFrequency.hs): Count word frequency in
   a file and print top 25 words.
-* [CSVParser](examples/CSVParser.hs): Process a CSV file
+* [CSVParser](examples/CSVParser.hs): Parse a CSV file.
+* [DateTimeParser](examples/DateTimeParser.hs): Parse a Date/Time string.
+* [LogParser](examples/LogParser.hs): Parse a quoted string with escaping.
 
 ### Networking
 
@@ -97,11 +99,6 @@ $ cabal run --flag interop Interop.Pipes
   that can be modified by typing "harm" and "potion" commands.
 * [CirclingSquare](examples/CirclingSquare.hs): Use SDL2 to display a
   square that moves in a circle, and follows the mouse pointer.
-
-### Monad Transformers
-
-* [ControlFlow](examples/ControlFlow.hs): Combining control flow manipulating
-  transformers (`MaybeT`, `ExceptT`, `ContT`) with streamly.
 
 ### Interoperation
 
