@@ -28,7 +28,7 @@ streamChunk =
     K.toStream
         . K.sortBy compare
         . K.fromStream
-        . Stream.unfold Array.reader
+        . Array.read
 
 sortChunk :: Array Int -> IO (Array Int)
 sortChunk = Stream.fold Array.write . streamChunk
@@ -63,8 +63,7 @@ sortMergeSeparate f =
         & Stream.chunksOf chunkSize
         & f sortChunk
         & K.fromStream
-        & K.mergeMapWith
-            (K.mergeBy compare) (K.fromStream . Stream.unfold Array.reader)
+        & K.mergeMapWith (K.mergeBy compare) (K.fromStream . Array.read)
         & K.toStream
         & Stream.fold Fold.drain
 
@@ -77,8 +76,8 @@ reduce :: Array Int -> Array Int -> IO (Array Int)
 reduce arr1 arr2 =
     Stream.mergeBy
         compare
-        (Stream.unfold Array.reader arr1)
-        (Stream.unfold Array.reader arr2)
+        (Array.read arr1)
+        (Array.read arr2)
         & Stream.fold Array.write
 
 sortMergeChunks ::

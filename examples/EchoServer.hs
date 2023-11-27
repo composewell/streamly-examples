@@ -12,7 +12,7 @@ import qualified Streamly.Network.Socket as Socket
 
 main :: IO ()
 main =
-      Stream.unfold TCP.acceptorOnPort 8091 -- Stream IO Socket
+      TCP.accept 8091                       -- Stream IO Socket
     & Stream.parMapM id (handleWithM echo)  -- Stream IO ()
     & Stream.fold Fold.drain                -- IO ()
 
@@ -20,8 +20,8 @@ main =
 
     echo :: Socket -> IO ()
     echo sk =
-          Stream.unfold Socket.chunkReaderWith (32768, sk) -- Stream IO (Array Word8)
-        & Stream.fold (Socket.writeChunks sk)              -- IO ()
+          Socket.readChunksWith 32768 sk      -- Stream IO (Array Word8)
+        & Stream.fold (Socket.writeChunks sk) -- IO ()
 
     handleWithM :: (Socket -> IO ()) -> Socket -> IO ()
     handleWithM f sk = finally (f sk) (Net.close sk)

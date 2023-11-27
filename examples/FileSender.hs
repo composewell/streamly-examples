@@ -30,7 +30,7 @@ main = do
 
     fileToSocket :: Handle -> Socket -> IO ()
     fileToSocket fh sk =
-          Stream.unfold Handle.chunkReader fh  -- Stream IO (Array Word8)
+          Handle.readChunks fh  -- Stream IO (Array Word8)
         & Stream.fold (Socket.writeChunks sk)  -- IO ()
 
     sendFile :: String -> IO ()

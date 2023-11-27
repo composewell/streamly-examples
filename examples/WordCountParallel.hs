@@ -19,8 +19,8 @@ import qualified Streamly.Unicode.Stream as Stream
 -- Get the line, word, char counts in one chunk.
 countArray :: Array Word8 -> IO Counts
 countArray arr =
-      Stream.unfold Array.reader arr          -- Stream IO Word8
-    & Stream.decodeLatin1                     -- Stream IO Char
+      Array.read arr          -- Stream IO Word8
+    & Stream.decodeLatin1     -- Stream IO Char
     & Stream.fold (Fold.foldl' count (Counts 0 0 0 True)) -- IO Counts
 
 -- When combining the counts in two contiguous chunks, we would also need to

@@ -10,7 +10,7 @@ import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Unicode.Stream as Unicode
 
-import qualified Streamly.Internal.Data.Stream.Chunked as ArrayStream (splitOn)
+import qualified Streamly.Internal.Data.Array.Stream as ArrayStream (splitOn)
 
 -- | Read the contents of a file to stdout.
 --
@@ -20,20 +20,20 @@ import qualified Streamly.Internal.Data.Stream.Chunked as ArrayStream (splitOn)
 --
 catBytes :: Handle -> IO ()
 catBytes src =
-      Stream.unfold Handle.reader src     -- Stream IO Word8
+      Handle.read src     -- Stream IO Word8
     & Stream.fold (Handle.write stdout)   -- IO ()
 
 -- | Chunked version, more efficient than the byte stream version above. Reads
 -- the file in 256KB chunks and writes those chunks to stdout.
 cat :: Handle -> IO ()
 cat src =
-      Stream.unfold Handle.chunkReaderWith (256*1024, src) -- Stream IO (Array Word8)
+      Handle.readChunksWith (256*1024) src    -- Stream IO (Array Word8)
     & Stream.fold (Handle.writeChunks stdout) -- IO ()
 
 -- | Read from standard input write to standard output
 echo :: IO ()
 echo =
-      Stream.unfold Handle.chunkReader stdin   -- Stream IO (Array Word8)
+      Handle.readChunks stdin   -- Stream IO (Array Word8)
     & Stream.fold (Handle.writeChunks stdout)  -- IO ()
 
 -- | Copy a source file to a destination file.
@@ -43,7 +43,7 @@ echo =
 -- 32KB and writes those chunks to the destination file.
 cpBytes :: Handle -> Handle -> IO ()
 cpBytes src dst =
-      Stream.unfold Handle.reader src  -- Stream IO Word8
+      Handle.read src  -- Stream IO Word8
     & Stream.fold (Handle.write dst)   -- IO ()
 
 -- | Chunked version, more efficient than the byte stream version above. Reads
@@ -51,7 +51,7 @@ cpBytes src dst =
 cp :: Handle -> Handle -> IO ()
 cp src dst =
       Stream.fold (Handle.writeChunks dst)
-    $ Stream.unfold Handle.chunkReaderWith (256*1024, src)
+    $ Handle.readChunksWith (256*1024) src
 
 -- | Count lines like wc -l.
 --
@@ -59,9 +59,9 @@ cp src dst =
 -- and counts the lines..
 wclChar :: Handle -> IO Int
 wclChar src =
-      Stream.unfold Handle.reader src           -- Stream IO Word8
-    & Unicode.decodeLatin1                      -- Stream IO Char
-    & split (== '\n') Fold.drain                -- Stream IO ()
+      Handle.read src            -- Stream IO Word8
+    & Unicode.decodeLatin1       -- Stream IO Char
+    & split (== '\n') Fold.drain -- Stream IO ()
     & Stream.fold Fold.length
 
     where
@@ -73,9 +73,9 @@ wclChar src =
 -- first.
 wcl :: Handle -> IO Int
 wcl src =
-      Stream.unfold Handle.chunkReader src -- Stream IO (Array Word8)
-    & ArrayStream.splitOn 10               -- Stream IO (Array Word8)
-    & Stream.fold Fold.length              -- IO ()
+      Handle.readChunks src   -- Stream IO (Array Word8)
+    & ArrayStream.splitOn 10  -- Stream IO (Array Word8)
+    & Stream.fold Fold.length -- IO ()
 
 main :: IO ()
 main = do

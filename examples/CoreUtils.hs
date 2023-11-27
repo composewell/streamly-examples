@@ -38,7 +38,7 @@ cp =
 append :: IO ()
 append =
       File.readChunks "input.txt"      -- Stream IO (Array Word8)
-    & File.appendChunks "output.txt"   -- IO ()
+    & File.writeAppendChunks "output.txt"   -- IO ()
 
 -- | > cat input.txt | tee output1.txt > output.txt
 tap :: IO ()
@@ -51,7 +51,7 @@ tap =
 -- output1.txt is processed/written to in a separate thread.
 tapAsync :: IO ()
 tapAsync =
-      Stream.unfold Stdio.readChunks ()   -- Stream IO (Array Word8)
+      Stdio.readChunks ()   -- Stream IO (Array Word8)
     & Stream.tapAsyncK
           (File.fromChunks "output1.txt") -- Stream IO (Array Word8)
     & File.fromChunks "output.txt"        -- IO ()

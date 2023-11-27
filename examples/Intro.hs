@@ -21,9 +21,6 @@ import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.FileSystem.File as File
 import qualified Streamly.Unicode.Stream as Unicode
 
-import qualified Streamly.Internal.Data.Stream as Stream (wordsBy)
-import qualified Streamly.Internal.Data.Unfold as Unfold (enumerateFromToIntegral)
-
 -------------------------------------------------------------------------------
 -- Simple loops
 -------------------------------------------------------------------------------
@@ -31,7 +28,7 @@ import qualified Streamly.Internal.Data.Unfold as Unfold (enumerateFromToIntegra
 -- | Sum a list of Int
 sumInt :: Identity Int
 sumInt =
-      Stream.unfold Unfold.fromList [1..10] -- Stream Identity Int
+      Stream.fromList [1..10] -- Stream Identity Int
     & Stream.fold Fold.sum                  -- Identity Int
 
 -- | Sum a list of Int
@@ -56,8 +53,8 @@ crossProduct range1 range2 =
         xmult :: Unfold Identity ((Int, Int), (Int, Int)) Int
         xmult =
             Unfold.crossWith (*)
-                  (Unfold.lmap fst Unfold.enumerateFromToIntegral)
-                  (Unfold.lmap snd Unfold.enumerateFromToIntegral)
+                  (Unfold.lmap fst Unfold.enumerateFromTo)
+                  (Unfold.lmap snd Unfold.enumerateFromTo)
 
      in Stream.unfold xmult (range1,range2) -- Stream Identity Int
             & Stream.fold Fold.sum          -- Identity Int

@@ -29,7 +29,7 @@ newHandle = do
 -- of directory names.
 splitFile :: Handle -> IO ()
 splitFile inHandle =
-      (Stream.unfold Handle.reader inHandle :: Stream IO Word8) -- Stream IO Word8
+      (Handle.read inHandle :: Stream IO Word8) -- Stream IO Word8
     & Stream.liftInner                   -- Stream (StateT (Maybe (Handle, Int)) IO) Word8
     -- Stream (StateT (Maybe (Handle, Int)) IO) ()
     & Stream.refoldMany (Refold.take (180 * mb) Handle.writer) newHandle

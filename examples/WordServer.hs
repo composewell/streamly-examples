@@ -21,7 +21,7 @@ fetch w = threadDelay 1000000 >> return (w,w)
 -- connection is closed.
 lookupWords :: Socket -> IO ()
 lookupWords sk =
-      Stream.unfold Socket.reader sk             -- Stream IO Word8
+      Socket.read sk                             -- Stream IO Word8
     & Unicode.decodeLatin1                       -- Stream IO Char
     & Stream.parseMany word
     & Stream.catRights                           -- Stream IO String
@@ -43,6 +43,6 @@ serve sk = finally (lookupWords sk) (close sk)
 -- "nc" as a client to try it out.
 main :: IO ()
 main =
-      Stream.unfold TCP.acceptorOnPort 8091             -- Stream IO Socket
-    & Stream.parMapM id (Socket.forSocketM serve)       -- Stream IO ()
-    & Stream.fold Fold.drain                            -- IO ()
+      TCP.accept 8091                             -- Stream IO Socket
+    & Stream.parMapM id (Socket.forSocketM serve) -- Stream IO ()
+    & Stream.fold Fold.drain                      -- IO ()

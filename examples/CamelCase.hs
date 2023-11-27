@@ -13,10 +13,10 @@ import qualified Streamly.FileSystem.Handle as Handle
 -- | @camelCase source-file dest-file@
 camelCase :: Handle -> Handle -> IO ()
 camelCase src dst =
-      Stream.unfold Handle.reader src    -- Stream IO Word8
-    & Stream.postscan fold               -- Stream IO (Bool, Maybe Word8)
-    & Stream.mapMaybe snd                -- Stream IO Word8
-    & Stream.fold (Handle.write dst)     -- IO ()
+      Handle.read src                 -- Stream IO Word8
+    & Stream.postscan fold            -- Stream IO (Bool, Maybe Word8)
+    & Stream.mapMaybe snd             -- Stream IO Word8
+    & Stream.fold (Handle.write dst)  -- IO ()
 
     where
 

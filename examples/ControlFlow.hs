@@ -27,7 +27,7 @@ import Control.Monad.Trans.Maybe (MaybeT (..))
 import Control.Monad.Trans.Except (ExceptT, runExceptT, throwE, catchE)
 import Control.Monad.Trans.Cont (ContT(..), callCC)
 import Streamly.Data.Stream (Stream)
-import Streamly.Internal.Data.Stream.StreamD (CrossStream, mkCross, unCross)
+import Streamly.Internal.Data.Stream (CrossStream, mkCross, unCross)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream

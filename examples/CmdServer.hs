@@ -75,13 +75,13 @@ demux = void (demuxKvToMap commands)
 
 handler :: Socket -> IO ()
 handler sk =
-      Stream.unfold Socket.reader sk     -- Stream IO Word8
-    & Unicode.decodeLatin1               -- Stream IO Char
-    & Stream.parseMany word              -- Stream IO String
+      Socket.read sk        -- Stream IO Word8
+    & Unicode.decodeLatin1  -- Stream IO Char
+    & Stream.parseMany word -- Stream IO String
     & Stream.catRights
-    & fmap (, sk)                        -- Stream IO (String, Socket)
-    & Stream.fold demux                  -- IO () + Exceptions
-    & discard                            -- IO ()
+    & fmap (, sk)           -- Stream IO (String, Socket)
+    & Stream.fold demux     -- IO () + Exceptions
+    & discard               -- IO ()
 
     where
 
@@ -94,7 +94,7 @@ handler sk =
 
 server :: IO ()
 server =
-      Stream.unfold TCP.acceptorOnPort 8091          -- Stream IO Socket
+      TCP.accept 8091                                -- Stream IO Socket
     & Stream.parMapM id (Socket.forSocketM handler)  -- Stream IO ()
     & Stream.fold Fold.drain                         -- IO ()
 

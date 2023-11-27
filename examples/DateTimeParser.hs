@@ -47,7 +47,7 @@ data FoldState =
 {-# INLINE foldDateTime #-}
 foldDateTime :: Array Char -> IO (Int, Int)
 foldDateTime arr =
-    Stream.fold t $ Stream.unfold Array.reader arr
+    Stream.fold t $ Array.read arr
 
     where
 
@@ -121,7 +121,7 @@ _foldDateTimeAp arr =
             <*  char ':'
             <*> decimal 2  -- sec
             <*  char 'Z'
-    in Stream.fold t $ Stream.unfold Array.reader arr
+    in Stream.fold t $ Array.read arr
 
 -------------------------------------------------------------------------------
 -- Using foldBreak - slower than applicative
@@ -130,7 +130,7 @@ _foldDateTimeAp arr =
 {-# INLINE _foldBreakDateTime #-}
 _foldBreakDateTime :: Array Char -> IO Int
 _foldBreakDateTime arr = do
-    let s = Stream.unfold Array.reader arr
+    let s = Array.read arr
     (year, s1) <- Stream.foldBreak (decimal 4) s
     (_, s2) <- Stream.foldBreak (char '-') s1
     (month, s3) <- Stream.foldBreak (decimal 2) s2
@@ -153,7 +153,7 @@ _foldBreakDateTime arr = do
 _parseBreakDateTime :: Array Char -> IO Int
 _parseBreakDateTime arr = do
     let s = StreamK.fromStream $ Stream.fromPure arr
-        p = ParserK.fromParser . Parser.fromFold
+        p = ParserK.adaptC . Parser.fromFold
     (Right year, s1) <- StreamK.parseBreakChunks (p $ decimal 4) s
     (_, s2) <- StreamK.parseBreakChunks (p $ char '-') s1
     (Right month, s3) <- StreamK.parseBreakChunks (p $ decimal 2) s2
@@ -180,7 +180,7 @@ _parseKDateTime arr = do
 
     where
 
-    p = ParserK.fromParser
+    p = ParserK.adaptC
 
     dateParser = do
         year <- p $ Parser.decimal <* Parser.char '-'
@@ -196,7 +196,7 @@ _parseKDateTime arr = do
 {-# NOINLINE _parseDateTime #-}
 _parseDateTime :: Array Char -> IO Int
 _parseDateTime arr = do
-    r <- Stream.parse dateParser $ Stream.unfold Array.reader arr
+    r <- Stream.parse dateParser $ Array.read arr
     return $ fromRight (error "failed") r
 
     where

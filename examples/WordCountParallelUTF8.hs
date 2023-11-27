@@ -49,9 +49,6 @@ import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Internal.Unicode.Stream as Unicode
        (DecodeState, DecodeError(..), CodePoint, decodeUtf8Either
        , resumeDecodeUtf8Either)
-import qualified Streamly.Internal.Data.Array.Mut.Type as MArray
-       (getIndexUnsafe, putIndexUnsafe, modifyIndexUnsafe)
-
 
 -------------------------------------------------------------------------------
 -- Parallel char, line and word counting
@@ -195,7 +192,7 @@ modifyField v fld f = do
 
 newCounts :: IO (MutArray Int)
 newCounts = do
-    counts <- MArray.newPinned (fromEnum (maxBound :: Field) + 1)
+    counts <- MArray.pinnedNew (fromEnum (maxBound :: Field) + 1)
     writeField counts LineCount 0
     writeField counts WordCount 0
     writeField counts CharCount 0
@@ -566,7 +563,7 @@ countArray src = do
     counts <- newCounts
     Stream.fold (Fold.drainMapM (countChar counts))
         $ Unicode.decodeUtf8Either
-        $ Stream.unfold Array.reader src
+        $ Array.read src
     return counts
 
 {-# INLINE wcMwlParallel #-}
@@ -578,7 +575,7 @@ wcMwlParallel src n = do
             . Stream.ordered True
             )
             countArray
-        $ Stream.unfold Handle.chunkReaderWith (n, src)
+        $ Handle.readChunksWith n src
 
 -------------------------------------------------------------------------------
 -- Serial counting using parallel version of countChar
@@ -590,7 +587,7 @@ wcMwlParserial src = do
     counts <- newCounts
     Stream.fold (Fold.drainMapM (countChar counts))
         $ Unicode.decodeUtf8Either
-        $ Stream.unfold Handle.reader src
+        $ Handle.read src
     return counts
 
 -------------------------------------------------------------------------------

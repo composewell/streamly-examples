@@ -9,24 +9,21 @@ import Data.Functor.Identity (Identity(..))
 import Data.Hashable (Hashable(..))
 import System.Environment (getArgs)
 import Streamly.Data.Array (Unbox)
-import Streamly.Internal.Data.IsMap.HashMap ()
 
 import qualified Data.Char as Char
 import qualified Data.HashMap.Strict as Map
 import qualified Data.List as List
 import qualified Data.Ord as Ord
 import qualified Streamly.Data.Array as Array
-import qualified Streamly.Data.Fold as Fold
-import qualified Streamly.Internal.Data.Fold.Container as Fold (toContainerIO)
+import qualified Streamly.Data.Fold.Prelude as Fold
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.Internal.Data.Stream as Stream (wordsBy)
 import qualified Streamly.FileSystem.File as File
 import qualified Streamly.Unicode.Stream as Unicode
 
 hashArray :: (Unbox a, Integral b, Num c) =>
     Fold.Fold Identity a b -> Array.Array a -> c
 hashArray f arr =
-      Stream.unfold Array.reader arr
+      Array.read arr
     & Stream.fold f
     & fromIntegral . runIdentity
 
@@ -61,7 +58,7 @@ main = do
     inFile <- fmap head getArgs
 
     let counter = Fold.foldl' (\n _ -> n + 1) (0 :: Int)
-        classifier = Fold.toContainerIO id counter
+        classifier = Fold.toHashMapIO id counter
     -- Write the stream to a hashmap consisting of word counts
     mp <-
         File.read inFile                       -- Stream IO Word8

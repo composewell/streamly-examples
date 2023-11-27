@@ -13,15 +13,14 @@ import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified System.IO as IO
-import qualified Streamly.Internal.Data.Stream as Stream (splitOn)
-import qualified Streamly.Internal.Data.Stream.Chunked as ArrayStream (splitOn)
+import qualified Streamly.Internal.Data.Array.Stream as ArrayStream (splitOn)
 
 main :: IO ()
 main = do
     inFile <- fmap head getArgs
     src <- IO.openFile inFile ReadMode
 
-    Stream.unfold Handle.chunkReader src         -- Stream IO (Array Word8)
+    Handle.readChunks src                        -- Stream IO (Array Word8)
         & ArrayStream.splitOn 10                 -- Stream IO (Array Word8)
         & Stream.fold (Fold.drainMapM parseLine) -- IO ()
 
@@ -30,7 +29,7 @@ main = do
     printList = putStr . map (chr . fromIntegral)
 
     parseLine arr =
-        (Stream.unfold Array.reader arr :: Stream IO Word8)
+        (Array.read arr :: Stream IO Word8)
             & Stream.splitOn (== 44) Fold.toList     -- Stream IO [Word8]
             & Stream.intersperse [32]                -- Stream IO [Word8]
             & Stream.fold (Fold.drainMapM printList) -- IO ()
