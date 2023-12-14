@@ -93,6 +93,8 @@ common exe-options
                -Wincomplete-uni-patterns
                -Wredundant-constraints
                -Wnoncanonical-monad-instances
+  if impl(ghc >= 9.8)
+    ghc-options: -Wno-x-partial
 
   if flag(fusion-plugin) && !impl(ghcjs) && !impl(ghc < 8.6)
     ghc-options: -fplugin Fusion.Plugin
