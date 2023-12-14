@@ -22,7 +22,6 @@ env: &env
       DISABLE_DOCS: "y"
       DISABLE_SDIST_BUILD: "yes"
       DISABLE_DIST_CHECKS: "yes"
-      ENABLE_INSTALL: "y"
 
       # ------------------------------------------------------------------------
       # stack options
@@ -39,13 +38,12 @@ env: &env
       # ------------------------------------------------------------------------
       CABAL_CHECK_RELAX: "y"
       CABAL_NO_SANDBOX: "y"
-      CABAL_HACKAGE_MIRROR: "hackage.haskell.org:http://hackage.fpcomplete.com"
 
       # ------------------------------------------------------------------------
       # Where to find the required tools
       # ------------------------------------------------------------------------
-      PATH: /opt/ghc/bin:/opt/ghcjs/bin:/sbin:/usr/sbin:/bin:/usr/bin
-      TOOLS_DIR: /opt
+      PATH: /sbin:/usr/sbin:/bin:/usr/bin
+      #TOOLS_DIR: /opt
 
       # ------------------------------------------------------------------------
       # Location of packcheck.sh (the shell script invoked to perform CI tests ).
@@ -60,10 +58,11 @@ env: &env
       PACKCHECK_GITHUB_URL: "https://raw.githubusercontent.com/composewell/packcheck"
       PACKCHECK_GITHUB_COMMIT: "a68b7b9c7c21eef8ed273e67030efb1d4fec027c"
 
+# image is a tag from docker registery
 executors:
   amd64-executor:
     docker:
-      - image: ubuntu:bionic
+      - image: ubuntu:latest
   x86-executor:
     docker:
       - image: i386/ubuntu:eoan
@@ -73,30 +72,13 @@ executors:
 #-----------------------------------------------------------------------------
 
 preinstall: &preinstall
-  run: |
+  command: |
         apt-get update
         # required for https/cache save and restore
         apt-get install -y ca-certificates
 
         # required to (re)generate the configure script
         apt-get install -y autoconf
-        apt-get install -y libtinfo-dev
-
-        # For ghc and cabal-install packages from hvr's ppa
-        # gnupg is required for apt-key to work
-        apt-get install -y gnupg
-        apt-get install -y apt-transport-https
-        apt-key adv --keyserver keyserver.ubuntu.com  --recv-keys BA3CBA3FFE22B574
-        apt-get install -y software-properties-common
-        apt-get install -y git
-        apt-get install -y zlib1g-dev
-        add-apt-repository -y ppa:hvr/ghc
-        # echo "deb http://downloads.haskell.org/debian stretch main" >> /etc/apt/sources.list
-        echo "deb-src http://ppa.launchpad.net/hvr/ghc/ubuntu bionic main" >> /etc/apt/sources.list
-        apt-get update
-
-        # required for packcheck
-        apt-get install -y curl
 
         # required for outbound https for stack and for stack setup
         apt-get install -y netbase xz-utils make
@@ -106,10 +88,40 @@ preinstall: &preinstall
         unset STACK_YAML
 
         # Get packcheck if needed
+        apt-get install -y curl
         CURL=$(which curl)
         PACKCHECK_URL=${PACKCHECK_GITHUB_URL}/${PACKCHECK_GITHUB_COMMIT}/packcheck.sh
         if test ! -e "$PACKCHECK"; then $CURL -sL -o "$PACKCHECK" $PACKCHECK_URL; fi;
         chmod +x $PACKCHECK
+
+        # Determine GHCUP_ARCH
+        os=$(uname -s -m)
+        case "$os" in
+          "Linux x86_64") GHCUP_ARCH="x86_64-linux" ;;
+          "Darwin x86_64") GHCUP_ARCH="x86_64-apple-darwin" ;;
+          *) echo "Unknown OS/Arch: $os"; exit 1;;
+        esac
+
+        # Check available versions here: https://downloads.haskell.org/~ghcup/
+        GHCUP_VER=0.1.20.0
+        $CURL -sL -o ./ghcup https://downloads.haskell.org/~ghcup/$GHCUP_VER/${GHCUP_ARCH}-ghcup-$GHCUP_VER
+        chmod +x ./ghcup
+        apt-get install -y gcc
+        apt-get install -y g++
+        apt-get install -y libtinfo-dev
+        ./ghcup install ghc $GHCVER
+        ./ghcup set ghc $GHCVER
+        ./ghcup install cabal $CABALVER
+        ./ghcup set cabal $CABALVER
+        # Required by cabal
+        apt-get install -y git
+        # libgmp required by ghc for linking
+        apt-get install -y libgmp-dev
+        # For sdl build flag
+        apt-get install -y libsdl2-dev
+        PATH=$HOME/.ghcup/bin:$PATH
+        export PATH
+        bash -c "$PACKCHECK $BUILD"
 
 restore: &restore
   # Needs to happen after installing ca-certificates
@@ -124,202 +136,67 @@ save: &save
         - ~/.ghc
         - ~/.local
         - ~/.stack
+        # add .ghcup?
 
 #-----------------------------------------------------------------------------
 # Build matrix
 #-----------------------------------------------------------------------------
 
 jobs:
-  stack-ghc-8_8:
+  cabal-ghc-9_8_1_Werror:
       <<: *env
       executor: amd64-executor
       steps:
         - checkout
-        - *preinstall
         - *restore
         - run:
-            name: GHC 8.8 + stack lts-16.31
-            environment:
-              BUILD: "stack"
-              RESOLVER: "lts-16.31"
-              STACK_YAML: "stack.yaml"
-              SDIST_OPTIONS: "--ignore-check"
-            command: |
-              apt-get build-dep -y ghc-8.8.4
-              apt-get install -y cabal-install-3.2
-              bash -c "$PACKCHECK $BUILD"
-        - *save
-  cabal-ghc-8_6_5:
-      <<: *env
-      executor: amd64-executor
-      steps:
-        - checkout
-        - *preinstall
-        - *restore
-        - run:
-           name: GHC 8.6.5
-           environment:
-             BUILD: "cabal-v2"
-             CABAL_PROJECT: "cabal.project.user"
-           command: |
-              apt-get install -y ghc-8.6.5
-              apt-get install -y cabal-install-3.2
-              bash -c "$PACKCHECK $BUILD"
-        - *save
-  cabal-ghc-8_4_4:
-      <<: *env
-      executor: x86-executor
-      steps:
-        - checkout
-        - *preinstall
-        - *restore
-        - run:
-           name: GHC 8.4.4 + x86
-           environment:
-             BUILD: "cabal-v2"
-             GHCVER: "8.4.4"
-           command: |
-              apt-get install -y ghc-8.4.4
-              apt-get install -y cabal-install-3.2
-              bash -c "$PACKCHECK $BUILD"
-        - *save
-  cabal-ghc-8_2_2:
-      <<: *env
-      executor: amd64-executor
-      steps:
-        - checkout
-        - *preinstall
-        - *restore
-        - run:
-            name: GHC 8.2.2
-            environment:
-              BUILD: "cabal-v2"
-            command: |
-              apt-get install -y ghc-8.2.2
-              apt-get install -y cabal-install-3.2
-              bash -c "$PACKCHECK $BUILD"
-        - *save
-  cabal-ghc-8_0_2:
-      <<: *env
-      executor: amd64-executor
-      steps:
-        - checkout
-        - *preinstall
-        - *restore
-        - run:
-            name: GHC 8.0.2
-            environment:
-              BUILD: "cabal-v2"
-            command: |
-              apt-get install -y ghc-8.0.2
-              apt-get install -y cabal-install-3.2
-              bash -c "$PACKCHECK $BUILD"
-        - *save
-  cabal-ghcjs-8_4:
-      <<: *env
-      executor: amd64-executor
-      steps:
-        - checkout
-        - *preinstall
-        - *restore
-        - run:
-            name: GHCJS 8.4
-            environment:
-              BUILD: cabal-v2
-              ENABLE_GHCJS: "yes"
-              DISABLE_TEST: "yes"
-              ENABLE_INSTALL: ""
-              DISABLE_DOCS: "yes"
-              DISABLE_SDIST_BUILD: "yes"
-            command: |
-              add-apt-repository -y ppa:hvr/ghcjs
-              curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
-              add-apt-repository -y 'deb https://deb.nodesource.com/node_11.x bionic main'
-              apt-get update
-              apt-get install -y cabal-install-3.2
-              apt-get install -y nodejs
-              apt-get install -y ghcjs-8.4
-              bash -c "$PACKCHECK $BUILD"
-        - *save
-  cabal-ghc-8_10_4:
-      <<: *env
-      executor: amd64-executor
-      steps:
-        - checkout
-        - *preinstall
-        - *restore
-        - run:
-            name: GHC 8.10.4
-            environment:
-              BUILD: "cabal-v2"
-              CABAL_PROJECT: "cabal.project.user"
-            command: |
-              apt-get install -y ghc-8.10.4
-              apt-get install -y cabal-install-3.2
-              bash -c "$PACKCHECK $BUILD"
-            no_output_timeout: 25m
-        - *save
-  cabal-ghc-8_10_4_fusion_plugin:
-      <<: *env
-      executor: amd64-executor
-      steps:
-        - checkout
-        - *preinstall
-        - *restore
-        - run:
-           name: GHC 8.10.4 + fusion-plugin
-           environment:
-             BUILD: "cabal-v2"
-             CABAL_PROJECT: "cabal.project.user"
-             CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
-           command: |
-              apt-get install -y ghc-8.10.4
-              apt-get install -y cabal-install-3.2
-              bash -c "$PACKCHECK $BUILD"
-        - *save
-  cabal-ghc-8_10_4_all_flags:
-      <<: *env
-      executor: amd64-executor
-      steps:
-        - checkout
-        - *preinstall
-        - *restore
-        - run:
-           name: GHC 8.10.4 + sdl2 + interop + fusion-plugin
-           environment:
-             BUILD: "cabal-v2"
-             CABAL_PROJECT: "cabal.project.user"
-             CABAL_BUILD_OPTIONS: "--flag sdl2 --flag interop --flag fusion-plugin"
-           command: |
-              apt-get install -y libsdl2-dev
-              apt-get install -y ghc-8.10.4
-              apt-get install -y cabal-install-3.2
-              bash -c "$PACKCHECK $BUILD"
-        - *save
-  cabal-ghc-9_0_1_fusion_plugin:
-      <<: *env
-      executor: amd64-executor
-      steps:
-        - checkout
-        - *preinstall
-        - *restore
-        - run:
-           name: GHC 9.0.1 + fusion-plugin + Werror
+           name: GHC 9.8.1 + fusion-plugin + Werror
            environment:
              BUILD: "cabal-v2"
              CABAL_PROJECT: "cabal.project.ci"
              CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
-           command: |
-              apt-get install -y ghc-9.0.1
-              apt-get install -y cabal-install-3.4
-              bash -c "$PACKCHECK $BUILD"
+             CABALVER: "3.10.2.0"
+             GHCVER: "9.8.1"
+           <<: *preinstall
         - *save
+  cabal-ghc-9_6_3_all_flags:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *restore
+        - run:
+           name: GHC 9.6.3 + sdl2 + interop + fusion-plugin
+           environment:
+             BUILD: "cabal-v2"
+             CABAL_PROJECT: "cabal.project.user"
+             CABAL_BUILD_OPTIONS: "--flag sdl2 --flag interop --flag fusion-plugin"
+             CABALVER: "3.10.2.0"
+             GHCVER: "9.6.3"
+           <<: *preinstall
+        - *save
+# Fails with this error:
+# withBinaryFile: invalid argument (Symbolic link loop)
+#  stack-ghc-9_6_3:
+#      <<: *env
+#      executor: amd64-executor
+#      steps:
+#        - checkout
+#        - *restore
+#        - run:
+#            name: stack nightly-2023-12-14
+#            environment:
+#              BUILD: "stack"
+#              RESOLVER: "nightly-2023-12-14"
+#              STACK_YAML: "stack.yaml"
+#              SDIST_OPTIONS: "--ignore-check"
+#            <<: *preinstall
+#        - *save
   cabal-ghc-9_0_1_sdist:
       <<: *env
       executor: amd64-executor
       steps:
         - checkout
-        - *preinstall
         - *restore
         - run:
            name: GHC 9.0.1 + sdist + fusion-plugin
@@ -328,52 +205,31 @@ jobs:
              CABAL_PROJECT: "cabal.project.user"
              CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
              DISABLE_SDIST_BUILD: "no"
-           command: |
-              apt-get install -y ghc-9.0.1
-              apt-get install -y cabal-install-3.4
-              bash -c "$PACKCHECK $BUILD"
+             CABALVER: "3.10.2.0"
+             GHCVER: "9.0.1"
+           <<: *preinstall
         - *save
-  cabal-ghc-9_2_4:
+  cabal-ghc-8_6_5:
       <<: *env
       executor: amd64-executor
       steps:
         - checkout
-        - *preinstall
-        - *restore
+          #- *restore
         - run:
-           name: GHC 9.2.4
+           name: GHC 8.6.5
            environment:
-             BUILD: "cabal"
-             CABAL_PROJECT: "cabal.project"
-             #CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
-             #DISABLE_SDIST_BUILD: "no"
-           command: |
-              # Check available versions here: https://downloads.haskell.org/~ghcup/
-              GHCUP_VER=0.1.18.0
-              CABALVER=3.6.2.0
-              GHCVER=9.2.4
-              GHCUP_ARCH=x86_64-linux
-              CURL=$(which curl)
-              os=$(uname -s -m)
-              case "$os" in
-                "Linux x86_64") GHCUP_ARCH="x86_64-linux" ;;
-                "Darwin x86_64") GHCUP_ARCH="x86_64-apple-darwin" ;;
-                *) echo "Unknown OS/Arch: $os"; exit 1;;
-              esac
-              $CURL -sL -o ./ghcup https://downloads.haskell.org/~ghcup/$GHCUP_VER/${GHCUP_ARCH}-ghcup-$GHCUP_VER
-              chmod +x ./ghcup
-              ./ghcup install ghc $GHCVER
-              ./ghcup install cabal $CABALVER
-              ./ghcup set ghc $GHCVER
-              ./ghcup set cabal $CABALVER
-              bash -c "$PACKCHECK $BUILD"
+             BUILD: "cabal-v2"
+             CABAL_PROJECT: "cabal.project.user"
+             CABALVER: "3.10.2.0"
+             GHCVER: "8.6.5"
+           <<: *preinstall
+           #no_output_timeout: 25m
         - *save
   hlint:
       <<: *env
       executor: amd64-executor
       steps:
         - checkout
-        - *preinstall
         - *restore
         - run:
             name: Hlint examples
@@ -381,19 +237,16 @@ jobs:
               BUILD: hlint
               HLINT_OPTIONS: lint
               HLINT_TARGETS: examples
-            command: |
-              bash -c "$PACKCHECK $BUILD"
+            <<: *preinstall
         - *save
 
 workflows:
   version: 2
   build:
     jobs:
+      - cabal-ghc-9_8_1_Werror
+      - cabal-ghc-9_6_3_all_flags
+      #- stack-ghc-9_6_3
       - cabal-ghc-9_0_1_sdist
-      - cabal-ghc-9_0_1_fusion_plugin
-      - cabal-ghc-8_10_4
-      - cabal-ghc-8_10_4_fusion_plugin
-      - cabal-ghc-8_10_4_all_flags
-      #- stack-ghc-8_8
       - cabal-ghc-8_6_5
       - hlint

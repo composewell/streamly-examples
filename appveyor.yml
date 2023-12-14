@@ -36,7 +36,7 @@ environment:
     # version.
     #STACKVER: "1.6.5"
     STACK_UPGRADE: "y"
-    RESOLVER: "lts-20.14"
+    RESOLVER: "nightly-2023-12-14"
     STACK_ROOT: "c:\\sr"
     STACK_YAML: "stack.yaml"
 
@@ -46,7 +46,6 @@ environment:
     CABAL_BUILD_OPTIONS: "--flag interop"
     CABAL_CHECK_RELAX: "y"
     CABAL_NO_SANDBOX: "y"
-    CABAL_HACKAGE_MIRROR: "hackage.haskell.org:http://hackage.fpcomplete.com"
 
     # ------------------------------------------------------------------------
     # Where to find the required tools
@@ -65,7 +64,7 @@ environment:
     # If you have not committed packcheck.sh in your repo at PACKCHECK_LOCAL_PATH
     # then it is automatically pulled from this URL.
     PACKCHECK_GITHUB_URL: "https://raw.githubusercontent.com/harendra-kumar/packcheck"
-    PACKCHECK_GITHUB_COMMIT: "563702bd02c41343dcd3dfcfef0845ca428a9240"
+    PACKCHECK_GITHUB_COMMIT: "a68b7b9c7c21eef8ed273e67030efb1d4fec027c"
 
     # Override the temp directory to avoid sed escaping issues
     # See https://github.com/haskell/cabal/issues/5386
