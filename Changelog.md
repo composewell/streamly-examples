@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0 (Dec 2023)
+
+* Support streamly-0.10.0 and streamly-core-0.2.0
+
 ## 0.1.3 (Mar 2023)
 
 * Support streamly-0.9.0 and streamly-core-0.1.0
