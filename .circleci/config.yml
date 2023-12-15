@@ -1,7 +1,7 @@
 version: 2.1
 
 #-----------------------------------------------------------------------------
-# packcheck-0.4.2
+# packcheck-0.7.0
 # Packcheck global environment variables
 #-----------------------------------------------------------------------------
 
@@ -11,6 +11,7 @@ env: &env
       # Common options
       # ------------------------------------------------------------------------
       # GHC_OPTIONS: "-Werror"
+      GHCUPVER: 0.1.20.0
       CABAL_REINIT_CONFIG: "y"
       LC_ALL: "C.UTF-8"
 
@@ -56,7 +57,7 @@ env: &env
       # If you have not committed packcheck.sh in your repo at PACKCHECK
       # then it is automatically pulled from this URL.
       PACKCHECK_GITHUB_URL: "https://raw.githubusercontent.com/composewell/packcheck"
-      PACKCHECK_GITHUB_COMMIT: "a68b7b9c7c21eef8ed273e67030efb1d4fec027c"
+      PACKCHECK_GITHUB_COMMIT: "v0.7.0"
 
 # image is a tag from docker registery
 executors:
@@ -72,56 +73,58 @@ executors:
 #-----------------------------------------------------------------------------
 
 preinstall: &preinstall
-  command: |
+  run: |
         apt-get update
+        # For sdl build flag
+        apt-get install -y libsdl2-dev
+
         # required for https/cache save and restore
         apt-get install -y ca-certificates
 
-        # required to (re)generate the configure script
-        apt-get install -y autoconf
+        # NOTE: depends on specific debian version in the deb line below
+        # For ghc and cabal-install packages from haskell.org
+        # gnupg is required for apt-key to work
+        #apt-get install -y gnupg
+        #apt-key adv --keyserver keyserver.ubuntu.com  --recv-keys BA3CBA3FFE22B574
+        #echo "deb http://downloads.haskell.org/debian buster main" >> /etc/apt/sources.list
+        #apt-get update
 
         # required for outbound https for stack and for stack setup
         apt-get install -y netbase xz-utils make
+        apt-get install -y zlib1g-dev
 
-        # If a custom stack-yaml is specified, replace the default with that
-        if test -e "$STACK_YAML"; then rm -f stack.yaml && ln -sv $STACK_YAML stack.yaml; else true; fi
-        unset STACK_YAML
+        # For ghcup to install ghc
+        if test -n "$GHCUPVER"
+        then
+          apt-get install -y gcc
+          apt-get install -y g++
+        fi
 
-        # Get packcheck if needed
-        apt-get install -y curl
-        CURL=$(which curl)
-        PACKCHECK_URL=${PACKCHECK_GITHUB_URL}/${PACKCHECK_GITHUB_COMMIT}/packcheck.sh
-        if test ! -e "$PACKCHECK"; then $CURL -sL -o "$PACKCHECK" $PACKCHECK_URL; fi;
-        chmod +x $PACKCHECK
-
-        # Determine GHCUP_ARCH
-        os=$(uname -s -m)
-        case "$os" in
-          "Linux x86_64") GHCUP_ARCH="x86_64-linux" ;;
-          "Darwin x86_64") GHCUP_ARCH="x86_64-apple-darwin" ;;
-          *) echo "Unknown OS/Arch: $os"; exit 1;;
-        esac
-
-        # Check available versions here: https://downloads.haskell.org/~ghcup/
-        GHCUP_VER=0.1.20.0
-        $CURL -sL -o ./ghcup https://downloads.haskell.org/~ghcup/$GHCUP_VER/${GHCUP_ARCH}-ghcup-$GHCUP_VER
-        chmod +x ./ghcup
-        apt-get install -y gcc
-        apt-get install -y g++
-        apt-get install -y libtinfo-dev
-        ./ghcup install ghc $GHCVER
-        ./ghcup set ghc $GHCVER
-        ./ghcup install cabal $CABALVER
-        ./ghcup set cabal $CABALVER
-        # Required by cabal
-        apt-get install -y git
         # libgmp required by ghc for linking
         apt-get install -y libgmp-dev
-        # For sdl build flag
-        apt-get install -y libsdl2-dev
-        PATH=$HOME/.ghcup/bin:$PATH
-        export PATH
-        bash -c "$PACKCHECK $BUILD"
+        apt-get install -y libtinfo-dev
+
+        # Required by cabal when git URL is specified in project file
+        apt-get install -y git
+
+        # Required for and by packcheck
+        apt-get install -y curl
+
+        # Get packcheck if needed
+        if test ! -e "$PACKCHECK"
+        then
+          if test -z "$PACKCHECK_GITHUB_COMMIT"
+          then
+              die "PACKCHECK_GITHUB_COMMIT is not specified."
+          fi
+          CURL=$(which curl)
+          PACKCHECK_URL=${PACKCHECK_GITHUB_URL}/${PACKCHECK_GITHUB_COMMIT}/packcheck.sh
+          $CURL -sL -o "$PACKCHECK" $PACKCHECK_URL
+          chmod +x $PACKCHECK
+        elif test ! -x "$PACKCHECK"
+        then
+            chmod +x $PACKCHECK
+        fi
 
 restore: &restore
   # Needs to happen after installing ca-certificates
@@ -136,7 +139,7 @@ save: &save
         - ~/.ghc
         - ~/.local
         - ~/.stack
-        # add .ghcup?
+        - ~/.ghcup
 
 #-----------------------------------------------------------------------------
 # Build matrix
@@ -149,15 +152,16 @@ jobs:
       steps:
         - checkout
         - *restore
+        - *preinstall
         - run:
            name: GHC 9.8.1 + fusion-plugin + Werror
            environment:
-             BUILD: "cabal-v2"
              CABAL_PROJECT: "cabal.project.ci"
              CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
              CABALVER: "3.10.2.0"
              GHCVER: "9.8.1"
-           <<: *preinstall
+           command: |
+              bash -c "$PACKCHECK cabal"
         - *save
   cabal-ghc-9_6_3_all_flags:
       <<: *env
@@ -165,64 +169,69 @@ jobs:
       steps:
         - checkout
         - *restore
+        - *preinstall
         - run:
            name: GHC 9.6.3 + sdl2 + interop + fusion-plugin
            environment:
-             BUILD: "cabal-v2"
              CABAL_PROJECT: "cabal.project.user"
              CABAL_BUILD_OPTIONS: "--flag sdl2 --flag interop --flag fusion-plugin"
              CABALVER: "3.10.2.0"
              GHCVER: "9.6.3"
-           <<: *preinstall
+           command: |
+              bash -c "$PACKCHECK cabal"
         - *save
 # Fails with this error:
 # withBinaryFile: invalid argument (Symbolic link loop)
-#  stack-ghc-9_6_3:
-#      <<: *env
-#      executor: amd64-executor
-#      steps:
-#        - checkout
-#        - *restore
-#        - run:
-#            name: stack nightly-2023-12-14
-#            environment:
-#              BUILD: "stack"
-#              RESOLVER: "nightly-2023-12-14"
-#              STACK_YAML: "stack.yaml"
-#              SDIST_OPTIONS: "--ignore-check"
-#            <<: *preinstall
-#        - *save
+  stack-ghc-9_6_3:
+      <<: *env
+      executor: amd64-executor
+      steps:
+        - checkout
+        - *restore
+        - *preinstall
+        - run:
+           name: stack nightly-2023-12-14
+           environment:
+             RESOLVER: "nightly-2023-12-14"
+             STACK_YAML: "stack.yaml"
+             DISABLE_SDIST_BUILD: "y"
+             #SDIST_OPTIONS: "--ignore-check"
+           command: |
+             bash -c "$PACKCHECK stack"
+        - *save
   cabal-ghc-9_0_1_sdist:
       <<: *env
       executor: amd64-executor
       steps:
         - checkout
         - *restore
+        - *preinstall
         - run:
            name: GHC 9.0.1 + sdist + fusion-plugin
            environment:
-             BUILD: "cabal-v2"
              CABAL_PROJECT: "cabal.project.user"
              CABAL_BUILD_OPTIONS: "--flag fusion-plugin"
              DISABLE_SDIST_BUILD: "no"
              CABALVER: "3.10.2.0"
              GHCVER: "9.0.1"
-           <<: *preinstall
+           command: |
+              bash -c "$PACKCHECK cabal"
         - *save
   cabal-ghc-8_6_5:
       <<: *env
       executor: amd64-executor
       steps:
         - checkout
-          #- *restore
+        - *restore
+        - *preinstall
         - run:
            name: GHC 8.6.5
            environment:
-             BUILD: "cabal-v2"
              CABAL_PROJECT: "cabal.project.user"
              CABALVER: "3.10.2.0"
              GHCVER: "8.6.5"
-           <<: *preinstall
+           command: |
+              bash -c "$PACKCHECK cabal"
            #no_output_timeout: 25m
         - *save
   hlint:
@@ -231,13 +240,15 @@ jobs:
       steps:
         - checkout
         - *restore
+        - *preinstall
         - run:
-            name: Hlint examples
-            environment:
-              BUILD: hlint
-              HLINT_OPTIONS: lint
-              HLINT_TARGETS: examples
-            <<: *preinstall
+           name: Hlint examples
+           environment:
+             HLINTVER: 3.6.1
+             HLINT_OPTIONS: lint
+             HLINT_TARGETS: examples
+           command: |
+              bash -c "$PACKCHECK hlint"
         - *save
 
 workflows:
@@ -246,7 +257,7 @@ workflows:
     jobs:
       - cabal-ghc-9_8_1_Werror
       - cabal-ghc-9_6_3_all_flags
-      #- stack-ghc-9_6_3
+      - stack-ghc-9_6_3
       - cabal-ghc-9_0_1_sdist
       - cabal-ghc-8_6_5
       - hlint
