@@ -59,7 +59,7 @@ $ cabal run --flag interop Interop.Pipes
 * [FileSystemEvent](https://github.com/composewell/streamly-examples/blob/master/examples/FileSystemEvent.hs): File watching/fsnotify API
   example.
 * [ListDir](https://github.com/composewell/streamly-examples/blob/master/examples/ListDir.hs): List a directory tree recursively and
-  concurrently.
+  concurrently, faster than rust fd.
 
 ### Text Processing
 
