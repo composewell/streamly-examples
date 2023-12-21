@@ -61,7 +61,7 @@ flag interop
 common exe-dependencies
   build-depends:
       streamly              == 0.10.0
-    , streamly-core         == 0.2.0
+    , streamly-core         >= 0.2.0 && < 0.2.2
     , base                  >= 4.9   && < 4.20
     , directory             >= 1.2   && < 1.4
     , transformers          >= 0.4   && < 0.7
@@ -74,6 +74,8 @@ common exe-dependencies
     , unordered-containers  >= 0.2   && < 0.3
     , vector                >= 0.12  && < 0.14
     , mtl                   >= 2.2   && < 3
+    , filepath
+    , os-string
 
 common exe-options
   import: exe-dependencies
