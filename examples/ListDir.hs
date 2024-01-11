@@ -25,15 +25,16 @@ main = do
     hSetBuffering stdout LineBuffering
     -- Stream.fold (Fold.drain)
     -- Stream.fold (Fold.drainMapM print)
-    Stream.fold (Handle.writeWith 32000 stdout)
-    -- Stream.fold (Handle.writeChunks stdout)
+    -- Stream.fold (Handle.writeWith 32000 stdout)
+    Stream.fold (Handle.writeChunks stdout)
     -- Stream.fold (Array.lPinnedCompactGE 32000 (Handle.writeChunks stdout))
-        $ Stream.interposeSuffix 10 Array.reader
+        -- $ Stream.interposeSuffix 10 Array.reader
         -- $ Array.compactInterposeGE 10 32000
         -- $ Array.pinnedCompactLE 32000
-        $ fmap Path.toChunk
-        $ Stream.unfoldMany Unfold.fromList
-        $ fmap (either id id)
+        -- $ fmap Path.toChunk
+        -- $ Stream.unfoldMany Unfold.fromList
+        -- $ fmap (either id id)
+        $ Stream.catRights
         -- $ fmap Path.toChunk
         -- $ Stream.catLefts
 
@@ -68,4 +69,4 @@ main = do
 
     -- unfoldOne = Unfold.either Dir.eitherReaderPaths Unfold.nil
     -- streamOneMaybe = either (Just . Dir.readEitherPaths) (const Nothing)
-    streamOne = either Dir.readEitherChunks (const Stream.nil)
+    streamOne = either Dir.readEitherByteChunks (const Stream.nil)
