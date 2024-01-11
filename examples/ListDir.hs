@@ -33,7 +33,7 @@ main = do
         -- $ Array.pinnedCompactLE 32000
         $ fmap Path.toChunk
         $ Stream.unfoldMany Unfold.fromList
-        $ fmap (either (:[]) id)
+        $ fmap (either id id)
         -- $ fmap Path.toChunk
         -- $ Stream.catLefts
 
@@ -60,7 +60,7 @@ main = do
             streamOne
         -- $ Stream.parConcatIterate (Stream.interleaved True) streamOne
         -- $ Stream.parConcatIterate (Stream.ordered True) streamOne
-        $ Stream.fromPure (Left $ fromJust $ Path.fromString ".")
+        $ Stream.fromPure (Left [fromJust $ Path.fromString "."])
         -- $ Stream.fromPure (Left ".")
         -- $ Stream.fromPure (Left [osp|.|])
 
