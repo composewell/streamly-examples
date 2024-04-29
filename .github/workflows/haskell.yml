@@ -16,21 +16,21 @@ jobs:
       STACK_UPGRADE: "y"
 
       CABAL_CHECK_RELAX: y
-      CABAL_NO_SANDBOX: y
 
       PACKCHECK: "./packcheck.sh"
       PACKCHECK_GITHUB_URL: "https://raw.githubusercontent.com/composewell/packcheck"
       PACKCHECK_GITHUB_COMMIT: "101c73b53473ddfb763d65058b80123991cfeb4f"
 
       BUILD: ${{ matrix.build }}
-      GHCUPVER: 0.1.20.0
+      GHCUP_VERSION: 0.1.20.0
       GHCVER: ${{ matrix.ghc_version }}
       CABALVER: ${{ matrix.cabal_version }}
       CABAL_BUILD_OPTIONS: ${{ matrix.cabal_build_options }}
       CABAL_PROJECT: ${{ matrix.cabal_project }}
-      DISABLE_DOCS: ${{ matrix.disable_docs }}
+      DISABLE_DOCS: "y"
       DISABLE_TEST: "y"
       DISABLE_BENCH: "y"
+      DISABLE_SDIST_BUILD: ${{ matrix.disable_sdist_build }}
 
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -43,7 +43,6 @@ jobs:
             build: cabal
             cabal_project: cabal.project.user
             cabal_version: 3.8.1.0
-            disable_docs: "y"
             disable_sdist_build: "y"
             ignore_error: false
           - name: 9.2.7
@@ -52,7 +51,6 @@ jobs:
             build: cabal
             cabal_project: cabal.project.user
             cabal_version: 3.6.2.0
-            disable_docs: "y"
             disable_sdist_build: "y"
             ignore_error: false
           - name: 8.10.7+macOS
@@ -61,7 +59,6 @@ jobs:
             build: cabal
             cabal_project: cabal.project.user
             cabal_version: 3.6.2.0
-            disable_docs: "y"
             cabal_build_options: "--flag interop"
             ignore_error: false
     steps:
