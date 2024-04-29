@@ -11,7 +11,7 @@ env: &env
       # Common options
       # ------------------------------------------------------------------------
       # GHC_OPTIONS: "-Werror"
-      GHCUPVER: 0.1.20.0
+      GHCUP_VERSION: 0.1.20.0
       CABAL_REINIT_CONFIG: "y"
       LC_ALL: "C.UTF-8"
 
@@ -94,7 +94,7 @@ preinstall: &preinstall
         apt-get install -y zlib1g-dev
 
         # For ghcup to install ghc
-        if test -n "$GHCUPVER"
+        if test -n "$GHCUP_VERSION"
         then
           apt-get install -y gcc
           apt-get install -y g++
@@ -244,7 +244,7 @@ jobs:
         - run:
            name: Hlint examples
            environment:
-             HLINTVER: 3.6.1
+             HLINT_VERSION: 3.6.1
              HLINT_OPTIONS: lint
              HLINT_TARGETS: examples
            command: |
