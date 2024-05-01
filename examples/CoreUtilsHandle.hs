@@ -9,8 +9,7 @@ import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.Unicode.Stream as Unicode
-
-import qualified Streamly.Internal.Data.Array.Stream as ArrayStream (splitOn)
+import qualified Streamly.Internal.Data.Array as Array (compactOnByte)
 
 -- | Read the contents of a file to stdout.
 --
@@ -74,7 +73,7 @@ wclChar src =
 wcl :: Handle -> IO Int
 wcl src =
       Handle.readChunks src   -- Stream IO (Array Word8)
-    & ArrayStream.splitOn 10  -- Stream IO (Array Word8)
+    & Array.compactOnByte 10  -- Stream IO (Array Word8)
     & Stream.fold Fold.length -- IO ()
 
 main :: IO ()
