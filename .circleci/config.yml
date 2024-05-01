@@ -74,6 +74,7 @@ executors:
 
 preinstall: &preinstall
   run: |
+        export DEBIAN_FRONTEND=noninteractive
         apt-get update
         # For sdl build flag
         apt-get install -y libsdl2-dev
