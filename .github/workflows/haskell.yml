@@ -37,6 +37,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: 9.8.1
+            ghc_version: 9.8.1
+            runner: ubuntu-latest
+            build: cabal
+            cabal_project: cabal.project.user
+            cabal_version: 3.10.1.0
+            disable_sdist_build: "y"
+            ignore_error: false
+          - name: 9.6.3-macos
+            ghc_version: 9.6.3
+            runner: macos-latest
+            build: cabal
+            cabal_project: cabal.project.user
+            disable_sdist_build: "y"
+            cabal_version: 3.10.1.0
+            cabal_build_options: "--flag interop"
+            ignore_error: false
           - name: 9.4.4
             ghc_version: 9.4.4
             runner: ubuntu-latest
@@ -53,14 +70,14 @@ jobs:
             cabal_version: 3.6.2.0
             disable_sdist_build: "y"
             ignore_error: false
-          - name: 8.10.7+macOS
+          - name: 8.10.7 # There is some llvm versioning issue in 8.10.7 and the
+                         # mac machine
             ghc_version: 8.10.7
-            runner: macos-latest
+            runner: ubuntu-latest
             build: cabal
             cabal_project: cabal.project.user
             disable_sdist_build: "y"
             cabal_version: 3.6.2.0
-            cabal_build_options: "--flag interop"
             ignore_error: false
     steps:
     - uses: actions/checkout@v2
