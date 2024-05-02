@@ -58,6 +58,7 @@ jobs:
             runner: macos-latest
             build: cabal
             cabal_project: cabal.project.user
+            disable_sdist_build: "y"
             cabal_version: 3.6.2.0
             cabal_build_options: "--flag interop"
             ignore_error: false
