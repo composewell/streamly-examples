@@ -238,6 +238,14 @@ executable EchoServer
   else
     buildable: False
 
+executable EchoClient
+  import: exe-options-threaded
+  main-is: EchoClient.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
 executable FileSender
   import: exe-options-threaded
   main-is: FileSender.hs
