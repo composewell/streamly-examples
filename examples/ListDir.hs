@@ -16,6 +16,7 @@ import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Internal.Data.Stream as Stream
 import qualified Streamly.Internal.Data.Unfold as Unfold
 import qualified Streamly.Internal.FileSystem.Dir as Dir
+import qualified Streamly.Internal.FileSystem.Posix.ReadDir as Dir
 import qualified Streamly.Internal.FileSystem.Handle as Handle
 import qualified Streamly.Internal.FileSystem.Path as Path
 
