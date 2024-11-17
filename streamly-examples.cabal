@@ -93,6 +93,7 @@ common exe-options
                -Wincomplete-uni-patterns
                -Wredundant-constraints
                -Wnoncanonical-monad-instances
+               -Wno-deprecations
   if impl(ghc >= 9.8)
     ghc-options: -Wno-x-partial
 
