@@ -42,13 +42,13 @@ import qualified Streamly.Data.Unfold as Unfold
 import qualified Streamly.Internal.Data.Unfold as Unfold
     (either, nil)
 import qualified Streamly.Internal.FileSystem.DirIO as Dir
-    (readEitherPaths, eitherReaderPaths)
+    (readEitherChunks, readEitherPaths, eitherReaderPaths)
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.FileSystem.Path as Path
 import qualified Streamly.Internal.FileSystem.Path as Path (toChunk)
 #if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
 import qualified Streamly.Internal.FileSystem.Posix.ReadDir as Dir
-    (readEitherChunks, readEitherByteChunks)
+    (readEitherByteChunks)
 #endif
 
 #if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
@@ -95,6 +95,7 @@ listDirByteChunked = do
 
     streamDirMaybe :: Either [Path] b -> Maybe (Stream IO (Either [Path] (Array Word8)))
     streamDirMaybe = either (Just . Dir.readEitherByteChunks) (const Nothing)
+#endif
 
 -- Faster than the listDir implementation below
 listDirChunked :: IO ()
@@ -138,7 +139,6 @@ listDirChunked = do
 
     streamDirMaybe :: Either [Path] b -> Maybe (Stream IO (Either [Path] [Path]))
     streamDirMaybe = either (Just . Dir.readEitherChunks) (const Nothing)
-#endif
 
 listDir :: IO ()
 listDir = do
@@ -194,7 +194,7 @@ main :: IO ()
 main = do
     hSetBuffering stdout LineBuffering
     listDir
-#if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
     -- listDirChunked
+#if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
     -- listDirByteChunked
 #endif
