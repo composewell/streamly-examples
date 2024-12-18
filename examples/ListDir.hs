@@ -146,14 +146,14 @@ listDir = do
         $ Stream.unfoldEachEndBy 10 Array.reader
         $ fmap (Path.toChunk . either id id)
 
-        -- Serial using unfolds (fastest serial)
+        -- Serial using unfolds
         -- $ Stream.unfoldIterateDfs unfoldDir -- 284 ms
         -- May fail with too many open files
         -- $ Stream.unfoldIterateBfs unfoldDir
         -- $ Stream.unfoldIterateBfsRev unfoldDir -- 344 ms
 
         -- Serial using streams
-        $ Stream.concatIterateDfs streamDirMaybe -- 274 ms
+        -- $ Stream.concatIterateDfs streamDirMaybe -- 274 ms
         -- $ Stream.concatIterateBfs streamDirMaybe -- 274 ms
         -- $ Stream.concatIterateBfsRev streamDirMaybe -- 264 ms
 
@@ -162,7 +162,7 @@ listDir = do
         -- $ mergeIterateWith StreamK.interleave  -- 304 ms
 
         -- Concurrent
-        -- $ Stream.parConcatIterate id streamDir -- 174 ms
+        $ Stream.parConcatIterate id streamDir -- 174 ms
         -- $ Stream.parConcatIterate (Stream.interleaved True) streamDir -- 224 ms
         -- $ Stream.parConcatIterate (Stream.ordered True) streamDir -- 234 ms
 
