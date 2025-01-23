@@ -354,3 +354,11 @@ executable LogParser
     build-depends: tasty-bench >= 0.3 && < 0.4
   else
     buildable: False
+
+executable Naive
+  import: exe-options
+  main-is: Naive.hs
+
+executable NaiveOsPath
+  import: exe-options
+  main-is: NaiveOsPath.hs
