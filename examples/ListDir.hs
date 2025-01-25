@@ -56,7 +56,7 @@ import qualified Streamly.Internal.FileSystem.Posix.ReadDir as Dir
 listDirByteChunked :: IO ()
 listDirByteChunked = do
     Stream.fold (Handle.writeChunks stdout)
-        $ Array.compactMax' 32000
+        -- $ Array.compactMax' 32000
         $ Stream.catRights
 
         -- Serial
@@ -193,8 +193,10 @@ listDir = do
 main :: IO ()
 main = do
     hSetBuffering stdout LineBuffering
-    listDir
-    -- listDirChunked
 #if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
-    -- listDirByteChunked
+    listDirByteChunked
+#else
+    listDirChunked
 #endif
+    -- listDirChunked
+    -- listDir
