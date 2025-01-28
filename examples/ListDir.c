@@ -18,11 +18,11 @@ void list_directory(const char *path) {
             continue;
         }
 
-        snprintf(full_path, sizeof(full_path), "%s/%s", path, entry->d_name);
-
         //printf("%s\n", full_path);
 
         if (entry->d_type == DT_DIR) {
+          snprintf(full_path, sizeof(full_path), "%s/%s", path, entry->d_name);
+
             list_directory(full_path);
         }
     }

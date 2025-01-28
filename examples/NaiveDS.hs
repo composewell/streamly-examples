@@ -2,16 +2,14 @@
 
 module Main (main) where
 
--- import System.OsPath
-import Data.Maybe
-import System.OsPath.Posix
-import System.Posix.Directory.PosixPath
-import NaiveDirStream
+import Data.Maybe (fromJust)
+import NaiveDirStream (loopDir)
+
+import qualified Streamly.Internal.FileSystem.Path as Path
+import qualified Streamly.Internal.FileSystem.Posix.ReadDir as ReadDir
 
 main :: IO ()
--- main = openDirStream [osp|.|] >>= loopDir
-main =
-    let name = [pstr|.|]
-    in do
-        putStrLn $ fromJust $ decodeUtf name
-        openDirStream name >>= loopDir name
+main = do
+    name <- Path.fromString "."
+    -- putStrLn $ fromJust $ decodeUtf name
+    ReadDir.openDirStream name >>= loopDir name
