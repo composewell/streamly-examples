@@ -13,7 +13,7 @@ import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified System.IO as IO
-import qualified Streamly.Internal.Data.Array as Array (compactOnByte)
+import qualified Streamly.Internal.Data.Array as Array (compactSepByByte_)
 
 main :: IO ()
 main = do
@@ -21,7 +21,7 @@ main = do
     src <- IO.openFile inFile ReadMode
 
     Handle.readChunks src                        -- Stream IO (Array Word8)
-        & Array.compactOnByte 10                 -- Stream IO (Array Word8)
+        & Array.compactSepByByte_ 10             -- Stream IO (Array Word8)
         & Stream.fold (Fold.drainMapM parseLine) -- IO ()
 
     where
@@ -30,7 +30,7 @@ main = do
 
     parseLine arr =
         (Array.read arr :: Stream IO Word8)
-            & Stream.splitOn (== 44) Fold.toList     -- Stream IO [Word8]
+            & Stream.splitSepBy_ (== 44) Fold.toList -- Stream IO [Word8]
             & Stream.intersperse [32]                -- Stream IO [Word8]
             & Stream.fold (Fold.drainMapM printList) -- IO ()
         >> putStrLn ""

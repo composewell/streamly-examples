@@ -6,7 +6,7 @@ import Data.Word (Word8)
 import System.Environment (getArgs)
 import System.IO (Handle, IOMode(..), openFile, stdout)
 
-import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.Data.Scanl as Scanl
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.FileSystem.Handle as Handle
 
@@ -14,7 +14,7 @@ import qualified Streamly.FileSystem.Handle as Handle
 camelCase :: Handle -> Handle -> IO ()
 camelCase src dst =
       Handle.read src                 -- Stream IO Word8
-    & Stream.postscan fold            -- Stream IO (Bool, Maybe Word8)
+    & Stream.postscanl fold           -- Stream IO (Bool, Maybe Word8)
     & Stream.mapMaybe snd             -- Stream IO Word8
     & Stream.fold (Handle.write dst)  -- IO ()
 
@@ -35,7 +35,7 @@ camelCase src dst =
         | isLower x = (False, Just $ if wasSpace then x - 32 else x)
         | otherwise = (True, Nothing)
 
-    fold = Fold.foldl' step (True, Nothing)
+    fold = Scanl.mkScanl step (True, Nothing)
 
 main :: IO ()
 main = do

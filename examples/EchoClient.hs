@@ -22,9 +22,9 @@ remotePort = 8091
 echo :: Stream IO ()
 echo =
       Stream.unfold Stdio.reader ()                -- Stream IO Word8
-    & split (== 10) Array.write                    -- Stream IO (Array Word8)
+    & split (== 10) Array.create                   -- Stream IO (Array Word8)
     & TCP.pipeChunks remoteAddr remotePort         -- Stream IO (Array Word8)
-    & Stream.unfoldMany Array.reader               -- Stream IO Word8
+    & Stream.unfoldEach Array.reader               -- Stream IO Word8
     & Unicode.decodeLatin1                         -- Stream IO Char
     & Stream.mapM putChar                          -- Stream IO ()
 

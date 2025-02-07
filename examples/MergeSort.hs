@@ -31,7 +31,7 @@ streamChunk =
         . Array.read
 
 sortChunk :: Array Int -> IO (Array Int)
-sortChunk = Stream.fold Array.write . streamChunk
+sortChunk = Stream.fold Array.create . streamChunk
 
 -------------------------------------------------------------------------------
 -- Stream the unsorted chunks and sort, merge those streams.
@@ -41,7 +41,7 @@ sortChunk = Stream.fold Array.write . streamChunk
 sortMergeCombined :: (Array Int -> Stream IO Int) -> IO ()
 sortMergeCombined f =
     Stream.fromList input
-        & Stream.chunksOf chunkSize
+        & Array.chunksOf chunkSize
         & K.fromStream
         & K.mergeMapWith (K.mergeBy compare) (K.fromStream . f)
         & K.toStream
@@ -60,7 +60,7 @@ sortMergeSeparate ::
     -> IO ()
 sortMergeSeparate f =
     Stream.fromList input
-        & Stream.chunksOf chunkSize
+        & Array.chunksOf chunkSize
         & f sortChunk
         & K.fromStream
         & K.mergeMapWith (K.mergeBy compare) (K.fromStream . Array.read)
@@ -78,7 +78,7 @@ reduce arr1 arr2 =
         compare
         (Array.read arr1)
         (Array.read arr2)
-        & Stream.fold Array.write
+        & Stream.fold Array.create
 
 sortMergeChunks ::
        (  (Array Int -> IO (Array Int))
@@ -88,7 +88,7 @@ sortMergeChunks ::
     -> IO ()
 sortMergeChunks f =
     Stream.fromList input
-        & Stream.chunksOf chunkSize
+        & Array.chunksOf chunkSize
         & f sortChunk
         & Stream.reduceIterateBfs reduce
         & void
