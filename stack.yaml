@@ -12,6 +12,8 @@ extra-deps:
   commit: 69eebb942ba419c982ea4d8c3fcae7a1e6ea5c43
   subdirs:
     - core
+- git: https://github.com/composewell/streamly-fsevents
+  commit: 87f1c5043695c004a6dae7e46ef45e88bb3fb55b
 # - lockfree-queue-0.2.4@sha256:156e7ccc193fc5d8b43f065e9cd31c3171c79ec25863283d546900d92930846d,2963
 # - tasty-bench-0.3.2@sha256:e7678a19114e1ff5effbe9b96a4688fa085cee39a50003d1170ec271f83e0792,2209
 
