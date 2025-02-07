@@ -7,9 +7,9 @@ extra-deps:
 #- streamly-0.9.0
 #- fusion-plugin-0.2.6
 - git: https://github.com/composewell/streamly
-  commit: 9a039b89c6b81300b2bd9c8765bf4bfa18e7c83c
+  commit: 69eebb942ba419c982ea4d8c3fcae7a1e6ea5c43
 - git: https://github.com/composewell/streamly
-  commit: 9a039b89c6b81300b2bd9c8765bf4bfa18e7c83c
+  commit: 69eebb942ba419c982ea4d8c3fcae7a1e6ea5c43
   subdirs:
     - core
 # - lockfree-queue-0.2.4@sha256:156e7ccc193fc5d8b43f065e9cd31c3171c79ec25863283d546900d92930846d,2963
