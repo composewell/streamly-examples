@@ -157,7 +157,7 @@ getWords =
     & fmap Array.fromList                     -- Stream IO (Array Word8)
     & Stream.fold (Handle.writeChunks stdout) -- IO ()
 
-    where unlinesBy = Stream.intercalateSuffix (Unfold.function id)
+    where unlinesBy k = Stream.unfoldEachEndBySeq k (Unfold.function id)
 
 -------------------------------------------------------------------------------
 -- Main

@@ -7,5 +7,5 @@ main :: IO ()
 main =
       Stream.sequence (Stream.repeat (pure "tick"))
     & Stream.timestamped
-    & Stream.parEval (Stream.avgRate 1)
+    & Stream.parBuffered (Stream.avgRate 1)
     & Stream.fold (Fold.drainMapM print)

@@ -180,19 +180,19 @@ data Field =
 -------------------------------------------------------------------------------
 
 readField :: MutArray Int -> Field -> IO Int
-readField v fld = MArray.getIndexUnsafe (fromEnum fld) v
+readField v fld = MArray.unsafeGetIndex (fromEnum fld) v
 
 writeField :: MutArray Int -> Field -> Int -> IO ()
-writeField v fld i = void $ MArray.putIndexUnsafe i v (fromEnum fld)
+writeField v fld i = void $ MArray.unsafePutIndex i v (fromEnum fld)
 
 modifyField :: MutArray Int -> Field -> (Int -> Int) -> IO ()
 modifyField v fld f = do
   let index = fromEnum fld
-  MArray.modifyIndexUnsafe index v (\x -> (f x, ()))
+  MArray.unsafeModifyIndex index v (\x -> (f x, ()))
 
 newCounts :: IO (MutArray Int)
 newCounts = do
-    counts <- MArray.pinnedNew (fromEnum (maxBound :: Field) + 1)
+    counts <- MArray.emptyOf' (fromEnum (maxBound :: Field) + 1)
     writeField counts LineCount 0
     writeField counts WordCount 0
     writeField counts CharCount 0

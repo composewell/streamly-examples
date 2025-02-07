@@ -38,7 +38,7 @@ sendValue :: Show a => Socket -> a -> IO ()
 sendValue sk x =
       Stream.fromList (show x ++ "\n")
     & Unicode.encodeLatin1
-    & Stream.fold (Array.writeN 60)
+    & Stream.fold (Array.createOf 60)
     >>= Socket.putChunk sk
 
 ------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ commands cmd =
 {-# INLINE demuxKvToMap #-}
 demuxKvToMap :: (Monad m, Ord k) =>
     (k -> m (Fold m a b)) -> Fold m (k, a) (Map k b)
-demuxKvToMap f = Fold.demuxToMap fst (\(k, _) -> fmap (Fold.lmap snd) (f k))
+demuxKvToMap f = Fold.demuxerToMap fst (fmap (Just . Fold.lmap snd) . f)
 
 demux :: Fold IO (String, Socket) ()
 demux = void (demuxKvToMap commands)

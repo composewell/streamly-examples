@@ -17,9 +17,9 @@ import qualified Streamly.Unicode.Stream as Unicode
 -- a limit to the buffering for safety.
 readLines :: Socket -> Stream IO (Array Char)
 readLines sk =
-    Socket.read sk              -- Stream IO Word8
-  & Unicode.decodeLatin1        -- Stream IO Char
-  & split (== '\n') Array.write -- Stream IO String
+    Socket.read sk               -- Stream IO Word8
+  & Unicode.decodeLatin1         -- Stream IO Char
+  & split (== '\n') Array.create -- Stream IO String
 
   where
 
@@ -36,7 +36,7 @@ server :: Handle -> IO ()
 server file =
       TCP.accept 8090                               -- Stream IO Socket
     & Stream.parConcatMap (Stream.eager True) recv  -- Stream IO (Array Char)
-    & Stream.unfoldMany Array.reader                -- Stream IO Char
+    & Stream.unfoldEach Array.reader                -- Stream IO Char
     & Unicode.encodeLatin1                          -- Stream IO Word8
     & Stream.fold (Handle.write file)               -- IO ()
 
