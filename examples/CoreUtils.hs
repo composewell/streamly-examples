@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- Implement some simple coreutils commands
 
 import Control.Monad (void)
@@ -6,12 +8,14 @@ import Data.Word (Word8)
 import System.Environment (getArgs)
 import Streamly.Data.Array (Array)
 import Streamly.Data.Fold (Fold)
+import Streamly.FileSystem.Path (path)
 
 import qualified Streamly.Console.Stdio as Stdio
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.FileSystem.Path as Path
 
-import qualified Streamly.Internal.FileSystem.Dir as Dir (readFiles)
+import qualified Streamly.Internal.FileSystem.DirIO as Dir (readFiles)
 import qualified Streamly.Internal.FileSystem.File as File
 
 -- | > cat input.txt
@@ -24,8 +28,11 @@ cat =
 -- > cat dir/* > output.txt
 catDirTo :: IO ()
 catDirTo =
-      Dir.readFiles "dir"                -- Stream IO String
-    & Stream.unfoldMany File.chunkReader -- Stream IO (Array Word8)
+      Dir.readFiles [path|dir|]          -- Stream IO Path
+    -- NOTE: This is a redundant step that we are forced to do as we've still
+    -- not introduced FileIO module that uses Path yet.
+    & fmap Path.toString                 -- Stream IO String
+    & Stream.unfoldEach File.chunkReader -- Stream IO (Array Word8)
     & File.fromChunks "output.txt"       -- IO ()
 
 -- | > cp input.txt output.txt
