@@ -28,7 +28,7 @@ import Streamly.Data.Array (Array)
 import Streamly.Data.Stream (Stream)
 import Streamly.Data.Unfold (Unfold)
 import Streamly.FileSystem.Path (Path)
-import System.IO (stdout, hSetBuffering, BufferMode(LineBuffering))
+import System.IO (hFlush, Handle, stdout, IOMode(..), hSetBuffering, BufferMode(LineBuffering))
 
 import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Data.Array as Array
@@ -48,13 +48,17 @@ import qualified Streamly.FileSystem.Path as Path
 import qualified Streamly.Internal.FileSystem.Path as Path (toChunk)
 #if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
 import qualified Streamly.Internal.FileSystem.Posix.ReadDir as Dir
-    (readEitherByteChunks)
+    (readEitherByteChunks, readEitherByteChunksAt)
+import qualified Streamly.Internal.FileSystem.Posix.File as File
+import Streamly.Internal.FileSystem.Posix.File (Fd, OpenMode(ReadOnly))
 #endif
 
 #if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
 -- Fastest implementation, only works for posix as of now.
 listDirByteChunked :: IO ()
 listDirByteChunked = do
+    ppath <- Path.fromString "."
+
     Stream.fold (Handle.writeChunks stdout)
         -- $ Array.compactMax' 32000
         $ Stream.catRights
@@ -65,17 +69,18 @@ listDirByteChunked = do
         -- $ Stream.concatIterateBfsRev streamDirMaybe -- 154 ms
 
         -- Serial using stream append and interleave
-        -- $ concatIterateWith StreamK.append -- 154 ms
+        $ concatIterateWith StreamK.append -- 154 ms
         -- $ mergeIterateWith StreamK.interleave  -- 154 ms
 
         -- Concurrent
         -- XXX To reduce concurrency overhead, perform buffering in each worker
         -- and post the buffer or return [Path] and then unfold it.
-        $ Stream.parConcatIterate id streamDir -- 94 ms
+        -- $ Stream.parConcatIterate id streamDir -- 94 ms
         -- $ Stream.parConcatIterate (Stream.interleaved True) streamDir -- 94 ms
         -- $ Stream.parConcatIterate (Stream.ordered True) streamDir -- 154 ms
 
-        $ Stream.fromPure (Left [fromJust $ Path.fromString "."])
+        -- $ Stream.fromPure (Left [fromJust $ Path.fromString "."])
+        $ Stream.fromPure (Left (ppath, [fromJust $ Path.fromString "."]))
 
     where
 
@@ -90,8 +95,10 @@ listDirByteChunked = do
         . StreamK.fromStream
 
     -- cfg = Stream.eager False . Stream.maxBuffer 2000 . Stream.maxThreads 2
-    streamDir :: Either [Path] b -> Stream IO (Either [Path] (Array Word8))
-    streamDir = either Dir.readEitherByteChunks (const Stream.nil)
+    -- streamDir :: Either [Path] b -> Stream IO (Either [Path] (Array Word8))
+    -- streamDir = either Dir.readEitherByteChunks (const Stream.nil)
+    streamDir :: Either (Path, [Path]) b -> Stream IO (Either (Path, [Path]) (Array Word8))
+    streamDir = either Dir.readEitherByteChunksAt (const Stream.nil)
 
     streamDirMaybe :: Either [Path] b -> Maybe (Stream IO (Either [Path] (Array Word8)))
     streamDirMaybe = either (Just . Dir.readEitherByteChunks) (const Nothing)
