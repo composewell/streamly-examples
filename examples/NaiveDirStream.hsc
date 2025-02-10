@@ -1,10 +1,31 @@
 {-# Language ScopedTypeVariables #-}
+{-# Language BangPatterns #-}
+{-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
 -- | Removing the print statements in both C program and Haskell program. C
 -- takes 58ms CPU time, Haskell +RTS -s reports 60ms CPU time (time reports
 -- 62ms which includes 2ms of RTS startup/teardown overhead). Actual Haskell
 -- processing is approximately 3% slower.
 --
+-- Learnings and notes:
+--
+-- * Be frugal with allocations, our perf tool can help in precisely
+-- pin-pointing the places where more allocations are happening.
+--
+-- * static argument transformation is very helpful in reducing unnecessary
+-- overhead in recursive loops.
+--
+-- * Using mutable memory for temporary usage in a small loop is beneficial due
+-- to cache benefits and reduction in allocations. Haskell lacks good mutable
+-- memory abstractions which should be fixed.
+--
+-- * XXX there should be a way to automatically suggest NOINLINE when using
+-- unsafeperformIO.
+--
+-- * XXX A CString module to manipulate CStrings conveniently?
+--
+-- * XXX An efficient unsafe variable length mutable cell/array module?
+
 module NaiveDirStream (loopDir)
 
 where
@@ -21,11 +42,13 @@ import Foreign.C.Error (errnoToIOError)
 import Streamly.Internal.FileSystem.Path (Path)
 import Streamly.Internal.FileSystem.Posix.ReadDir (DirStream)
 import Streamly.Internal.Data.MutArray (MutArray)
+import Streamly.Internal.Data.MutByteArray (MutByteArray)
 import System.IO
 import System.IO.Unsafe
 
 import qualified Streamly.Internal.Data.Array as Array
 import qualified Streamly.Internal.Data.MutArray as MutArray
+import qualified Streamly.Internal.Data.MutByteArray as MutByteArray
 import qualified Streamly.Internal.FileSystem.Path as Path
 import qualified Streamly.Internal.FileSystem.Posix.ReadDir as ReadDir
 
@@ -56,24 +79,25 @@ isMetaDir dname = do
 foreign import ccall unsafe "dirent.h readdir"
     c_readdir  :: DirStream -> IO (Ptr a)
 
-loopDir :: Path -> DirStream -> IO ()
-loopDir dirname dirp =  goDir
+-- dirname should not be mutated, so we need an immutable ByteArray type for
+-- that.
+loopDir :: MutByteArray -> DirStream -> IO ()
+loopDir dirname dirp = goDir
 
     where
 
-    -- buf is a mutable variable holding dirname/
-    -- NOINLINE impacts performance by around 10%.
-    -- Goof abstractions for mutable references may be helpful in such
-    -- situations.
-    {-# NOINLINE buf #-}
-    buf :: MutArray Word8
-    buf = unsafePerformIO $ do
-            -- pinning reduces allocations, avoids copying for system call.
-            -- the impact is around 10% cpu time.
-            arr <- MutArray.emptyOf' 1024
-            arr1 <- MutArray.splice arr (Array.unsafeThaw (Path.toChunk dirname))
-            -- putStrLn "unsafeperform"
-            MutArray.unsafeSnoc arr1 47
+    -- a mutable variable holding dirname/
+    -- pinning reduces allocations, avoids copying for system call.
+    -- the impact is around 10% cpu time.
+    -- {-# NOINLINE dat #-}
+    dat :: (MutByteArray, Int)
+    dat@(buf, dirlen) = MutByteArray.mutVar' 1024 $ \arr -> do
+            -- XXX can use putCString variant instead
+            -- putStrLn "mutable cell"
+            MutByteArray.pokeAt 0 arr (0 :: Word8)
+            n <- MutByteArray.unsafeSpliceCString arr dirname
+            MutByteArray.pokeAt n arr (47 :: Word8)
+            return (n+1)
 
     goDir = do
         resetErrno
@@ -89,7 +113,7 @@ loopDir dirname dirp =  goDir
             then do
                 isMeta <- isMetaDir dname
                 when (not isMeta) $ do
-                    buf1 <- MutArray.appendCString buf dname
+                    off <- MutByteArray.unsafePutCString buf dirlen dname
 
                     -- XXX putStrLn seems to be very inefficient compared to
                     -- the C printf. Adding printf in the C version of this
@@ -101,25 +125,14 @@ loopDir dirname dirp =  goDir
                     -- putStrLn $ Path.toString fullName
 
                     {-
-                    arr <- MutArray.emptyOf' 1024
-                    arr1 <- MutArray.splice arr buf1
-                    arr2 <- MutArray.unsafeSnoc arr1 10
-
-                    MutArray.unsafePinnedAsPtr
-                        -- (Path.toChunk fullName)
-                        arr2
-                        (hPutBuf stdout)
+                    arr <- MutByteArray.unsafePinnedCloneSlice 0 off buf
+                    MutByteArray.pokeAt off arr (10 :: Word8)
+                    MutByteArray.unsafeAsPtr arr $ \p ->
+                        hPutBuf stdout p (off+1)
                     -}
 
-                    -- fullName <- Path.appendCString dirname dname
-                    let fullName = Path.unsafeFromChunk (Array.unsafeFreeze buf1)
-                    buf2 <- MutArray.unsafeSnoc buf1 0
-                    MutArray.unsafePinnedAsPtr buf2 (\s _ ->
-                        -- XXX we are copying the array constructor.
-                        ReadDir.openDirStreamCString (castPtr s) >>= loopDir fullName)
-                    {-
-                    ReadDir.openDirStream fullName >>= loopDir fullName
-                    -}
+                    MutByteArray.unsafeAsPtr buf $ \s ->
+                        ReadDir.openDirStreamCString (castPtr s) >>= loopDir buf
             else -- putStrLn $ fromJust $ decodeUtf fullName
                 do
                     -- hPutBuf stdout $ Path.toChunk fullName
