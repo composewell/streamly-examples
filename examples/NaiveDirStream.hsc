@@ -1,8 +1,5 @@
 {-# Language ScopedTypeVariables #-}
--- {-# Language MagicHash #-}
--- {-# LANGUAGE UnliftedFFITypes #-}
-{-# Language BangPatterns #-}
-{-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
+-- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
 -- | Removing the print statements in both C program and Haskell program. C
 -- takes 58ms CPU time, Haskell +RTS -s reports 60ms CPU time (time reports
@@ -14,7 +11,7 @@
 -- * Be frugal with allocations, our perf tool can help in precisely
 -- pin-pointing the places where more allocations are happening.
 --
--- * static argument transformation is very in reducing unnecessary
+-- * static argument transformation is very important in reducing unnecessary
 -- overhead in recursive loops, it becomes especially important when other
 -- inefficiencies are removed. It will be nice if compiler can automatically
 -- detect and point out such opportunities.
@@ -27,8 +24,8 @@
 -- returns, allocations and deallocations are cheaper. Even if we allocate a
 -- variable earlier than it is used, we do not pay much cost. In Haskell, there
 -- is no such thing as stack, all allocations happen on heap, once we allocate
--- we pay the cost of collection as well. Therefore, if we simulate the stack
--- like mutable allocations in Haskell, when allocating unlazily we have to be
+-- we pay the cost of collection as well. Therefore, if we simulate stack
+-- like mutable allocations in Haskell, when allocating strictly we have to be
 -- careful to allocate only when needed.
 --
 -- * In multithreaded programs however Haskell might work better because in
@@ -47,27 +44,17 @@ module NaiveDirStream (loopDir)
 
 where
 
-import Control.Monad
-import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad (when)
 import Data.Char (ord)
-import Data.Maybe
 import Foreign (Ptr, Word8, nullPtr, peek, peekByteOff, castPtr, plusPtr)
 import Foreign.C
-    (resetErrno, Errno(..), getErrno, eINTR, throwErrno
-    , throwErrnoIfMinus1Retry_, CInt(..), CString, CChar, CSize(..))
-import Foreign.C.Error (errnoToIOError)
-import Streamly.Internal.FileSystem.Path (Path)
+    (resetErrno, Errno(..), getErrno, eINTR, throwErrno, CChar, CSize(..))
 import Streamly.Internal.FileSystem.Posix.ReadDir (DirStream)
-import Streamly.Internal.Data.MutArray (MutArray)
 import Streamly.Internal.Data.MutByteArray (MutByteArray(..))
-import System.IO
-import System.IO.Unsafe
+import System.IO (hPutBuf, stdout)
 
-import qualified Streamly.Internal.Data.Array as Array
 import qualified Streamly.Internal.Data.CString as CString
-import qualified Streamly.Internal.Data.MutArray as MutArray
 import qualified Streamly.Internal.Data.MutByteArray as MutByteArray
-import qualified Streamly.Internal.FileSystem.Path as Path
 import qualified Streamly.Internal.FileSystem.Posix.ReadDir as ReadDir
 
 #include <dirent.h>
@@ -97,10 +84,12 @@ isMetaDir dname = do
 foreign import ccall unsafe "dirent.h readdir"
     c_readdir  :: DirStream -> IO (Ptr a)
 
-{-
 foreign import ccall unsafe "string.h strlen" c_strlen_pinned
-    :: MutableByteArray# -> IO CSize
--}
+    :: Ptr a -> IO CSize
+
+-- Temporary mutable buffer
+buffer :: MutByteArray
+buffer = MutByteArray.emptyMutVar' 1024
 
 -- dirname should not be mutated, we can use an immutable ByteArray type for
 -- that.
@@ -109,25 +98,29 @@ loopDir dirname dirp = goDir
 
     where
 
-    -- A lazily allocated mutable variable holding dirname/
-    -- Lazy allocation does not allocate it when not needed.
-    -- Pinning reduces allocations by avoiding copying for system call.
-    -- the impact is around 10% cpu time.
-    buf :: (MutByteArray, Int)
-    buf = MutByteArray.mutVar' 1024 $ \arr -> do
-            -- XXX can use putCString variant instead
-            MutByteArray.pokeAt 0 arr (0 :: Word8)
-            n <- CString.splice arr dirname
-            MutByteArray.pokeAt n arr (47 :: Word8)
-            return (n+1)
+    -- XXX We can use a poke monad to do this more
+    -- ergonomically. We can create a monad for composing
+    -- CStrings, and equivalent of snprintf.
+    allocBuf dirLen dname = do
+        dentLen <- fmap fromIntegral $ c_strlen_pinned dname
+        buf <- MutByteArray.pinnedNew (dirLen + dentLen + 2)
+        return buf
 
-    {-
-    {-# NOINLINE dirlen #-}
-    dirlen :: Int
-    dirlen = unsafePerformIO $ do
-        n <- fmap fromIntegral $ CString.length dirname
-        return (n+1)
-    -}
+    appendName dirLen buf dname = do
+        -- XXX can use putCString variant instead
+        MutByteArray.pokeAt 0 buf (0 :: Word8)
+        _ <- CString.splice buf dirname
+        MutByteArray.pokeAt dirLen buf (47 :: Word8)
+        off <- CString.putCString buf (dirLen + 1) dname
+        return off
+
+    printName arr off = do
+        -- If we use an Array then we can use a slice of the same
+        -- buffer for printing and for passing to loopDir.
+        MutByteArray.pokeAt off arr (10 :: Word8)
+        -- hPutBuf is quite expensive compared to C printf
+        MutByteArray.unsafeAsPtr arr $ \p ->
+            hPutBuf stdout p (off+1)
 
     goDir = do
         resetErrno
@@ -141,45 +134,25 @@ loopDir dirname dirp = goDir
             then do
                 isMeta <- isMetaDir dname
                 when (not isMeta) $ do
-                    let buf1 = fst buf
-                        -- getting dirlen from the tuple forces the allocation
-                        -- earlier than needed, therefore increases the
-                        -- allocations.
-
-                        -- dirlen = snd buf
-
-                    -- Computing it everytime turns out to be less expensive
-                    -- than computing it once using unsafePerformIO, because of
-                    -- decreased allocs.
-                    dirlen <- fmap (+1) $ CString.length dirname
-                    off <- CString.putCString buf1 (dirlen) dname
-
-                    -- XXX putStrLn seems to be very inefficient compared to
-                    -- the C printf. Adding printf in the C version of this
-                    -- program does not make any noticeable difference, whereas
-                    -- this makes a huge difference 134ms become 264ms. One big
-                    -- reason for that is unicode decoding and the encoding
-                    -- again, we should use binary IO without conversion.
-                    -- putStrLn $ fromJust $ decodeUtf fullName
-                    -- putStrLn $ Path.toString fullName
+                    dirLen <- CString.length dirname
+                    buf <- allocBuf dirLen dname
+                    off <- appendName dirLen buf dname
 
                     {-
                     arr <- MutByteArray.unsafePinnedCloneSlice 0 off buf
-                    MutByteArray.pokeAt off arr (10 :: Word8)
-                    MutByteArray.unsafeAsPtr arr $ \p ->
-                        hPutBuf stdout p (off+1)
+                    printName arr off
                     -}
 
-                    MutByteArray.unsafeAsPtr buf1 $ \s ->
-                        ReadDir.openDirStreamCString (castPtr s) >>= loopDir buf1
-            else -- putStrLn $ fromJust $ decodeUtf fullName
-                do
-                    -- hPutBuf stdout $ Path.toChunk fullName
-                    -- putStrLn $ Path.toString fullName
-                    -- Array.unsafePinnedAsPtr
-                        -- (Path.toChunk fullName)
-                        -- (hPutBuf stdout)
-                    return ()
+                    MutByteArray.unsafeAsPtr buf $ \s ->
+                        ReadDir.openDirStreamCString (castPtr s) >>= loopDir buf
+            else do
+                {-
+                dirLen <- CString.length dirname
+                buf <- allocBuf dirLen dname
+                off <- appendName dirLen buffer dname
+                printName buffer off
+                -}
+                return ()
             goDir
         else do
             errno <- getErrno
