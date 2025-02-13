@@ -9,3 +9,7 @@ walkdir = "2.4"
 [[example]]
 name = "WalkDir"
 path = "examples/WalkDir.rs"
+
+[[example]]
+name = "ListDir"
+path = "examples/ListDir.rs"
