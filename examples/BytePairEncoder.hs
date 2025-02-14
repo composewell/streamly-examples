@@ -4,10 +4,14 @@
 --
 module BytePairEncoder (main) where
 
+import Control.Monad.IO.Class (MonadIO)
 import Data.Function ((&))
+import Data.List (maximumBy)
 import qualified Data.Map as M
+import Data.Ord (comparing)
 import qualified Data.Vector as V
 import GHC.Word (Word8)
+import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import Streamly.Data.Stream (Stream)
 import qualified Streamly.Data.Stream as Stream
@@ -59,6 +63,45 @@ mapToIndexStream :: (Monad m) => ByteMappings -> Stream m Word8 -> Stream m Int
 mapToIndexStream mapping = fmap (\k -> M.findWithDefault (-1) k (byteToIndex mapping))
 
 -------------------------------------------------------------------------------
+-- Count and merge most frequent pairs
+-------------------------------------------------------------------------------
+
+charToWord8 :: Char -> Word8
+charToWord8 = toEnum . fromEnum
+
+-- Stores pair frequencies for merging
+type PairFrequencies = M.Map (Int, Int) Int
+
+{-# INLINE countPairs #-}
+countPairs :: (MonadIO m) => Stream m Int -> m PairFrequencies
+countPairs stream =
+  stream
+    & Stream.chunksOf 2
+    & Stream.fold (Fold.foldl' addPair M.empty)
+  where
+    addPair acc chunk =
+      case Array.toList chunk of
+        [b1, b2] -> M.insertWith (+) (b1, b2) 1 acc
+        _ -> acc
+
+{-# INLINE mergeMostFrequentPair #-}
+mergeMostFrequentPair :: ByteMappings -> PairFrequencies -> ByteMappings
+mergeMostFrequentPair mappings@(ByteMappings b2i s2i i2t nidx) freqs =
+  if M.null freqs
+    then mappings
+    else
+      let ((b1, b2), _) = maximumBy (comparing snd) (M.toList $ freqs)
+          text1 = M.findWithDefault "?" b1 i2t
+          text2 = M.findWithDefault "?" b2 i2t
+          newToken = text1 ++ text2
+          bytes = V.fromList $ map charToWord8 newToken
+       in ByteMappings
+            b2i
+            (M.insert bytes nidx s2i)
+            (M.insert nidx newToken i2t)
+            (nidx + 1)
+
+-------------------------------------------------------------------------------
 -- Main
 -------------------------------------------------------------------------------
 
@@ -68,5 +111,9 @@ main = do
   let stream = File.read name
   mapping <- initializeSingleBytes stream
   print mapping
-  indexStream <- Stream.toList . mapToIndexStream mapping $ stream
+  let byteIndexStream = mapToIndexStream mapping stream
+  indexStream <- Stream.toList byteIndexStream
   print indexStream
+  freqs <- countPairs byteIndexStream
+  let mergedMappings = mergeMostFrequentPair mapping freqs
+  print mergedMappings
