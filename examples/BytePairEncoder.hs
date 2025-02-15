@@ -19,6 +19,7 @@ import qualified Streamly.FileSystem.File as File
 import Streamly.Internal.Data.Pipe (Pipe (..), Step (..))
 import Streamly.Internal.Data.Stream (pipe)
 import System.Environment (getArgs)
+import Data.Maybe (fromJust)
 
 -------------------------------------------------------------------------------
 -- Byte indexing and text representation
@@ -143,6 +144,56 @@ mergedMappingsStream initMapping initStream =
       return $ Just (updatedMapping, (updatedMapping, newStream))
 
 -------------------------------------------------------------------------------
+-- Tokenize text
+-------------------------------------------------------------------------------
+
+word8ToChar :: Word8 -> Char
+word8ToChar = toEnum . fromIntegral
+
+-- | 'tokenize' consumes a stream of bytes and produces tokens.
+--
+-- The tokens are determined by the ByteMappings. The pipe's state is a tuple
+-- consisting of the current byte buffer, the last valid candidate token, and its byte count.
+--
+-- On each new byte:
+--   • Extend the buffer.
+--   • If the extended buffer is in the mapping (i.e. is a valid token) update the candidate
+--   • Otherwise, emit the candidate token (the longest match so far),
+--     reset the state (starting with the current byte), and continue.
+{-# INLINE tokenize #-}
+tokenize :: (Monad m) => ByteMappings -> Pipe m Word8 String
+tokenize mapping = Pipe consume produce (V.empty, "", 0)
+  where
+    -- State: (current buffer, candidate token, candidate byte count)
+    consume ::
+      (Monad m) =>
+      (V.Vector Word8, String, Int) -> -- current state
+      Word8 -> -- new byte
+      m (Step (V.Vector Word8, String, Int) () String)
+    consume (buf, cand, candCount) byte =
+      let newBuf = V.snoc buf byte
+       in case M.lookup newBuf (seqToIndex mapping) of
+            -- If newBuf is valid, update the candidate token and extend state.
+            Just idx ->
+              let newCand = M.findWithDefault (error "Missing token text") idx (indexToText mapping)
+               in return $ SkipC (newBuf, newCand, length newCand)
+            -- Extended buffer not valid: the current candidate (from buf) is maximal.
+            -- Yield it and reinitialize state to allow the new byte to start a new token.
+            Nothing ->
+              if V.length newBuf >= 20
+                then return $ SkipC (newBuf, cand, candCount)
+                else
+                  let rest = V.drop candCount newBuf
+                      (nextState, nextCand, nextCandCount) =
+                        if V.null rest
+                          then (V.empty, "", 0)
+                          else (rest, [word8ToChar (V.head rest)], 1)
+                  in return $ YieldC (nextState, nextCand, nextCandCount) cand
+
+    -- When input is exhausted, if the buffer is non-empty emit the candidate.
+    produce = undefined
+
+-------------------------------------------------------------------------------
 -- Main
 -------------------------------------------------------------------------------
 
@@ -155,4 +206,8 @@ main = do
   let indexStream = mapToIndexStream mapping stream
       mappingStream = mergedMappingsStream mapping indexStream
       printMappingStream = Stream.trace print mappingStream
-  Stream.fold (Fold.take 20 Fold.drain) printMappingStream
+  maybeMapping <- Stream.fold (Fold.index 40) printMappingStream
+  let mapping = fromJust maybeMapping
+  print mapping
+  let tokenStream = pipe (tokenize mapping) stream
+  Stream.fold (Fold.drainMapM (\s -> putStr (s ++ ","))) tokenStream
