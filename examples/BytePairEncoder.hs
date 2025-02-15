@@ -16,6 +16,8 @@ import qualified Streamly.Data.Fold as Fold
 import Streamly.Data.Stream (Stream)
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.FileSystem.File as File
+import Streamly.Internal.Data.Pipe (Pipe (..), Step (..))
+import Streamly.Internal.Data.Stream (pipe)
 import System.Environment (getArgs)
 
 -------------------------------------------------------------------------------
@@ -84,22 +86,44 @@ countPairs stream =
         [b1, b2] -> M.insertWith (+) (b1, b2) 1 acc
         _ -> acc
 
-{-# INLINE mergeMostFrequentPair #-}
-mergeMostFrequentPair :: ByteMappings -> PairFrequencies -> ByteMappings
-mergeMostFrequentPair mappings@(ByteMappings b2i s2i i2t nidx) freqs =
-  if M.null freqs
-    then mappings
-    else
-      let ((b1, b2), _) = maximumBy (comparing snd) (M.toList $ freqs)
-          text1 = M.findWithDefault "?" b1 i2t
-          text2 = M.findWithDefault "?" b2 i2t
-          newToken = text1 ++ text2
-          bytes = V.fromList $ map charToWord8 newToken
-       in ByteMappings
-            b2i
-            (M.insert bytes nidx s2i)
-            (M.insert nidx newToken i2t)
-            (nidx + 1)
+mostFrequentPair :: PairFrequencies -> ((Int, Int), Int)
+mostFrequentPair = maximumBy (comparing snd) . M.toList
+
+updateMappings :: ByteMappings -> (Int, Int) -> ByteMappings
+updateMappings (ByteMappings b2i s2i i2t nidx) (i1, i2) =
+  let text1 = M.findWithDefault "?" i1 i2t
+      text2 = M.findWithDefault "?" i2 i2t
+      newToken = text1 ++ text2
+      bytes = V.fromList $ map charToWord8 newToken
+   in ByteMappings
+        b2i
+        (M.insert bytes nidx s2i)
+        (M.insert nidx newToken i2t)
+        (nidx + 1)
+
+{-# INLINE replaceMostFrequentPair #-}
+replaceMostFrequentPair :: (Monad m) => (Int, Int) -> Int -> Pipe m Int Int
+replaceMostFrequentPair (i1, i2) nidx = Pipe consume produce False
+  where
+    consume False i | i == i1 = return $ SkipC True -- found first index
+    consume False i = return $ YieldP Nothing i -- first index not found
+    consume True i | i == i2 = return $ YieldP Nothing nidx -- found second index
+    consume True i | i == i1 = return $ YieldC True i1 -- encountered first index again
+    consume True i = return $ YieldP (Just i) i1 -- fallback
+    produce Nothing = return $ SkipC False
+    produce (Just i) = return $ YieldC False i
+
+-------------------------------------------------------------------------------
+-- Build BPE mapping
+-------------------------------------------------------------------------------
+
+buildBpeMapping :: (MonadIO m) => ByteMappings -> Stream m Int -> m (Pipe m Int Int)
+buildBpeMapping mapping stream = do
+  freqs <- countPairs stream
+  let (i1, i2) = fst . mostFrequentPair $ freqs
+      updatedMapping = updateMappings mapping (i1, i2)
+      replacePipe = replaceMostFrequentPair (i1, i2) (nextIndex updatedMapping - 1)
+  return replacePipe
 
 -------------------------------------------------------------------------------
 -- Main
@@ -112,8 +136,7 @@ main = do
   mapping <- initializeSingleBytes stream
   print mapping
   let byteIndexStream = mapToIndexStream mapping stream
-  indexStream <- Stream.toList byteIndexStream
-  print indexStream
-  freqs <- countPairs byteIndexStream
-  let mergedMappings = mergeMostFrequentPair mapping freqs
-  print mergedMappings
+  replacePipe <- buildBpeMapping mapping byteIndexStream
+  let newStream = pipe replacePipe byteIndexStream
+  merged <- Stream.toList newStream
+  print merged
