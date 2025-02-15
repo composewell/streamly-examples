@@ -117,13 +117,30 @@ replaceMostFrequentPair (i1, i2) nidx = Pipe consume produce False
 -- Build BPE mapping
 -------------------------------------------------------------------------------
 
-buildBpeMapping :: (MonadIO m) => ByteMappings -> Stream m Int -> m (Pipe m Int Int)
-buildBpeMapping mapping stream = do
+mergeUntil :: (MonadIO m) => Int -> ByteMappings -> Stream m Int -> m ByteMappings
+mergeUntil threshold mapping stream = do
   freqs <- countPairs stream
   let (i1, i2) = fst . mostFrequentPair $ freqs
       updatedMapping = updateMappings mapping (i1, i2)
       replacePipe = replaceMostFrequentPair (i1, i2) (nextIndex updatedMapping - 1)
-  return replacePipe
+      newStream = pipe replacePipe stream
+  if nextIndex updatedMapping >= threshold
+    then return updatedMapping
+    else mergeUntil threshold updatedMapping newStream
+
+-- | Produce an (infinite) stream of updated ByteMappings.
+mergedMappingsStream :: (MonadIO m) => ByteMappings -> Stream.Stream m Int -> Stream.Stream m ByteMappings
+mergedMappingsStream initMapping initStream =
+  Stream.unfoldrM step (initMapping, initStream)
+  where
+    step (mapping, stream) = do
+      freqs <- countPairs stream
+      let (i1, i2) = fst $ mostFrequentPair freqs
+          updatedMapping = updateMappings mapping (i1, i2)
+          newIdx = nextIndex updatedMapping - 1
+          replacePipe = replaceMostFrequentPair (i1, i2) newIdx
+          newStream = pipe replacePipe stream
+      return $ Just (updatedMapping, (updatedMapping, newStream))
 
 -------------------------------------------------------------------------------
 -- Main
@@ -135,8 +152,7 @@ main = do
   let stream = File.read name
   mapping <- initializeSingleBytes stream
   print mapping
-  let byteIndexStream = mapToIndexStream mapping stream
-  replacePipe <- buildBpeMapping mapping byteIndexStream
-  let newStream = pipe replacePipe byteIndexStream
-  merged <- Stream.toList newStream
-  print merged
+  let indexStream = mapToIndexStream mapping stream
+      mappingStream = mergedMappingsStream mapping indexStream
+      printMappingStream = Stream.trace print mappingStream
+  Stream.fold (Fold.take 20 Fold.drain) printMappingStream
