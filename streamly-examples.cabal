@@ -75,7 +75,7 @@ common exe-dependencies
     , exceptions            >= 0.8   && < 0.11
     , transformers-base     >= 0.4   && < 0.5
     , network               >= 2.6   && < 4
-    , hashable              >= 1.2   && < 1.5
+    , hashable              >= 1.2   && < 1.6
     , unordered-containers  >= 0.2   && < 0.3
     , vector                >= 0.12  && < 0.14
     , mtl                   >= 2.2   && < 3
@@ -365,7 +365,7 @@ executable DateTimeParser
   main-is: DateTimeParser.hs
   if !impl(ghcjs)
     buildable: True
-    build-depends: tasty-bench >= 0.3 && < 0.4
+    build-depends: tasty-bench >= 0.3 && < 0.5
   else
     buildable: False
 
@@ -374,6 +374,6 @@ executable LogParser
   main-is: LogParser.hs
   if !impl(ghcjs)
     buildable: True
-    build-depends: tasty-bench >= 0.3 && < 0.4
+    build-depends: tasty-bench >= 0.3 && < 0.5
   else
     buildable: False
