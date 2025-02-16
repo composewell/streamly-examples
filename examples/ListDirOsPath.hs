@@ -4,14 +4,13 @@ module Main (main) where
 import Control.Monad
 import System.Directory.OsPath
 import System.OsPath
-import System.IO
 import Data.Maybe
 
 listDir :: OsPath -> IO ()
 listDir dir = do
     contents <- listDirectory dir
     let fullPaths = map (dir </>) contents
-    forM fullPaths $ \path -> do
+    forM_ fullPaths $ \path -> do
         isDir <- doesDirectoryExist path
         if isDir
         then do

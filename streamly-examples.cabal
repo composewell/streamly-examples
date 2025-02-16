@@ -25,10 +25,14 @@ stability:     provisional
 tested-with: GHC==9.4.4, GHC==9.2.7, GHC==9.0.1, GHC==8.10.7
 build-type:    Simple
 extra-source-files:
+  Cargo.toml
   Changelog.md
   Makefile
   NOTICE
   README.md
+  examples/ListDirBasic.c
+  examples/ListDirBasic.rs
+  examples/WalkDirBasic.rs
   examples/WordCount.c
 
 source-repository head
@@ -60,23 +64,23 @@ flag interop
 
 common exe-dependencies
   build-depends:
-      -- streamly              == 0.11.0
-    -- , streamly-fsevents     == 0.1.0
-      base                  >= 4.9
+      streamly              == 0.11.0
+    , streamly-fsevents     == 0.1.0
     , streamly-core         == 0.3.0
-    , directory             >= 1.2
+    , base                  >= 4.9   && < 4.22
+    , directory             >= 1.2   && < 1.4
+    , transformers          >= 0.4   && < 0.7
+    , containers            >= 0.5   && < 0.8
+    , random                >= 1.0.0 && < 2
+    , exceptions            >= 0.8   && < 0.11
+    , transformers-base     >= 0.4   && < 0.5
+    , network               >= 2.6   && < 4
+    , hashable              >= 1.2   && < 1.5
+    , unordered-containers  >= 0.2   && < 0.3
+    , vector                >= 0.12  && < 0.14
+    , mtl                   >= 2.2   && < 3
+    -- For the ListDirOsPath example
     , filepath
-    , unix
---     , transformers          >= 0.4   && < 0.7
---     , containers            >= 0.5   && < 0.8
---     , random                >= 1.0.0 && < 2
---     , exceptions            >= 0.8   && < 0.11
---     , transformers-base     >= 0.4   && < 0.5
---     , network               >= 2.6   && < 4
---     , hashable              >= 1.2   && < 1.5
---     , unordered-containers  >= 0.2   && < 0.3
---     , vector                >= 0.12  && < 0.14
---     , mtl                   >= 2.2   && < 3
 
 common exe-options
   import: exe-dependencies
@@ -96,236 +100,280 @@ common exe-options
                -Wincomplete-uni-patterns
                -Wredundant-constraints
                -Wnoncanonical-monad-instances
---   if impl(ghc >= 9.8)
---     ghc-options: -Wno-x-partial
--- 
---   if flag(fusion-plugin) && !impl(ghcjs) && !impl(ghc < 8.6)
---     ghc-options: -fplugin Fusion.Plugin
---     build-depends:
---         fusion-plugin >= 0.2.6 && < 0.3
+  if impl(ghc >= 9.8)
+    ghc-options: -Wno-x-partial
+
+  if flag(fusion-plugin) && !impl(ghcjs) && !impl(ghc < 8.6)
+    ghc-options: -fplugin Fusion.Plugin
+    build-depends:
+        fusion-plugin >= 0.2.6 && < 0.3
 
 common exe-options-threaded
   import: exe-options
---   ghc-options: -threaded
---                -with-rtsopts=-N
+  ghc-options: -threaded
+               -with-rtsopts=-N
 
 ------------------------------------------------------------------------------
 -- Examples                                                                 --
 ------------------------------------------------------------------------------
 
--- executable Interop.Vector
+executable Interop.Vector
+  import: exe-options-threaded
+  main-is: Interop/Vector.hs
+  if !impl(ghcjs) && flag(interop)
+    buildable: True
+  else
+    buildable: False
+
+executable Interop.Pipes
+  import: exe-options-threaded
+  main-is: Interop/Pipes.hs
+  if !impl(ghcjs) && flag(interop)
+    buildable: True
+    build-depends: pipes >= 4.3.16 && < 4.4
+  else
+    buildable: False
+
+executable Interop.Streaming
+  import: exe-options-threaded
+  main-is: Interop/Streaming.hs
+  if !impl(ghcjs) && flag(interop)
+    buildable: True
+    build-depends: streaming >= 0.2.3.0 && < 0.3
+  else
+    buildable: False
+
+executable Interop.Conduit
+  import: exe-options-threaded
+  main-is: Interop/Conduit.hs
+  if !impl(ghcjs) && flag(interop)
+    buildable: True
+    build-depends: conduit >= 1.3.4.1 && < 1.4
+  else
+    buildable: False
+
+executable Intro
+  import: exe-options-threaded
+  main-is: Intro.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable WordServer
+  import: exe-options-threaded
+  main-is: WordServer.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable MergeServer
+  import: exe-options-threaded
+  main-is: MergeServer.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable CmdServer
+  import: exe-options-threaded
+  main-is: CmdServer.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable CmdClient
+  import: exe-options-threaded
+  main-is: CmdClient.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+-- executable SearchQuery
 --   import: exe-options-threaded
---   main-is: Interop/Vector.hs
---   if !impl(ghcjs) && flag(interop)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable Interop.Pipes
---   import: exe-options-threaded
---   main-is: Interop/Pipes.hs
---   if !impl(ghcjs) && flag(interop)
---     buildable: True
---     build-depends: pipes >= 4.3.16 && < 4.4
---   else
---     buildable: False
--- 
--- executable Interop.Streaming
---   import: exe-options-threaded
---   main-is: Interop/Streaming.hs
---   if !impl(ghcjs) && flag(interop)
---     buildable: True
---     build-depends: streaming >= 0.2.3.0 && < 0.3
---   else
---     buildable: False
--- 
--- executable Interop.Conduit
---   import: exe-options-threaded
---   main-is: Interop/Conduit.hs
---   if !impl(ghcjs) && flag(interop)
---     buildable: True
---     build-depends: conduit >= 1.3.4.1 && < 1.4
---   else
---     buildable: False
--- 
--- executable Intro
---   import: exe-options-threaded
---   main-is: Intro.hs
+--   main-is: SearchQuery.hs
 --   if !impl(ghcjs)
 --     buildable: True
 --   else
 --     buildable: False
 
--- executable ListDir
---   import: exe-options-threaded
---   main-is: ListDir.hs
--- 
--- executable MergeSort
---   import: exe-options-threaded
---   main-is: MergeSort.hs
--- 
--- executable AcidRain
---   import: exe-options-threaded
---   main-is: AcidRain.hs
--- 
--- executable CirclingSquare
---   import: exe-options-threaded
---   main-is: CirclingSquare.hs
---   if flag(sdl2)
---     buildable: True
---     build-Depends:
---           text >= 1.2.3 && < 2.2
---         , sdl2 >= 2.5.0 && < 2.6
---     if os(darwin)
---         frameworks: Cocoa
---   else
---     buildable: False
--- 
--- executable ControlFlow
---   import: exe-options
---   main-is: ControlFlow.hs
--- 
--- executable CoreUtilsHandle
---   import: exe-options
---   main-is: CoreUtilsHandle.hs
--- 
--- executable CoreUtils
---   import: exe-options
---   main-is: CoreUtils.hs
--- 
--- executable EchoServer
---   import: exe-options-threaded
---   main-is: EchoServer.hs
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable EchoClient
---   import: exe-options-threaded
---   main-is: EchoClient.hs
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable FileSender
---   import: exe-options-threaded
---   main-is: FileSender.hs
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable WordFrequency
---   import: exe-options
---   main-is: WordFrequency.hs
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable WordCount
---   import: exe-options
---   main-is: WordCount.hs
---   ghc-options: -main-is WordCount
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable WordCountParallel
---   import: exe-options-threaded
---   main-is: WordCountParallel.hs
---   other-modules: WordCount
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable WordCountModular
---   import: exe-options
---   main-is: WordCountModular.hs
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable WordCountParallelUTF8
---   import: exe-options-threaded
---   main-is: WordCountParallelUTF8.hs
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable CamelCase
---   import: exe-options
---   main-is: CamelCase.hs
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable CSVParser
---   import: exe-options
---   main-is: CSVParser.hs
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable Rate
---   import: exe-options-threaded
---   main-is: Rate.hs
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable Split
---   import: exe-options
---   main-is: Split.hs
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable FileSystemEvent
---   import: exe-options-threaded
---   main-is: FileSystemEvent.hs
---   if !impl(ghcjs)
---     buildable: True
---   else
---     buildable: False
--- 
--- executable DateTimeParser
---   import: exe-options
---   main-is: DateTimeParser.hs
---   if !impl(ghcjs)
---     buildable: True
---     build-depends: tasty-bench >= 0.3 && < 0.4
---   else
---     buildable: False
--- 
--- executable LogParser
---   import: exe-options
---   main-is: LogParser.hs
---   if !impl(ghcjs)
---     buildable: True
---     build-depends: tasty-bench >= 0.3 && < 0.4
---   else
---     buildable: False
+executable ListDir
+  import: exe-options-threaded
+  main-is: ListDir.hs
 
-executable Naive
+executable ListDirNaive
   import: exe-options
-  main-is: Naive.hs
+  main-is: ListDirNaive.hs
 
-executable NaiveOsPath
+executable ListDirOsPath
   import: exe-options
-  main-is: NaiveOsPath.hs
+  main-is: ListDirOsPath.hs
+  if impl(ghc < 9.6)
+    buildable: False
 
-executable NaiveDirStream
+executable ListDirBasic
   import: exe-options
-  main-is: NaiveDS.hs
-  other-modules: NaiveDirStream
+  main-is: ListDirBasic.hs
+  other-modules: BasicDirStream
+  if os(windows)
+    buildable: False
+
+executable MergeSort
+  import: exe-options-threaded
+  main-is: MergeSort.hs
+
+executable AcidRain
+  import: exe-options-threaded
+  main-is: AcidRain.hs
+
+executable CirclingSquare
+  import: exe-options-threaded
+  main-is: CirclingSquare.hs
+  if flag(sdl2)
+    buildable: True
+    build-Depends:
+          text >= 1.2.3 && < 2.2
+        , sdl2 >= 2.5.0 && < 2.6
+    if os(darwin)
+        frameworks: Cocoa
+  else
+    buildable: False
+
+executable ControlFlow
+  import: exe-options
+  main-is: ControlFlow.hs
+
+executable CoreUtilsHandle
+  import: exe-options
+  main-is: CoreUtilsHandle.hs
+
+executable CoreUtils
+  import: exe-options
+  main-is: CoreUtils.hs
+
+executable EchoServer
+  import: exe-options-threaded
+  main-is: EchoServer.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable EchoClient
+  import: exe-options-threaded
+  main-is: EchoClient.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable FileSender
+  import: exe-options-threaded
+  main-is: FileSender.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable WordFrequency
+  import: exe-options
+  main-is: WordFrequency.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable WordCount
+  import: exe-options
+  main-is: WordCount.hs
+  ghc-options: -main-is WordCount
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable WordCountParallel
+  import: exe-options-threaded
+  main-is: WordCountParallel.hs
+  other-modules: WordCount
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable WordCountModular
+  import: exe-options
+  main-is: WordCountModular.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable WordCountParallelUTF8
+  import: exe-options-threaded
+  main-is: WordCountParallelUTF8.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable CamelCase
+  import: exe-options
+  main-is: CamelCase.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable CSVParser
+  import: exe-options
+  main-is: CSVParser.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable Rate
+  import: exe-options-threaded
+  main-is: Rate.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable Split
+  import: exe-options
+  main-is: Split.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable FileSystemEvent
+  import: exe-options-threaded
+  main-is: FileSystemEvent.hs
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
+
+executable DateTimeParser
+  import: exe-options
+  main-is: DateTimeParser.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-depends: tasty-bench >= 0.3 && < 0.4
+  else
+    buildable: False
+
+executable LogParser
+  import: exe-options
+  main-is: LogParser.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-depends: tasty-bench >= 0.3 && < 0.4
+  else
+    buildable: False

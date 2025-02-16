@@ -1,6 +1,6 @@
 CFLAGS += -Wall -Wextra -pedantic -march=native -Ofast
 
-EXAMPLES = examples/WordCount examples/ListDir
+EXAMPLES = examples/WordCount examples/ListDirBasic
 
 all: $(EXAMPLES)
 

@@ -1,13 +1,12 @@
 import Control.Monad
 import System.Directory
 import System.FilePath
-import System.IO
 
 listDir :: FilePath -> IO ()
 listDir dir = do
     contents <- listDirectory dir
     let fullPaths = map (dir </>) contents
-    forM fullPaths $ \path -> do
+    forM_ fullPaths $ \path -> do
         isDir <- doesDirectoryExist path
         if isDir
         then do

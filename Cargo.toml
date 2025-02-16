@@ -7,9 +7,9 @@ edition = "2021"
 walkdir = "2.4"
 
 [[example]]
-name = "WalkDir"
-path = "examples/WalkDir.rs"
+name = "WalkDirBasic"
+path = "examples/WalkDirBasic.rs"
 
 [[example]]
-name = "ListDir"
-path = "examples/ListDir.rs"
+name = "ListDirBasic"
+path = "examples/ListDirBasic.rs"
