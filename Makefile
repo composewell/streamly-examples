@@ -1,10 +1,12 @@
-CFLAGS += -std=gnu11 -Wall -Wextra -pedantic -march=native -Ofast
+CFLAGS += -Wall -Wextra -pedantic -march=native -Ofast
 
-all: examples/WordCount
+EXAMPLES = examples/WordCount examples/ListDirBasic
 
-examples/WordCount: examples/WordCount.c
+all: $(EXAMPLES)
+
+examples/%: examples/%.c
 	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -f examples/WordCount
+	rm -f $(EXAMPLES)

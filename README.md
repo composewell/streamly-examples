@@ -111,6 +111,42 @@ $ cabal run --flag interop Interop.Pipes
 * [Interop.Vector](https://github.com/composewell/streamly-examples/blob/master/examples/Interop/Vector.hs): Converting streamly
   stream type to and from `vector` stream type.
 
+## Comparing Haskell Performance with C and Rust
+
+### Word Count
+
+`examples/WordCount.c` is the C equivalent of `examples/WordCount.hs`:
+
+```
+$ make
+$ examples/WordCount input.txt
+```
+
+### Directory Traversal
+
+`examples/ListDirBasic.c` is the C equivalent of `examples/ListDirBasic.hs`:
+
+```
+$ make
+$ examples/ListDirBasic
+```
+
+`examples/ListDirBasic.rs` is the Rust equivalent of
+`examples/ListDirBasic.hs` using `std::fs` :
+
+```
+$ cargo build --example ListDirBasic --release
+$ target/release/examples/ListDirBasic
+```
+
+`example/WalkDirBasic.rs` is the Rust equivalent of
+``example/ListDirBasic.hs` using the `walkdir` crate:
+
+```
+$ cargo build --example WalkDirBasic --release
+$ target/release/examples/WalkDirBasic
+```
+
 ## Licensing
 
 Available under [Apache-2.0 license](https://github.com/composewell/streamly-examples/blob/master/LICENSE).

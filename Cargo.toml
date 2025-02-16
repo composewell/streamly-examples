@@ -1,0 +1,15 @@
+[package]
+name = "listdir"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+walkdir = "2.4"
+
+[[example]]
+name = "WalkDirBasic"
+path = "examples/WalkDirBasic.rs"
+
+[[example]]
+name = "ListDirBasic"
+path = "examples/ListDirBasic.rs"

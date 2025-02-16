@@ -25,10 +25,14 @@ stability:     provisional
 tested-with: GHC==9.4.4, GHC==9.2.7, GHC==9.0.1, GHC==8.10.7
 build-type:    Simple
 extra-source-files:
+  Cargo.toml
   Changelog.md
   Makefile
   NOTICE
   README.md
+  examples/ListDirBasic.c
+  examples/ListDirBasic.rs
+  examples/WalkDirBasic.rs
   examples/WordCount.c
 
 source-repository head
@@ -63,7 +67,7 @@ common exe-dependencies
       streamly              == 0.11.0
     , streamly-fsevents     == 0.1.0
     , streamly-core         == 0.3.0
-    , base                  >= 4.9   && < 4.20
+    , base                  >= 4.9   && < 4.22
     , directory             >= 1.2   && < 1.4
     , transformers          >= 0.4   && < 0.7
     , containers            >= 0.5   && < 0.8
@@ -71,10 +75,12 @@ common exe-dependencies
     , exceptions            >= 0.8   && < 0.11
     , transformers-base     >= 0.4   && < 0.5
     , network               >= 2.6   && < 4
-    , hashable              >= 1.2   && < 1.5
+    , hashable              >= 1.2   && < 1.6
     , unordered-containers  >= 0.2   && < 0.3
     , vector                >= 0.12  && < 0.14
     , mtl                   >= 2.2   && < 3
+    -- For the ListDirOsPath example
+    , filepath
 
 common exe-options
   import: exe-dependencies
@@ -197,6 +203,23 @@ executable CmdClient
 executable ListDir
   import: exe-options-threaded
   main-is: ListDir.hs
+
+executable ListDirNaive
+  import: exe-options
+  main-is: ListDirNaive.hs
+
+executable ListDirOsPath
+  import: exe-options
+  main-is: ListDirOsPath.hs
+  if impl(ghc < 9.6)
+    buildable: False
+
+executable ListDirBasic
+  import: exe-options
+  main-is: ListDirBasic.hs
+  other-modules: BasicDirStream
+  if os(windows)
+    buildable: False
 
 executable MergeSort
   import: exe-options-threaded
@@ -342,7 +365,7 @@ executable DateTimeParser
   main-is: DateTimeParser.hs
   if !impl(ghcjs)
     buildable: True
-    build-depends: tasty-bench >= 0.3 && < 0.4
+    build-depends: tasty-bench >= 0.3 && < 0.5
   else
     buildable: False
 
@@ -351,6 +374,6 @@ executable LogParser
   main-is: LogParser.hs
   if !impl(ghcjs)
     buildable: True
-    build-depends: tasty-bench >= 0.3 && < 0.4
+    build-depends: tasty-bench >= 0.3 && < 0.5
   else
     buildable: False
