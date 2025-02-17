@@ -1,4 +1,5 @@
 {-# Language ScopedTypeVariables #-}
+{-# Language CApiFFI #-}
 -- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
 -- | Removing the print statements in both C program and Haskell program. C
@@ -81,7 +82,7 @@ isMetaDir dname = do
                 then return True
                 else return False
 
-foreign import ccall unsafe "dirent.h readdir"
+foreign import capi unsafe "dirent.h readdir"
     c_readdir  :: DirStream -> IO (Ptr a)
 
 foreign import ccall unsafe "string.h strlen" c_strlen_pinned
