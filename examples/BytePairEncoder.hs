@@ -8,6 +8,7 @@ import Control.Monad.IO.Class (MonadIO)
 import Data.Function ((&))
 import Data.List (maximumBy)
 import qualified Data.Map as M
+import Data.Maybe (fromJust, fromMaybe)
 import Data.Ord (comparing)
 import qualified Data.Vector as V
 import GHC.Word (Word8)
@@ -19,7 +20,6 @@ import qualified Streamly.FileSystem.File as File
 import Streamly.Internal.Data.Pipe (Pipe (..), Step (..))
 import Streamly.Internal.Data.Stream (pipe)
 import System.Environment (getArgs)
-import Data.Maybe (fromJust)
 
 -------------------------------------------------------------------------------
 -- Byte indexing and text representation
@@ -150,6 +150,19 @@ mergedMappingsStream initMapping initStream =
 word8ToChar :: Word8 -> Char
 word8ToChar = toEnum . fromIntegral
 
+-- | Find token from looking up bytes from mapping
+findTokenFromBytes :: V.Vector Word8 -> ByteMappings -> Maybe String
+findTokenFromBytes bytes mapping = do
+  idx <- M.lookup bytes (seqToIndex mapping)
+  return $ M.findWithDefault (error "Missing token text") idx (indexToText mapping)
+
+-- | Find longest token from looking up bytes from mapping
+findLongestTokenFromBytes :: (Monad m) => V.Vector Word8 -> ByteMappings -> m (Maybe String)
+findLongestTokenFromBytes bytes mapping =
+  let candidates = Stream.takeWhile (not . V.null) $ Stream.iterate V.init bytes
+      tokens = Stream.mapMaybe (`findTokenFromBytes` mapping) candidates
+  in Stream.fold Fold.one tokens
+
 -- | 'tokenize' consumes a stream of bytes and produces tokens.
 --
 -- The tokens are determined by the ByteMappings. The pipe's state is a tuple
@@ -172,23 +185,22 @@ tokenize mapping = Pipe consume produce (V.empty, "", 0)
       m (Step (V.Vector Word8, String, Int) () String)
     consume (buf, cand, candCount) byte =
       let newBuf = V.snoc buf byte
-       in case M.lookup newBuf (seqToIndex mapping) of
-            -- If newBuf is valid, update the candidate token and extend state.
-            Just idx ->
-              let newCand = M.findWithDefault (error "Missing token text") idx (indexToText mapping)
-               in return $ SkipC (newBuf, newCand, length newCand)
-            -- Extended buffer not valid: the current candidate (from buf) is maximal.
-            -- Yield it and reinitialize state to allow the new byte to start a new token.
+       in case findTokenFromBytes newBuf mapping of
+            -- Update with new candidate token and continue consuming
+            Just newCand -> return $ SkipC (newBuf, newCand, length newCand)
+            -- Extended buffer not valid is not a valid key
+            -- Continue with existing candidate
+            -- if the buffer length has exceeded the threshold
+            -- Yield the candidate and reset state
             Nothing ->
-              if V.length newBuf >= 20
+              if V.length newBuf <= 20
                 then return $ SkipC (newBuf, cand, candCount)
-                else
+                else do
                   let rest = V.drop candCount newBuf
-                      (nextState, nextCand, nextCandCount) =
-                        if V.null rest
-                          then (V.empty, "", 0)
-                          else (rest, [word8ToChar (V.head rest)], 1)
-                  in return $ YieldC (nextState, nextCand, nextCandCount) cand
+                  longestToken <- findLongestTokenFromBytes rest mapping
+                  let nextCand = fromMaybe "" longestToken
+                  let nextCandCount = length nextCand
+                  return $ YieldC (rest, nextCand, nextCandCount) cand
 
     -- When input is exhausted, if the buffer is non-empty emit the candidate.
     produce = undefined
@@ -206,8 +218,8 @@ main = do
   let indexStream = mapToIndexStream mapping stream
       mappingStream = mergedMappingsStream mapping indexStream
       printMappingStream = Stream.trace print mappingStream
-  maybeMapping <- Stream.fold (Fold.index 40) printMappingStream
-  let mapping = fromJust maybeMapping
-  print mapping
-  let tokenStream = pipe (tokenize mapping) stream
+  maybeMapping <- Stream.fold (Fold.index 100) printMappingStream
+  let m2 = fromJust maybeMapping
+  print m2
+  let tokenStream = pipe (tokenize m2) stream
   Stream.fold (Fold.drainMapM (\s -> putStr (s ++ ","))) tokenStream
