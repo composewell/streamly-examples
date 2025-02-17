@@ -195,6 +195,14 @@ greedyTokenizer mapping = Pipe consume produce (V.empty, "", 0)
 -- Main
 -------------------------------------------------------------------------------
 
+-- | Main entry point
+--
+-- Usage:
+--
+-- cabal run --flag fusion-plugin BytePairEncoder <input-file-path>
+--
+-- This will read the test data from test-data.txt, build the ByteMappings,
+-- from frequent byte pairs in the file, and then tokenize the data to stdout.
 main :: IO ()
 main = do
   name <- fmap head getArgs
