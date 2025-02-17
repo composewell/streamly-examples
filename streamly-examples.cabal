@@ -377,3 +377,12 @@ executable LogParser
     build-depends: tasty-bench >= 0.3 && < 0.5
   else
     buildable: False
+
+executable BytePairEncoder
+  import: exe-options
+  main-is: BytePairEncoder.hs
+  ghc-options: -main-is BytePairEncoder
+  if !impl(ghcjs)
+    buildable: True
+  else
+    buildable: False
