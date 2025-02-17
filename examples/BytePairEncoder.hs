@@ -118,17 +118,6 @@ replaceMostFrequentPair (i1, i2) nidx = Pipe consume produce False
 -- Build BPE mapping
 -------------------------------------------------------------------------------
 
-mergeUntil :: (MonadIO m) => Int -> ByteMappings -> Stream m Int -> m ByteMappings
-mergeUntil threshold mapping stream = do
-  freqs <- countPairs stream
-  let (i1, i2) = fst . mostFrequentPair $ freqs
-      updatedMapping = updateMappings mapping (i1, i2)
-      replacePipe = replaceMostFrequentPair (i1, i2) (nextIndex updatedMapping - 1)
-      newStream = pipe replacePipe stream
-  if nextIndex updatedMapping >= threshold
-    then return updatedMapping
-    else mergeUntil threshold updatedMapping newStream
-
 -- | Produce an (infinite) stream of updated ByteMappings.
 mergedMappingsStream :: (MonadIO m) => ByteMappings -> Stream.Stream m Int -> Stream.Stream m ByteMappings
 mergedMappingsStream initMapping initStream =
@@ -147,9 +136,6 @@ mergedMappingsStream initMapping initStream =
 -- Tokenize text
 -------------------------------------------------------------------------------
 
-word8ToChar :: Word8 -> Char
-word8ToChar = toEnum . fromIntegral
-
 -- | Find token from looking up bytes from mapping
 findTokenFromBytes :: V.Vector Word8 -> ByteMappings -> Maybe String
 findTokenFromBytes bytes mapping = do
@@ -163,19 +149,19 @@ findLongestTokenFromBytes bytes mapping =
       tokens = Stream.mapMaybe (`findTokenFromBytes` mapping) candidates
   in Stream.fold Fold.one tokens
 
--- | 'tokenize' consumes a stream of bytes and produces tokens.
+-- | 'greedyTokenizer' consumes a stream of bytes and produces tokens.
 --
 -- The tokens are determined by the ByteMappings. The pipe's state is a tuple
 -- consisting of the current byte buffer, the last valid candidate token, and its byte count.
 --
 -- On each new byte:
---   • Extend the buffer.
---   • If the extended buffer is in the mapping (i.e. is a valid token) update the candidate
---   • Otherwise, emit the candidate token (the longest match so far),
+--   * Extend the buffer.
+--   * If the extended buffer is in the mapping (i.e. is a valid token) update the candidate
+--   * Otherwise, emit the candidate token (the longest match so far),
 --     reset the state (starting with the current byte), and continue.
-{-# INLINE tokenize #-}
-tokenize :: (Monad m) => ByteMappings -> Pipe m Word8 String
-tokenize mapping = Pipe consume produce (V.empty, "", 0)
+{-# INLINE greedyTokenizer #-}
+greedyTokenizer :: (Monad m) => ByteMappings -> Pipe m Word8 String
+greedyTokenizer mapping = Pipe consume produce (V.empty, "", 0)
   where
     -- State: (current buffer, candidate token, candidate byte count)
     consume ::
@@ -221,5 +207,5 @@ main = do
   maybeMapping <- Stream.fold (Fold.index 100) printMappingStream
   let m2 = fromJust maybeMapping
   print m2
-  let tokenStream = pipe (tokenize m2) stream
+  let tokenStream = pipe (greedyTokenizer m2) stream
   Stream.fold (Fold.drainMapM (\s -> putStr (s ++ ","))) tokenStream
