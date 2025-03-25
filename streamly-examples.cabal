@@ -65,7 +65,7 @@ flag interop
 common exe-dependencies
   build-depends:
       streamly              == 0.11.0
-    , streamly-fsevents     == 0.1.0
+    -- , streamly-fsevents     == 0.1.0
     , streamly-core         == 0.3.0
     , base                  >= 4.9   && < 4.22
     , directory             >= 1.2   && < 1.4
@@ -352,13 +352,13 @@ executable Split
   else
     buildable: False
 
-executable FileSystemEvent
-  import: exe-options-threaded
-  main-is: FileSystemEvent.hs
-  if !impl(ghcjs)
-    buildable: True
-  else
-    buildable: False
+-- executable FileSystemEvent
+--   import: exe-options-threaded
+--   main-is: FileSystemEvent.hs
+--   if !impl(ghcjs)
+--     buildable: True
+--   else
+--     buildable: False
 
 executable DateTimeParser
   import: exe-options
