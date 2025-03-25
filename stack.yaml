@@ -1,21 +1,18 @@
-resolver: lts-20.13
+resolver: lts-22.43
 packages:
 - '.'
 extra-deps:
-- lockfree-queue-0.2.4
-#- streamly-core-0.1.0
-#- streamly-0.9.0
+#- streamly-core-0.2.0
+#- streamly-0.10.0
 #- fusion-plugin-0.2.6
 - git: https://github.com/composewell/streamly
-  commit: 4b443acde44d3f7eb43f27a40d4e6f6c6dd1b79f
+  commit: 8500b6446dae07e763370608625f26eff5c84600
 - git: https://github.com/composewell/streamly
-  commit: 4b443acde44d3f7eb43f27a40d4e6f6c6dd1b79f
+  commit: 8500b6446dae07e763370608625f26eff5c84600
   subdirs:
     - core
 - git: https://github.com/composewell/streamly-fsevents
-  commit: 87f1c5043695c004a6dae7e46ef45e88bb3fb55b
-# - lockfree-queue-0.2.4@sha256:156e7ccc193fc5d8b43f065e9cd31c3171c79ec25863283d546900d92930846d,2963
-# - tasty-bench-0.3.2@sha256:e7678a19114e1ff5effbe9b96a4688fa085cee39a50003d1170ec271f83e0792,2209
+  commit: a7ef478ee6cdc8bad1893694eee7d02d2baf441b
 
 rebuild-ghc-options: true
 
