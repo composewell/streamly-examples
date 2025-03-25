@@ -28,7 +28,7 @@ cat =
 -- > cat dir/* > output.txt
 catDirTo :: IO ()
 catDirTo =
-      Dir.readFiles [path|dir|]          -- Stream IO Path
+      Dir.readFiles id [path|dir|]          -- Stream IO Path
     -- NOTE: This is a redundant step that we are forced to do as we've still
     -- not introduced FileIO module that uses Path yet.
     & fmap Path.toString                 -- Stream IO String

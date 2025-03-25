@@ -17,7 +17,7 @@
 -- inefficiencies are removed. It will be nice if compiler can automatically
 -- detect and point out such opportunities.
 --
--- * Using mutable memory for in a local loop is beneficial due to cache
+-- * Using mutable memory in a local loop is beneficial due to cache
 -- benefits and reduction in allocations/collections. Haskell lacks good
 -- mutable memory abstractions which should be fixed.
 --
