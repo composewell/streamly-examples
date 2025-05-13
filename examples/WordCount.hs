@@ -7,10 +7,12 @@ module WordCount (main, count, Counts(..), isSpace) where
 import Data.Char (ord)
 import Data.Function ((&))
 import System.Environment (getArgs)
+import Streamly.FileSystem.Path (Path)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.FileSystem.File as File
+import qualified Streamly.FileSystem.FileIO as File
+import qualified Streamly.FileSystem.Path as Path
 import qualified Streamly.Unicode.Stream as Stream
 
 -------------------------------------------------------------------------------
@@ -39,7 +41,7 @@ count (Counts l w c wasSpace) ch =
             else (if wasSpace then w + 1 else w, False)
     in Counts l1 w1 (c + 1) wasSpace1
 
-wc :: String -> IO Counts
+wc :: Path -> IO Counts
 wc file =
       File.read file                                      -- Stream IO Word8
     & Stream.decodeLatin1                                 -- Stream IO Char
@@ -53,5 +55,6 @@ wc file =
 main :: IO ()
 main = do
     name <- fmap head getArgs
-    Counts l w c _ <- wc name
+    nameP <- Path.fromString name
+    Counts l w c _ <- wc nameP
     putStrLn $ show l ++ " " ++ show w ++ " " ++ show c ++ " " ++ name
