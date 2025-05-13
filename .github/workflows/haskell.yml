@@ -81,7 +81,7 @@ jobs:
             ignore_error: false
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       name: Cache common directories
       with:
         path: |
