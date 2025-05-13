@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- Introductory example programs
 
 import Control.Concurrent (threadDelay)
@@ -11,6 +13,7 @@ import System.IO (stdout)
 import Streamly.Data.Fold (Fold, Tee(..))
 import Streamly.Data.Stream.Prelude (Stream)
 import Streamly.Data.Unfold (Unfold)
+import Streamly.FileSystem.Path (path)
 import Streamly.Internal.Data.Stream (CrossStream, mkCross, unCross)
 
 import qualified Streamly.Data.Array as Array
@@ -18,7 +21,7 @@ import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Data.Unfold as Unfold
 import qualified Streamly.FileSystem.Handle as Handle
-import qualified Streamly.FileSystem.File as File
+import qualified Streamly.FileSystem.FileIO as File
 import qualified Streamly.Unicode.Stream as Unicode
 
 -------------------------------------------------------------------------------
@@ -79,7 +82,7 @@ splitOn p f = Stream.foldMany (Fold.takeEndBy_ p f)
 -- | Find average line length for lines in a text file
 avgLineLength :: IO Double
 avgLineLength =
-      File.read "input.txt"                    -- Stream IO Word8
+      File.read [path|input.txt|]                 -- Stream IO Word8
     & splitOn isNewLine Fold.length               -- Stream IO Int
     & Stream.fold avg                             -- IO Double
 
@@ -103,7 +106,7 @@ kvMap = Fold.toMap fst . Fold.lmap snd
 -- | Read text from a file and generate a histogram of line length
 lineLengthHistogram :: IO (Map Int Int)
 lineLengthHistogram =
-      File.read "input.txt"                      -- Stream IO Word8
+      File.read [path|input.txt|]                -- Stream IO Word8
     & splitOn isNewLine Fold.length              -- Stream IO Int
     & fmap bucket                                -- Stream IO (Int, Int)
     & Stream.fold (kvMap Fold.length)            -- IO (Map Int Int)
@@ -119,7 +122,7 @@ lineLengthHistogram =
 -- | Read text from a file and generate a histogram of word length
 wordLengthHistogram :: IO (Map Int Int)
 wordLengthHistogram =
-      File.read "input.txt"                   -- Stream IO Word8
+      File.read [path|input.txt|]             -- Stream IO Word8
     & Unicode.decodeLatin1                    -- Stream IO Char
     & Stream.wordsBy isSpace Fold.length      -- Stream IO Int
     & fmap bucket                             -- Stream IO (Int, Int)

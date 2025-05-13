@@ -9,10 +9,12 @@ import Data.Function ((&))
 import Data.Word (Word8)
 import Streamly.Data.Fold (Fold, Tee(..))
 import System.Environment (getArgs)
+import Streamly.FileSystem.Path (Path)
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.FileSystem.File as File
+import qualified Streamly.FileSystem.FileIO as File
+import qualified Streamly.FileSystem.Path as Path
 
 {-# INLINE isSpace #-}
 isSpace :: Char -> Bool
@@ -24,7 +26,7 @@ isSpace c = uc == 0x20 || uc - 0x9 <= 4
 -------------------------------------------------------------------------------
 
 -- The fold accepts a stream of `Word8` and returns a value of type "a".
-foldWith :: Fold IO Word8 a -> String -> IO a
+foldWith :: Fold IO Word8 a -> Path -> IO a
 foldWith f file =
     File.read file    -- Stream IO Word8
   & Stream.fold f     -- IO a
@@ -69,8 +71,9 @@ countAll = unTee $ (,,) <$> Tee Fold.length <*> Tee nlines <*> Tee nwords
 main :: IO ()
 main = do
     name <- fmap head getArgs
+    nameP <- Path.fromString name
     -- foldWith Fold.length name >>= print -- count bytes only
     -- foldWith nlines name >>= print      -- count lines only
     -- foldWith nwords name >>= print      -- count words only
-    (c, l, w) <- foldWith countAll name    -- count all at once
+    (c, l, w) <- foldWith countAll nameP   -- count all at once
     putStrLn $ show l ++ " " ++ show w ++ " " ++ show c ++ " " ++ name

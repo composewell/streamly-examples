@@ -9,11 +9,13 @@ import GHC.Conc (numCapabilities)
 import System.Environment (getArgs)
 import Streamly.Data.Array (Array)
 import WordCount (count, Counts(..), isSpace)
+import Streamly.FileSystem.Path (Path)
 
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream.Prelude as Stream
-import qualified Streamly.FileSystem.File as File (readChunks)
+import qualified Streamly.FileSystem.Path as Path
+import qualified Streamly.FileSystem.FileIO as File (readChunks)
 import qualified Streamly.Unicode.Stream as Stream
 
 -- Get the line, word, char counts in one chunk.
@@ -48,7 +50,7 @@ addCounts (sp1, Counts l1 w1 c1 ws1) (sp2, Counts l2 w2 c2 ws2) =
 
 -- Now put it all together, we only need to divide the stream into arrays,
 -- apply our counting function to each array and then combine all the counts.
-wc :: String -> IO (Bool, Counts)
+wc :: Path -> IO (Bool, Counts)
 wc file = do
       File.readChunks file               -- Stream IO (Array Word8)
     & Stream.parMapM
@@ -69,5 +71,6 @@ wc file = do
 main :: IO ()
 main = do
     name <- fmap head getArgs
-    (_, Counts l w c _) <- wc name
+    nameP <- Path.fromString name
+    (_, Counts l w c _) <- wc nameP
     putStrLn $ show l ++ " " ++ show w ++ " " ++ show c ++ " " ++ name

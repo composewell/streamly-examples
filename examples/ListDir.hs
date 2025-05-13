@@ -27,11 +27,13 @@ import Data.Word (Word8)
 import Streamly.Data.Array (Array)
 import Streamly.Data.Stream (Stream)
 import Streamly.Data.Unfold (Unfold)
+import Streamly.FileSystem.DirIO (ReadOptions)
 import Streamly.FileSystem.Path (Path)
 import System.IO (stdout, hSetBuffering, BufferMode(LineBuffering))
 
 import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Data.Array as Array
+import qualified Streamly.FileSystem.DirIO as DirIO
 import qualified Streamly.Internal.Data.Array as Array (compactMax')
 import qualified Streamly.Internal.Data.Stream as Stream
     (unfoldEachEndBy, concatIterateDfs, concatIterateBfs, concatIterateBfsRev)
@@ -50,6 +52,14 @@ import qualified Streamly.Internal.FileSystem.Path as Path (toChunk)
 import qualified Streamly.Internal.FileSystem.Posix.ReadDir as Dir
     (readEitherByteChunks)
 #endif
+
+{-# INLINE recReadOpts #-}
+recReadOpts :: ReadOptions -> ReadOptions
+recReadOpts =
+      DirIO.followSymlinks True
+    . DirIO.ignoreLoopErrors False
+    . DirIO.ignoreNonExisting True
+    . DirIO.ignoreInAccessible True
 
 #if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
 -- Fastest implementation, only works for posix as of now.
@@ -91,10 +101,10 @@ listDirByteChunked = do
 
     -- cfg = Stream.eager False . Stream.maxBuffer 2000 . Stream.maxThreads 2
     streamDir :: Either [Path] b -> Stream IO (Either [Path] (Array Word8))
-    streamDir = either (Dir.readEitherByteChunks id) (const Stream.nil)
+    streamDir = either (Dir.readEitherByteChunks recReadOpts) (const Stream.nil)
 
     streamDirMaybe :: Either [Path] b -> Maybe (Stream IO (Either [Path] (Array Word8)))
-    streamDirMaybe = either (Just . Dir.readEitherByteChunks id) (const Nothing)
+    streamDirMaybe = either (Just . Dir.readEitherByteChunks recReadOpts) (const Nothing)
 #endif
 
 -- Faster than the listDir implementation below
@@ -135,10 +145,10 @@ listDirChunked = do
         . StreamK.fromStream
 
     streamDir :: Either [Path] b -> Stream IO (Either [Path] [Path])
-    streamDir = either (Dir.readEitherChunks id) (const Stream.nil)
+    streamDir = either (Dir.readEitherChunks recReadOpts) (const Stream.nil)
 
     streamDirMaybe :: Either [Path] b -> Maybe (Stream IO (Either [Path] [Path]))
-    streamDirMaybe = either (Just . Dir.readEitherChunks id) (const Nothing)
+    streamDirMaybe = either (Just . Dir.readEitherChunks recReadOpts) (const Nothing)
 
 listDir :: IO ()
 listDir = do
@@ -181,13 +191,13 @@ listDir = do
         . StreamK.fromStream
 
     streamDir :: Either Path b -> Stream IO (Either Path Path)
-    streamDir = either (Dir.readEitherPaths id) (const Stream.nil)
+    streamDir = either (Dir.readEitherPaths recReadOpts) (const Stream.nil)
 
     unfoldDir :: Unfold IO (Either Path b) (Either Path Path)
-    unfoldDir = Unfold.either (Dir.eitherReaderPaths id) Unfold.nil
+    unfoldDir = Unfold.either (Dir.eitherReaderPaths recReadOpts) Unfold.nil
 
     streamDirMaybe :: Either Path b -> Maybe (Stream IO (Either Path Path))
-    streamDirMaybe = either (Just . Dir.readEitherPaths id) (const Nothing)
+    streamDirMaybe = either (Just . Dir.readEitherPaths recReadOpts) (const Nothing)
 
 -- | List the current directory recursively
 main :: IO ()

@@ -17,7 +17,8 @@ import qualified Data.Ord as Ord
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold.Prelude as Fold
 import qualified Streamly.Data.Stream as Stream
-import qualified Streamly.FileSystem.File as File
+import qualified Streamly.FileSystem.Path as Path
+import qualified Streamly.FileSystem.FileIO as File
 import qualified Streamly.Unicode.Stream as Unicode
 
 hashArray :: (Unbox a, Integral b, Num c) =>
@@ -56,12 +57,13 @@ isAlpha c
 main :: IO ()
 main = do
     inFile <- fmap head getArgs
+    inFileP <- Path.fromString inFile
 
     let counter = Fold.foldl' (\n _ -> n + 1) (0 :: Int)
         classifier = Fold.toHashMapIO id counter
     -- Write the stream to a hashmap consisting of word counts
     mp <-
-        File.read inFile                       -- Stream IO Word8
+        File.read inFileP                      -- Stream IO Word8
          & Unicode.decodeLatin1                -- Stream IO Char
          & fmap toLower                        -- Stream IO Char
          & Stream.wordsBy isSpace Fold.toList  -- Stream IO String
