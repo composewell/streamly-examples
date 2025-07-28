@@ -65,9 +65,8 @@ flag interop
 common exe-dependencies
   build-depends:
       streamly              == 0.11.0
-    -- , streamly-fsevents     == 0.1.0
     , streamly-core         == 0.3.0
-    , streamly-fsevents     == 0.1.0
+    -- , streamly-fsevents     == 0.1.0
     , base                  >= 4.9   && < 4.22
     , directory             >= 1.2   && < 1.4
     , transformers          >= 0.4   && < 0.7
@@ -373,6 +372,15 @@ executable DateTimeParser
 executable LogParser
   import: exe-options
   main-is: LogParser.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-depends: tasty-bench >= 0.3 && < 0.5
+  else
+    buildable: False
+
+executable Primes
+  import: exe-options
+  main-is: Primes.hs
   if !impl(ghcjs)
     buildable: True
     build-depends: tasty-bench >= 0.3 && < 0.5
