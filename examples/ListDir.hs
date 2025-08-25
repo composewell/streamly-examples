@@ -47,7 +47,7 @@ import qualified Streamly.Internal.FileSystem.DirIO as Dir
     (readEitherChunks, readEitherPaths, eitherReaderPaths)
 import qualified Streamly.FileSystem.Handle as Handle
 import qualified Streamly.FileSystem.Path as Path
-import qualified Streamly.Internal.FileSystem.Path as Path (toChunk)
+import qualified Streamly.Internal.FileSystem.Path as Path (toArray)
 #if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
 import qualified Streamly.Internal.FileSystem.Posix.ReadDir as Dir
     (readEitherByteChunks)
@@ -57,9 +57,9 @@ import qualified Streamly.Internal.FileSystem.Posix.ReadDir as Dir
 recReadOpts :: ReadOptions -> ReadOptions
 recReadOpts =
       DirIO.followSymlinks True
-    . DirIO.ignoreLoopErrors False
-    . DirIO.ignoreNonExisting True
-    . DirIO.ignoreInAccessible True
+    . DirIO.ignoreSymlinkLoops False
+    . DirIO.ignoreMissing True
+    . DirIO.ignoreInaccessible True
 
 #if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
 -- Fastest implementation, only works for posix as of now.
@@ -112,7 +112,7 @@ listDirChunked :: IO ()
 listDirChunked = do
     Stream.fold (Handle.writeWith 32000 stdout)
         $ Stream.unfoldEachEndBy 10 Array.reader
-        $ fmap Path.toChunk
+        $ fmap Path.toArray
         $ Stream.unfoldEach Unfold.fromList
         $ fmap (either id id)
 
@@ -154,7 +154,7 @@ listDir :: IO ()
 listDir = do
     Stream.fold (Handle.writeWith 32000 stdout)
         $ Stream.unfoldEachEndBy 10 Array.reader
-        $ fmap (Path.toChunk . either id id)
+        $ fmap (Path.toArray . either id id)
 
         -- Serial using unfolds
         -- $ Stream.unfoldIterateDfs unfoldDir -- 284 ms

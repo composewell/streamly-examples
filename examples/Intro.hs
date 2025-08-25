@@ -14,7 +14,7 @@ import Streamly.Data.Fold (Fold, Tee(..))
 import Streamly.Data.Stream.Prelude (Stream)
 import Streamly.Data.Unfold (Unfold)
 import Streamly.FileSystem.Path (path)
-import Streamly.Internal.Data.Stream (CrossStream, mkCross, unCross)
+import Streamly.Internal.Data.Stream (Nested(..))
 
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
@@ -66,11 +66,11 @@ crossProduct range1 range2 =
 -- efficient. The second stream may depend on the first stream. The loops
 -- cannot fuse completely.
 --
-nestedLoops :: CrossStream IO ()
+nestedLoops :: Nested IO ()
 nestedLoops = do
-    x <- mkCross $  Stream.fromList [3,4 :: Int]
-    y <- mkCross $  Stream.fromList [1..x]
-    mkCross $  Stream.fromEffect $ print (x, y)
+    x <- Nested $  Stream.fromList [3,4 :: Int]
+    y <- Nested $  Stream.fromList [1..x]
+    Nested $  Stream.fromEffect $ print (x, y)
 
 -------------------------------------------------------------------------------
 -- Text processing
@@ -187,7 +187,7 @@ main = do
             print $ runIdentity $ crossProduct (1,1000) (1000,2000)
         "nestedLoops" -> do
             putStrLn "nestedLoops"
-            Stream.fold Fold.drain $ unCross nestedLoops
+            Stream.fold Fold.drain $ unNested nestedLoops
         "avgLineLength" -> do
             putStrLn "avgLineLength"
             avgLineLength >>= print

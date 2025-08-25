@@ -15,7 +15,7 @@ import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream.Prelude as Stream
 import qualified Streamly.Data.StreamK as K
 
-import qualified Streamly.Internal.Data.Stream as Stream (reduceIterateBfs)
+import qualified Streamly.Internal.Data.Stream as Stream (bfsReduceIterate)
 
 input :: [Int]
 input = [1000000,999999..1]
@@ -90,7 +90,7 @@ sortMergeChunks f =
     Stream.fromList input
         & Array.chunksOf chunkSize
         & f sortChunk
-        & Stream.reduceIterateBfs reduce
+        & Stream.bfsReduceIterate reduce
         & void
 
 -- | Divide a stream in chunks, sort the chunks and merge them.

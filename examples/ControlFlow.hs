@@ -27,7 +27,7 @@ import Control.Monad.Trans.Maybe (MaybeT (..))
 import Control.Monad.Trans.Except (ExceptT, runExceptT, throwE, catchE)
 import Control.Monad.Trans.Cont (ContT(..), callCC)
 import Streamly.Data.Stream (Stream)
-import Streamly.Internal.Data.Stream (CrossStream, mkCross, unCross)
+import Streamly.Internal.Data.Stream (Nested(..))
 
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
@@ -40,10 +40,10 @@ import qualified Streamly.Data.Stream as Stream
 -- non-determinism.
 --
 getSequenceMaybeBelow :: MonadIO m => Stream (MaybeT m) ()
-getSequenceMaybeBelow = unCross $ do
+getSequenceMaybeBelow = unNested $ do
     liftIO $ putStrLn "MaybeT below streamly: Enter one char per line: "
 
-    i <- mkCross $ Stream.fromList [1..2 :: Int]
+    i <- Nested $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -69,11 +69,11 @@ mainMaybeBelow = do
 -- Note that this is redundant configuration as the same behavior can be
 -- achieved with just streamly, using mzero.
 --
-getSequenceMaybeAbove :: MonadIO m => MaybeT (CrossStream m) ()
+getSequenceMaybeAbove :: MonadIO m => MaybeT (Nested m) ()
 getSequenceMaybeAbove = do
     liftIO $ putStrLn "MaybeT above streamly: Enter one char per line: "
 
-    i <- lift $ mkCross $ Stream.fromList [1..2 :: Int]
+    i <- lift $ Nested $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -82,7 +82,7 @@ getSequenceMaybeAbove = do
     r2 <- liftIO getLine
     when (r2 /= "y") mzero
 
-mainMaybeAbove :: MonadIO m => MaybeT (CrossStream m) ()
+mainMaybeAbove :: MonadIO m => MaybeT (Nested m) ()
 mainMaybeAbove = do
     getSequenceMaybeAbove
     liftIO $ putStrLn "Bingo"
@@ -96,10 +96,10 @@ mainMaybeAbove = do
 -- Note that throwE would terminate all iterations of non-determinism
 -- altogether.
 getSequenceEitherBelow :: MonadIO m => Stream (ExceptT String m) ()
-getSequenceEitherBelow = unCross $ do
+getSequenceEitherBelow = unNested $ do
     liftIO $ putStrLn "ExceptT below streamly: Enter one char per line: "
 
-    i <- mkCross $ Stream.fromList [1..2 :: Int]
+    i <- Nested $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -124,10 +124,10 @@ mainEitherBelow = do
 --
 
 getSequenceEitherAsyncBelow :: MonadIO m => Stream (ExceptT String m) ()
-getSequenceEitherAsyncBelow = unCross $ do
+getSequenceEitherAsyncBelow = unNested $ do
     liftIO $ putStrLn "ExceptT below concurrent streamly: "
 
-    i <- mkCross
+    i <- Nested
             $ Stream.consM
                 (liftIO (threadDelay 1000)
                     >> throwE "First task"
@@ -158,11 +158,11 @@ mainEitherAsyncBelow = do
 --
 -- Here we can use catchE directly but will have to use monad-control to lift
 -- stream operations with stream arguments.
-getSequenceEitherAbove :: MonadIO m => ExceptT String (CrossStream m) ()
+getSequenceEitherAbove :: MonadIO m => ExceptT String (Nested m) ()
 getSequenceEitherAbove = do
     liftIO $ putStrLn "ExceptT above streamly: Enter one char per line: "
 
-    i <- lift $ mkCross $ Stream.fromList [1..2 :: Int]
+    i <- lift $ Nested $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
@@ -171,7 +171,7 @@ getSequenceEitherAbove = do
     r2 <- liftIO getLine
     when (r2 /= "y") $ throwE $ "Expecting y got: " <> r2
 
-mainEitherAbove :: MonadIO m => ExceptT String (CrossStream m) ()
+mainEitherAbove :: MonadIO m => ExceptT String (Nested m) ()
 mainEitherAbove =
     catchE (getSequenceEitherAbove >> liftIO (putStrLn "Bingo"))
            (liftIO . putStrLn)
@@ -188,20 +188,20 @@ instance Exception Unexpected
 -- iterations of non-determinism rather then just the current iteration.
 --
 getSequenceMonadThrow :: (MonadIO m, MonadThrow m) => Stream m ()
-getSequenceMonadThrow = unCross $ do
+getSequenceMonadThrow = unNested $ do
     liftIO $ putStrLn "MonadThrow in streamly: Enter one char per line: "
 
-    i <- mkCross $ Stream.fromList [1..2 :: Int]
+    i <- Nested $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r1 <- liftIO getLine
     when (r1 /= "x")
-        $ mkCross
+        $ Nested
         $ Stream.fromEffect $ throwM $ Unexpected $ "Expecting x got: " <> r1
 
     r2 <- liftIO getLine
     when (r2 /= "y")
-        $ mkCross
+        $ Nested
         $ Stream.fromEffect $ throwM $ Unexpected $ "Expecting y got: " <> r2
 
 mainMonadThrow :: IO ()
@@ -218,11 +218,11 @@ mainMonadThrow =
 --
 -- XXX need to have a specialized liftCallCC to actually lift callCC
 --
-getSequenceContBelow :: MonadIO m => CrossStream (ContT r m) (Either String ())
+getSequenceContBelow :: MonadIO m => Nested (ContT r m) (Either String ())
 getSequenceContBelow = do
     liftIO $ putStrLn "ContT below streamly: Enter one char per line: "
 
-    i <- mkCross $ Stream.fromList [1..2 :: Int]
+    i <- Nested $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     r <- lift $ callCC $ \exit -> do
@@ -239,7 +239,7 @@ getSequenceContBelow = do
     return r
 
 mainContBelow :: MonadIO m => Stream (ContT r m) ()
-mainContBelow = unCross $ do
+mainContBelow = unNested $ do
     r <- getSequenceContBelow
     case r of
         Right _ -> liftIO $ putStrLn "Bingo"
@@ -249,11 +249,11 @@ mainContBelow = unCross $ do
 -- Using ContT above streamly
 -------------------------------------------------------------------------------
 --
-getSequenceContAbove :: MonadIO m => ContT r (CrossStream m) (Either String ())
+getSequenceContAbove :: MonadIO m => ContT r (Nested m) (Either String ())
 getSequenceContAbove = do
     liftIO $ putStrLn "ContT above streamly: Enter one char per line: "
 
-    i <- lift $ mkCross $ Stream.fromList [1..2 :: Int]
+    i <- lift $ Nested $ Stream.fromList [1..2 :: Int]
     liftIO $ putStrLn $ "iteration = " <> show i
 
     callCC $ \exit -> do
@@ -267,7 +267,7 @@ getSequenceContAbove = do
         then exit $ Left $ "Expecting y got: " <> r2
         else return $ Right ()
 
-mainContAbove :: MonadIO m => ContT r (CrossStream m) ()
+mainContAbove :: MonadIO m => ContT r (Nested m) ()
 mainContAbove = do
     r <- getSequenceContAbove
     case r of
@@ -282,10 +282,10 @@ mainContAbove = do
 main :: IO ()
 main = do
     mainMaybeBelow
-    Stream.fold Fold.drain $ unCross $ runMaybeT mainMaybeAbove
+    Stream.fold Fold.drain $ unNested $ runMaybeT mainMaybeAbove
     runContT (Stream.fold Fold.drain mainContBelow) return
-    Stream.fold Fold.drain $ unCross $ runContT mainContAbove return
+    Stream.fold Fold.drain $ unNested $ runContT mainContAbove return
     mainEitherBelow
-    Stream.fold Fold.drain $ unCross $ runExceptT mainEitherAbove
+    Stream.fold Fold.drain $ unNested $ runExceptT mainEitherAbove
     mainMonadThrow
     mainEitherAsyncBelow

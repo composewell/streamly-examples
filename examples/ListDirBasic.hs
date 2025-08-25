@@ -10,7 +10,7 @@ import qualified Streamly.Internal.FileSystem.Posix.ReadDir as ReadDir
 main :: IO ()
 main = do
     name <- Path.fromString "."
-    let arr = Path.toChunk name
+    let arr = Path.toArray name
     buffer <- MutByteArray.new' 1024
     ReadDir.openDirStream name
         >>= loopDir0 buffer (arrContents arr)
