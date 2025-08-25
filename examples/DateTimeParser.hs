@@ -19,7 +19,6 @@ import qualified Data.Char as Char
 import qualified Streamly.Data.Array as Array
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Parser as Parser
-import qualified Streamly.Data.ParserK as ParserK
 import qualified Streamly.Data.StreamK as StreamK
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.Internal.Data.Fold as Fold (foldt', satisfy)
@@ -153,19 +152,19 @@ _foldBreakDateTime arr = do
 _parseBreakDateTime :: Array Char -> IO Int
 _parseBreakDateTime arr = do
     let s = StreamK.fromStream $ Stream.fromPure arr
-        p = ParserK.adaptC . Parser.fromFold
-    (Right year, s1) <- StreamK.parseBreakChunks (p $ decimal 4) s
-    (_, s2) <- StreamK.parseBreakChunks (p $ char '-') s1
-    (Right month, s3) <- StreamK.parseBreakChunks (p $ decimal 2) s2
-    (_, s4) <- StreamK.parseBreakChunks (p $ char '-') s3
-    (Right day, s5) <- StreamK.parseBreakChunks (p $ decimal 2) s4
-    (_, s6) <- StreamK.parseBreakChunks (p $ char 'T') s5
-    (Right hr, s7) <- StreamK.parseBreakChunks (p $ decimal 2) s6
-    (_, s8) <- StreamK.parseBreakChunks (p $ char ':') s7
-    (Right mn, s9) <- StreamK.parseBreakChunks (p $ decimal 2) s8
-    (_, s10) <- StreamK.parseBreakChunks (p $ char ':') s9
-    (Right sec, s11) <- StreamK.parseBreakChunks (p $ decimal 2) s10
-    (_, _) <- StreamK.parseBreakChunks (p $ char 'Z') s11
+        p = Array.parserK . Parser.fromFold
+    (Right year, s1) <- Array.parseBreak (p $ decimal 4) s
+    (_, s2) <- Array.parseBreak (p $ char '-') s1
+    (Right month, s3) <- Array.parseBreak (p $ decimal 2) s2
+    (_, s4) <- Array.parseBreak (p $ char '-') s3
+    (Right day, s5) <- Array.parseBreak (p $ decimal 2) s4
+    (_, s6) <- Array.parseBreak (p $ char 'T') s5
+    (Right hr, s7) <- Array.parseBreak (p $ decimal 2) s6
+    (_, s8) <- Array.parseBreak (p $ char ':') s7
+    (Right mn, s9) <- Array.parseBreak (p $ decimal 2) s8
+    (_, s10) <- Array.parseBreak (p $ char ':') s9
+    (Right sec, s11) <- Array.parseBreak (p $ decimal 2) s10
+    (_, _) <- Array.parseBreak (p $ char 'Z') s11
     return (year + month + day + hr + mn + sec)
 
 -------------------------------------------------------------------------------
@@ -175,12 +174,12 @@ _parseBreakDateTime arr = do
 {-# NOINLINE _parseKDateTime #-}
 _parseKDateTime :: Array Char -> IO Int
 _parseKDateTime arr = do
-    r <- StreamK.parseChunks dateParser $ StreamK.fromPure arr
+    r <- Array.parse dateParser $ StreamK.fromPure arr
     return $ fromRight (error "failed") r
 
     where
 
-    p = ParserK.adaptC
+    p = Array.parserK
 
     dateParser = do
         year <- p $ Parser.decimal <* Parser.char '-'

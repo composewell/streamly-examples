@@ -6,13 +6,13 @@ extra-deps:
 #- streamly-0.10.0
 #- fusion-plugin-0.2.6
 - git: https://github.com/composewell/streamly
-  commit: 64dd83c750e8eb77b0aa28127ccf04010a186b3a
+  commit: 4aa7ae215f64cf98f7b3c175d3a8c47c8bd3177e
 - git: https://github.com/composewell/streamly
-  commit: 64dd83c750e8eb77b0aa28127ccf04010a186b3a
+  commit: 4aa7ae215f64cf98f7b3c175d3a8c47c8bd3177e
   subdirs:
     - core
 - git: https://github.com/composewell/streamly-fsevents
-  commit: 71cc64256464ded84feb6ee592860a820e0a41d0
+  commit: 7c06c187f0437e6857108c89fe74dc7cc53a0bac
 
 rebuild-ghc-options: true
 
