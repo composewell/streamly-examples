@@ -17,13 +17,34 @@ import qualified Streamly.Internal.Data.Array as Array
 import qualified Streamly.Internal.Data.Fold as Fold
 import qualified Streamly.Internal.Data.Scanl as Scanl
 
+-- XXX put this in streamk benchmarks
+-- 24 minute
+naivePrimeStreamK :: StreamK IO Int
+naivePrimeStreamK = filterPrime (StreamK.fromStream (Stream.enumerateFrom 2))
+
+    where
+
+    filterPrime ys = StreamK.concatEffect $ do
+        Just (p, xs) <- StreamK.uncons ys
+        pure
+            $ StreamK.cons p
+            $ filterPrime
+            $ flip StreamK.concatMap xs
+            $ \x ->
+                if x `mod` p /= 0
+                then StreamK.fromPure x
+                else StreamK.nil
+
 -- The example listed on the Haskell website divides all numbers by all the
 -- previous primes, it is slow take around 170 sec to find primes up to
 -- 1,000,000.
 naivePrimeList :: [Int]
-naivePrimeList = filterPrime [2..] where
-  filterPrime (p:xs) =
-    p : filterPrime [x | x <- xs, x `mod` p /= 0]
+naivePrimeList = filterPrime [2..]
+
+    where
+
+    filterPrime (p:xs) =
+        p : filterPrime [x | x <- xs, x `mod` p /= 0]
 
 -- This has lowest memory residency but highest number of allocations which
 -- makes it slow - 8 sec for primes up to 1,000,000. Is it possible to reduce
@@ -85,19 +106,35 @@ primesScan =
 
 main :: IO ()
 main = do
+    print $ last $ take 78497 $ naivePrimeList
+    {-
+    (    Stream.fold Fold.last
+        $ Stream.take 100000
+        $ StreamK.toStream
+        $ naivePrimeStreamK
+        ) >>= print
+    -}
+    {-
+    x <- Stream.fold Fold.last $ sieveList $ Stream.enumerateFromThenTo 3 5 1000000
+    print x
+    -}
+    {-
+    print
+        $ runIdentity
+        $ Stream.fold Fold.last
+        $ Stream.take 78497
+        $ StreamK.toStream
+        $ primeStreamK
+    -}
+    -- print $ last $ take 78497 $ primeList
+    {-
+    xs <- Stream.fold primesFold $ Stream.enumerateFromThenTo 3 5 1000000
+    MutArray.getIndexRev 0 xs >>= print
+    -}
     {-
     x <- Stream.fold Fold.last
-            $ Stream.postscanlMaybe sieveScan
+            $ Stream.postscanlMaybe primesScan
             $ Stream.enumerateFromThenTo 3 5 1000000
     print x
     -}
-    -- xs <- Stream.fold primes $ Stream.enumerateFromThenTo 3 5 1000000
-    x <- Stream.fold Fold.last $ sieveList $ Stream.enumerateFromThenTo 3 5 1000000
-    print x
-    -- MutArray.getIndexRev 0 xs >>= print
-    -- MutArray.getIndex 0 xs >>= print
-    -- print $ MutArray.length xs
-    -- print $ last $ take 78497 $ primeList
-    -- print $ runIdentity $ Stream.fold Fold.last $ Stream.take 78497 $ StreamK.toStream $ primeStreamK
-    -- print $ last $ take 78497 $ naivePrimeList
     return ()
