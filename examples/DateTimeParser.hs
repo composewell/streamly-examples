@@ -152,7 +152,7 @@ _foldBreakDateTime arr = do
 _parseBreakDateTime :: Array Char -> IO Int
 _parseBreakDateTime arr = do
     let s = StreamK.fromStream $ Stream.fromPure arr
-        p = Array.parserK . Parser.fromFold
+        p = Array.toParserK . Parser.fromFold
     (Right year, s1) <- Array.parseBreak (p $ decimal 4) s
     (_, s2) <- Array.parseBreak (p $ char '-') s1
     (Right month, s3) <- Array.parseBreak (p $ decimal 2) s2
@@ -179,7 +179,7 @@ _parseKDateTime arr = do
 
     where
 
-    p = Array.parserK
+    p = Array.toParserK
 
     dateParser = do
         year <- p $ Parser.decimal <* Parser.char '-'
