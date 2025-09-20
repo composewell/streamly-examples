@@ -9,16 +9,8 @@ import qualified Data.List.NonEmpty as NonEmpty
 import qualified Streamly.Data.Fold as Fold
 import qualified Streamly.Data.Stream as Stream
 import qualified Streamly.FileSystem.Path as Path
-
-#if darwin_HOST_OS
-import qualified Streamly.Internal.FS.Event.Darwin as Event
-#elif linux_HOST_OS
-import qualified Streamly.Internal.FS.Event.Linux as Event
-#elif mingw32_HOST_OS
-import qualified Streamly.Internal.FS.Event.Windows as Event
-#else
-#error "FS Events not supported on this platform"
-#endif
+import qualified Streamly.FileSystem.Event as Event
+import qualified Streamly.Internal.FS.Event as Event (showEvent)
 
 -------------------------------------------------------------------------------
 -- Main
