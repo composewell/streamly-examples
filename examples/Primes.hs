@@ -17,6 +17,9 @@ import qualified Streamly.Internal.Data.Array as Array
 import qualified Streamly.Internal.Data.Fold as Fold
 import qualified Streamly.Internal.Data.Scanl as Scanl
 
+-- The Genuine Sieve of Eratosthenes
+-- https://www.cs.hmc.edu/%7Eoneill/papers/Sieve-JFP.pdf
+
 -- XXX put this in streamk benchmarks
 -- 24 minute
 naivePrimeStreamK :: StreamK IO Int
