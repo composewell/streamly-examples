@@ -44,7 +44,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: git://github.com/composewell/streamly-examples.git
+  location: https://github.com/composewell/streamly-examples.git
 
 ------------------------------------------------------------------------------
 -- Flags                                                                    --
