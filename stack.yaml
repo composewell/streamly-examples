@@ -1,18 +1,17 @@
-resolver: lts-22.43
+resolver: lts-24.37
 packages:
 - '.'
 extra-deps:
-#- streamly-core-0.2.0
-#- streamly-0.10.0
-#- fusion-plugin-0.2.6
-- git: https://github.com/composewell/streamly
-  commit: c7048326486e537908f9e6b7529f0d783014b7d9
-- git: https://github.com/composewell/streamly
-  commit: c7048326486e537908f9e6b7529f0d783014b7d9
-  subdirs:
-    - core
-- git: https://github.com/composewell/streamly-fsevents
-  commit: 7c06c187f0437e6857108c89fe74dc7cc53a0bac
+- streamly-core-0.3.0
+- streamly-0.11.0
+- streamly-fsevents-0.1.1
+
+#- git: https://github.com/composewell/streamly
+#  commit: 9f256bfa7c441451b46fec02fa0510383643db09
+#- git: https://github.com/composewell/streamly
+#  commit: 9f256bfa7c441451b46fec02fa0510383643db09
+#  subdirs:
+#    - core
 
 rebuild-ghc-options: true
 
