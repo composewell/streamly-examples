@@ -28,7 +28,7 @@ import Streamly.Data.Array (Array)
 import Streamly.Data.Stream (Stream)
 import Streamly.Data.Unfold (Unfold)
 import Streamly.FileSystem.DirIO (ReadOptions)
-import Streamly.FileSystem.Path (Path)
+import Streamly.FileSystem.Path (Path, OsWord)
 import System.IO (stdout, hSetBuffering, BufferMode(LineBuffering))
 
 import qualified Streamly.Data.Stream.Prelude as Stream
@@ -51,15 +51,29 @@ import qualified Streamly.Internal.FileSystem.Path as Path (toArray)
 #if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
 import qualified Streamly.Internal.FileSystem.Posix.ReadDir as Dir
     (readEitherByteChunks)
+#else
+import qualified Streamly.Unicode.Stream as Stream
 #endif
 
 {-# INLINE recReadOpts #-}
 recReadOpts :: ReadOptions -> ReadOptions
+{-# INLINE reEncode #-}
+reEncode :: Stream IO OsWord -> Stream IO Word8
+#if defined(mingw32_HOST_OS) || defined(__MINGW32__)
+recReadOpts = id
+
+reEncode =
+      Stream.encodeUtf8
+    . Stream.decodeUtf16le
+#else
 recReadOpts =
       DirIO.followSymlinks True
     . DirIO.ignoreSymlinkLoops False
     . DirIO.ignoreMissing True
     . DirIO.ignoreInaccessible True
+
+reEncode = id
+#endif
 
 #if !defined(mingw32_HOST_OS) && !defined(__MINGW32__)
 -- Fastest implementation, only works for posix as of now.
@@ -111,6 +125,7 @@ listDirByteChunked = do
 listDirChunked :: IO ()
 listDirChunked = do
     Stream.fold (Handle.writeWith 32000 stdout)
+        $ reEncode
         $ Stream.unfoldEachEndBy 10 Array.reader
         $ fmap Path.toArray
         $ Stream.unfoldEach Unfold.fromList
@@ -153,6 +168,7 @@ listDirChunked = do
 listDir :: IO ()
 listDir = do
     Stream.fold (Handle.writeWith 32000 stdout)
+        $ reEncode
         $ Stream.unfoldEachEndBy 10 Array.reader
         $ fmap (Path.toArray . either id id)
 
