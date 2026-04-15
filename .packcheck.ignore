@@ -8,4 +8,7 @@ hie.yaml
 stack.yaml
 cabal.project.user
 cabal.project.Werror
-default.nix
+flake.lock
+flake.nix
+packages.nix
+sources.nix
