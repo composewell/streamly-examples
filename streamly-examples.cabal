@@ -72,9 +72,8 @@ flag interop
 common exe-dependencies
   build-depends:
       streamly              == 0.11.0
-    -- , streamly-fsevents     == 0.1.0
     , streamly-core         == 0.3.0
-    , streamly-fsevents     == 0.1.0
+    , streamly-fsevents     >= 0.1.0 && < 0.2
     , base                  >= 4.9   && < 4.23
     , directory             >= 1.2   && < 1.4
     , transformers          >= 0.4   && < 0.7
