@@ -1,5 +1,4 @@
 .packcheck.ignore
-.circleci/config.yml
 .github/workflows/haskell.yml
 .gitignore
 .hlint.ignore
@@ -8,6 +7,5 @@ examples/SearchQuery.hs
 hie.yaml
 stack.yaml
 cabal.project.user
-cabal.project.ci
 cabal.project.Werror
 default.nix
