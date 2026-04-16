@@ -7,33 +7,33 @@
         "nixpkgs-darwin": "nixpkgs-darwin"
       },
       "locked": {
-        "lastModified": 1776288061,
-        "narHash": "sha256-Gop8YZeA2m4znMPIhSDSbDEov1VYrIdwmXtb636lhRY=",
+        "lastModified": 1776358686,
+        "narHash": "sha256-J6LOUQguCldYhYufQDpGDjZECNAsb84OJCkUPhNVK+k=",
         "ref": "refs/heads/master",
-        "rev": "b07df1d7264bc6c03c0388131e9cbdc7f4ae542a",
-        "revCount": 120,
+        "rev": "8923d420baf7b05fe0aef5b6674b04ccf111276a",
+        "revCount": 121,
         "type": "git",
         "url": "ssh://git@github.com/composewell/streamly-packages"
       },
       "original": {
-        "rev": "b07df1d7264bc6c03c0388131e9cbdc7f4ae542a",
+        "rev": "8923d420baf7b05fe0aef5b6674b04ccf111276a",
         "type": "git",
         "url": "ssh://git@github.com/composewell/streamly-packages"
       }
     },
     "basepkgs_2": {
       "locked": {
-        "lastModified": 1775305167,
-        "narHash": "sha256-BPBKbDZ9aoGOHDAeScwj/N4h2IHOLLRSJmSC3AXQZko=",
+        "lastModified": 1776352576,
+        "narHash": "sha256-/rNYSCE5o+u5ZRfpE+PaDjmp5ttEgSLyiRoDOgguKJw=",
         "owner": "composewell",
         "repo": "nixpack",
-        "rev": "fc492c73877aeaa3bf9bec85d0eebc56036d53f9",
+        "rev": "8c0e3596f53ae42c43175b7440d9c0f5c462997c",
         "type": "github"
       },
       "original": {
         "owner": "composewell",
         "repo": "nixpack",
-        "rev": "fc492c73877aeaa3bf9bec85d0eebc56036d53f9",
+        "rev": "8c0e3596f53ae42c43175b7440d9c0f5c462997c",
         "type": "github"
       }
     },
