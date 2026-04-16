@@ -12,6 +12,7 @@ packages =
 libraries =
 with nixpkgs.haskellPackages;
 [
+  sdl2
 ];
 
 # Haskell dev packages. Install only dependencies of these in the shell,

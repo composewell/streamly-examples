@@ -9,7 +9,8 @@ import SDL (($=), V2(..), V4(..), Point(..))
 
 import qualified Data.Text as Text
 import qualified SDL
-import qualified Streamly.Prelude as Stream
+import qualified Streamly.Data.Stream as Stream
+import qualified Streamly.Data.Fold as Fold
 
 ------------------------------------------------------------------------------
 -- SDL Graphics Init
@@ -79,8 +80,10 @@ main = do
     _ <- forkIO $ do
             Stream.repeatM (updateDisplay ref rend) -- Stream IO ()
                 & Stream.delay (1/60)               -- Stream IO ()
-                & Stream.drain                      -- IO ()
+                & Stream.fold Fold.drain                   -- IO ()
 
     -- MacOS requires pollEvents to run in the Main thread.
-    Stream.repeatM (handleEvents ref) & Stream.drainWhile (== True)
+    Stream.repeatM (handleEvents ref)
+        & Stream.takeWhile (== True)
+        & Stream.fold Fold.drain
     SDL.destroyWindow window
