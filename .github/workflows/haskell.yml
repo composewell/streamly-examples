@@ -162,13 +162,14 @@ jobs:
           #    CABAL_PROJECT=cabal.project.ghc-head
           #    DISABLE_SDIST_BUILD="y"
 
-          - name: ci
+          - name: sdl2
             runner: ubuntu-latest
             command: cabal
             ghc_version: 9.14.1
             # WARNING! cannot use # comments inside pack_options.
             pack_options: >-
               CABAL_PROJECT=cabal.project.user
+              CABAL_BUILD_OPTIONS="--flag sdl2 --allow-newer"
 
           - name: ci
             runner: macos-latest
@@ -406,6 +407,15 @@ jobs:
           export ARGS
         }
         EOF
+
+    - name: Install sdl2
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        if [[ "$MATRIX_OPTIONS" == *sdl2* ]]
+        then
+          sudo apt-get update && sudo apt-get install -y libsdl2-dev
+        fi
 
     - name: Run packcheck (dependencies only)
       id: deps-only
