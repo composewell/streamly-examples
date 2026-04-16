@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1 (Apr 2026)
+
+* Support GHC 9.14
+
 ## 0.3.0 (Sep 2025)
 
 * Support streamly-0.11.0 and streamly-core-0.3.0
