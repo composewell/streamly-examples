@@ -62,6 +62,8 @@ cradle:
               component: "exe:WordServer"
             - path: "./examples/WordFrequency.hs"
               component: "exe:WordFrequency"
+            - path: "./examples/BytePairEncoder.hs"
+              component: "exe:BytePairEncoder"
 
 dependencies:
   - streamly-examples.cabal
