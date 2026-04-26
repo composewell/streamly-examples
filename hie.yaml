@@ -48,6 +48,8 @@ cradle:
               component: "exe:SearchQuery"
             - path: "./examples/Split.hs"
               component: "exe:Split"
+            - path: "./examples/StringSearch.hs"
+              component: "exe:StringSearch"
             - path: "./examples/WordClassifier.hs"
               component: "exe:WordClassifier"
             - path: "./examples/WordCount.hs"
