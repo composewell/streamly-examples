@@ -41,6 +41,7 @@ extra-source-files:
   examples/ListDirBasic.rs
   examples/WalkDirBasic.rs
   examples/WordCount.c
+  examples/generate-random-word-lines.sh
 
 source-repository head
   type: git
@@ -379,6 +380,15 @@ executable DateTimeParser
 executable LogParser
   import: exe-options
   main-is: LogParser.hs
+  if !impl(ghcjs)
+    buildable: True
+    build-depends: tasty-bench >= 0.3 && < 0.6
+  else
+    buildable: False
+
+executable StringSearch
+  import: exe-options
+  main-is: StringSearch.hs
   if !impl(ghcjs)
     buildable: True
     build-depends: tasty-bench >= 0.3 && < 0.6
