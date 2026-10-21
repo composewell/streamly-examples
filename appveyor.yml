@@ -33,7 +33,10 @@ environment:
     # DISABLE_BENCH: "y"
     # DISABLE_DOCS: "y"
     # DISABLE_DIST_CHECKS: "y"
-    # DISABLE_SDIST_BUILD: "y"
+    # On Windows, DISABLE_SDIST_BUILD is useful for (1) avoiding
+    # path length restriction, (2) avoid installing autoreconf
+    # for configure builds.
+    DISABLE_SDIST_BUILD: "y"
     # Note: these require the "diff" utility.
     # DISABLE_SDIST_GIT_CHECK: "y"
     DISABLE_SDIST_PROJECT_CHECK: "y"
@@ -55,11 +58,15 @@ environment:
     # If you have not committed packcheck.sh in your repo at PACKCHECK_LOCAL_PATH
     # then it is automatically pulled from this URL.
     PACKCHECK_GITHUB_URL: "https://raw.githubusercontent.com/composewell/packcheck"
-    PACKCHECK_GITHUB_COMMIT: "3f0f1d1dd8252a8e8b5256bc86428b46039d8dba"
+    PACKCHECK_GITHUB_COMMIT: "b8579a2d2a75c9d9cad5957eea63855a2e14a91d"
 
     # Override the temp directory to avoid sed escaping issues
     # See https://github.com/haskell/cabal/issues/5386
     TMP: "c:\\tmp"
+
+# ------------------------------------------------------------------------
+# Usually you do not need to change anything below this line
+# ------------------------------------------------------------------------
 
 # Bump the -> version to clear the cache
 # packcheck uses "%APPDATA%\\local" to install tools like hlint etc.
@@ -72,7 +79,8 @@ cache:
   - "C:\\ghcup"
   - "C:\\cabal"
 
-# Folder where the repository is cloned.
+# Folder where the repository is cloned. Kept as short as possible to avoid
+# long path issues on Windows.
 clone_folder: "c:\\pkg"
 build: off
 

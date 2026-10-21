@@ -112,7 +112,7 @@ jobs:
       # If you have not committed packcheck.sh in your repo at PACKCHECK
       # then it is automatically pulled from this URL.
       PACKCHECK_GITHUB_URL: "https://raw.githubusercontent.com/composewell/packcheck"
-      PACKCHECK_GITHUB_COMMIT: "3f0f1d1dd8252a8e8b5256bc86428b46039d8dba"
+      PACKCHECK_GITHUB_COMMIT: "b8579a2d2a75c9d9cad5957eea63855a2e14a91d"
 
     # ubuntu seems to have better support than debian on CI systems
     runs-on: ${{ matrix.runner }}
@@ -217,8 +217,10 @@ jobs:
             runner: windows-latest
             command: cabal
             ghc_version: 9.14.1
+            # On Windows, DISABLE_SDIST_BUILD is useful for (1) avoiding
+            # path length restriction, (2) avoid installing autoreconf
+            # for configure builds.
             # WARNING! cannot use # comments inside pack_options.
-            # DISABLE_SDIST_BUILD for shorter paths on Windows
             pack_options: >-
               DISABLE_SDIST_BUILD="y"
               CABAL_PROJECT=cabal.project.user
@@ -271,6 +273,38 @@ jobs:
 
     - uses: actions/checkout@v4
 
+    # The macOS image may ship Command Line Tools newer than the default
+    # Xcode (e.g. CLT 27.0 with Xcode 26.6). Linking against the CLT SDK then
+    # fails with "tapi error: malformed file ... unknown architecture
+    # arm64e.x1-macos". Select the default Xcode so that the compiler, linker
+    # and SDK come from the same toolchain. packcheck clears the environment,
+    # so SDKROOT or DEVELOPER_DIR cannot be used instead.
+    #
+    # The GHC bindists for macOS hardcode the CLT SDK path from their build
+    # machine, e.g. the rts and ghci package confs of GHC 9.14.1 have
+    # /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib in
+    # library-dirs, so the linker uses the CLT SDK even when Xcode is
+    # selected. Point the CLT MacOSX.sdk symlink at the Xcode SDK.
+    #
+    # The GHC and dependency cache keys include the Xcode version and build,
+    # so a runner image with a different Xcode installs GHC afresh.
+    - name: Select default Xcode (macOS)
+      id: xcode
+      if: runner.os == 'macOS'
+      run: |
+        sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+        xcode-select -p
+        sdk=$(xcrun --show-sdk-path)
+        echo "$sdk"
+        clt=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+        if test -L "$clt"; then
+          ls -ld "$clt"
+          sudo ln -sfn "$sdk" "$clt"
+          ls -ld "$clt"
+        fi
+        ver=$(xcodebuild -version | awk 'NR==1{v=$2} /Build version/{b=$3} END{print v "-" b}')
+        echo "toolchain=-xcode-$ver" >> "$GITHUB_OUTPUT"
+
     # This should happen before cache restore.
     - name: Remove ~/.ghcup symlink (non-Windows)
       if: runner.os != 'Windows'
@@ -280,7 +314,8 @@ jobs:
     # See the "cabal path" output in the CI logs to tweak the cache
     # locations.
 
-    # Shared by all tests, all platforms
+    # Shared by all tests, all platforms. Other workflows can restore it
+    # with the same key.
     - name: Restore hackage package index (non-Windows)
       id: restore-hackage
       uses: actions/cache/restore@v4
@@ -288,7 +323,7 @@ jobs:
       with:
         path: |
             ~/.cache/cabal/packages
-        key: cabal-hackage-index-non-windows
+        key: cabal-hackage-index
 
     # GHC is not test/options specific
     - name: Restore ghcup and ghc (non-Windows)
@@ -298,7 +333,7 @@ jobs:
       with:
         path: |
           ~/.ghcup
-        key: ghc-${{ matrix.ghc_version }}-v${{ matrix.ghc_salt }}-${{ matrix.runner }}
+        key: ghc-${{ matrix.ghc_version }}-v${{ matrix.ghc_salt }}-${{ matrix.runner }}${{ steps.xcode.outputs.toolchain }}
 
     # GHC is not test/options specific
     #- name: Restore ghcup and ghc (Windows)
@@ -329,7 +364,7 @@ jobs:
           ~/.local/bin
           ~/.local/state/cabal
           ~/.stack
-        key: ${{ matrix.command }}-deps-ghc-${{ matrix.ghc_version }}-v${{ matrix.ghc_salt }}-${{ matrix.runner }}-${{ matrix.name }}
+        key: ${{ matrix.command }}-deps-ghc-${{ matrix.ghc_version }}-v${{ matrix.ghc_salt }}-${{ matrix.runner }}-${{ matrix.name }}${{ steps.xcode.outputs.toolchain }}
 
     # Deps are test/options specific
     - name: Restore build dependencies, hackage index, local/bin (Windows)
@@ -400,7 +435,8 @@ jobs:
               ARGS="$ARGS CABAL_BUILDDIR=\"/c/b\" WINVER=$WINVER"
               ARGS="$ARGS NUMBER_OF_PROCESSORS=$NUMBER_OF_PROCESSORS"
               ARGS="$ARGS PROCESSOR_IDENTIFIER=\"$PROCESSOR_IDENTIFIER\""
-              PATH_VAR="$PATH_VAR:/c/ghcup:/c/Program Files/7-Zip:/mingw64/bin"
+              # Git for Windows 2.56 moved /mingw64 to /ucrt64
+              PATH_VAR="$PATH_VAR:/c/ghcup:/c/Program Files/7-Zip:/ucrt64/bin:/mingw64/bin"
               ;;
           esac
           ARGS="$ARGS PATH=\"$PATH_VAR\""
@@ -437,14 +473,14 @@ jobs:
       if: always() && steps.deps-only.outcome == 'success' && runner.os != 'Windows' && steps.restore-hackage.outputs.cache-hit != 'true'
       with:
         path: ~/.cache/cabal/packages
-        key: cabal-hackage-index-non-windows
+        key: cabal-hackage-index
 
     - name: Save ghcup and ghc (non-Windows)
       uses: actions/cache/save@v4
       if: always() && steps.deps-only.outcome == 'success' && runner.os != 'Windows' && steps.restore-ghcup.outputs.cache-hit != 'true'
       with:
         path: ~/.ghcup
-        key: ghc-${{ matrix.ghc_version }}-v${{ matrix.ghc_salt }}-${{ matrix.runner }}
+        key: ghc-${{ matrix.ghc_version }}-v${{ matrix.ghc_salt }}-${{ matrix.runner }}${{ steps.xcode.outputs.toolchain }}
 
     # On Windows, ghc restore step takes 2-3 minutes whereas installing
     # GHC takes less than 2 minutes. On top of this saving the ghc cache
@@ -466,7 +502,7 @@ jobs:
           ~/.local/bin
           ~/.local/state/cabal
           ~/.stack
-        key: ${{ matrix.command }}-deps-ghc-${{ matrix.ghc_version }}-v${{ matrix.ghc_salt }}-${{ matrix.runner }}-${{ matrix.name }}
+        key: ${{ matrix.command }}-deps-ghc-${{ matrix.ghc_version }}-v${{ matrix.ghc_salt }}-${{ matrix.runner }}-${{ matrix.name }}${{ steps.xcode.outputs.toolchain }}
 
     # hackage package index is part of C:/cabal
     # Deps are test/options specific, hence, matrix.name in the key
