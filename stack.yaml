@@ -2,8 +2,8 @@ resolver: lts-24.37
 packages:
 - '.'
 extra-deps:
-- streamly-core-0.3.0
-- streamly-0.11.0
+- streamly-core-0.3.2
+- streamly-0.11.1
 - streamly-fsevents-0.1.1
 
 #- git: https://github.com/composewell/streamly
